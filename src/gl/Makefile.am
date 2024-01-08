@@ -1489,19 +1489,11 @@ EXTRA_DIST += w32sock.h
 
 ## begin gnulib module stat
 
-<<<<<<< HEAD
-if !OS2
-libgnu_gpl_la_SOURCES += stat-time.c
-
-EXTRA_DIST += stat-time.h
-endif
-=======
 if GL_COND_OBJ_STAT
 libgnu_gpl_la_SOURCES += stat.c
 endif
 
 EXTRA_DIST += stat-w32.c stat-w32.h
->>>>>>> vendor
 
 EXTRA_libgnu_gpl_la_SOURCES += stat-w32.c
 
