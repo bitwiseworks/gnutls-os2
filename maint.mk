@@ -2,7 +2,7 @@
 # This Makefile fragment tries to be general-purpose enough to be
 # used by many projects via the gnulib maintainer-makefile module.
 
-## Copyright (C) 2001-2019 Free Software Foundation, Inc.
+## Copyright (C) 2001-2023 Free Software Foundation, Inc.
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@ ME := maint.mk
 # These variables ought to be defined through the configure.ac section
 # of the module description. But some packages import this file directly,
 # ignoring the module description.
+AWK ?= awk
 GREP ?= grep
 SED ?= sed
 
@@ -63,7 +64,11 @@ VC_LIST = $(srcdir)/$(_build-aux)/vc-list-files -C $(srcdir)
 
 # You can override this variable in cfg.mk if your gnulib submodule lives
 # in a different location.
-gnulib_dir ?= $(srcdir)/gnulib
+gnulib_dir ?= $(shell if test -n "$(GNULIB_SRCDIR)" && test -f "$(GNULIB_SRCDIR)/gnulib-tool"; then \
+			echo "$(GNULIB_SRCDIR)"; \
+		else \
+			echo $(srcdir)/gnulib; \
+		fi)
 
 # You can override this variable in cfg.mk to set your own regexp
 # matching files to ignore.
@@ -162,7 +167,7 @@ ifneq ($(_gl-Makefile),)
 _cfg_mk := $(wildcard $(srcdir)/cfg.mk)
 
 # Collect the names of rules starting with 'sc_'.
-syntax-check-rules := $(sort $(shell $(SED) -n \
+syntax-check-rules := $(sort $(shell env LC_ALL=C $(SED) -n \
    's/^\(sc_[a-zA-Z0-9_-]*\):.*/\1/p' $(srcdir)/$(ME) $(_cfg_mk)))
 .PHONY: $(syntax-check-rules)
 
@@ -190,7 +195,7 @@ $(sc_z_rules_): %.z: %
 	@end=$$(date +%s.%N);						\
 	start=$$(cat .sc-start-$*);					\
 	rm -f .sc-start-$*;						\
-	awk -v s=$$start -v e=$$end					\
+	$(AWK) -v s=$$start -v e=$$end					\
 	  'END {printf "%.2f $(patsubst sc_%,%,$*)\n", e - s}' < /dev/null
 
 # The patsubst here is to replace each sc_% rule with its sc_%.z wrapper
@@ -408,6 +413,43 @@ sc_prohibit_magic_number_exit:
 	halt='use EXIT_* values rather than magic number'		\
 	  $(_sc_search_regexp)
 
+# Check that we don't use $< in non-implicit Makefile rules.
+#
+# To find the Makefiles, trace AC_CONFIG_FILES.  Using VC_LIST would
+# miss the Makefiles that are not under VC control (e.g., symlinks
+# installed for gettext).  "Parsing" (recursive) uses of SUBDIRS seems
+# too delicate.
+#
+# Use GNU Make's --print-data-base to normalize the rules into some
+# easy to parse format: they are separated by two \n.  Look for the
+# "section" about non-pattern rules (marked with "# Files") inside
+# which there are still the POSIX Make like implicit rules (".c.o").
+sc_prohibit_gnu_make_extensions_awk_ =					\
+  BEGIN {								\
+      RS = "\n\n";							\
+      in_rules = 0;							\
+  }									\
+  /^\# Files/ {								\
+      in_rules = 1;							\
+  }									\
+  /\$$</ && in_rules && $$0 !~ /^(.*\n)*\.\w+(\.\w+)?:/ {		\
+      print "Error: " file ": $$< in a non implicit rule\n" $$0;	\
+      status = 1;							\
+  }									\
+  END {									\
+     exit status;							\
+  }
+sc_prohibit_gnu_make_extensions:
+	@if $(AWK) --version | grep GNU >/dev/null 2>&1; then		\
+	  (cd $(srcdir) && autoconf --trace AC_CONFIG_FILES:'$$1') |	\
+	    tr ' ' '\n' |						\
+	    $(SED) -ne '/Makefile/{s/\.in$$//;p;}' |			\
+	    while read m; do						\
+	      $(MAKE) -qp -f $$m .DUMMY-TARGET 2>/dev/null |		\
+		$(AWK) -v file=$$m -e '$($@_awk_)' || exit 1;		\
+	    done;							\
+	fi
+
 # Using EXIT_SUCCESS as the first argument to error is misleading,
 # since when that parameter is 0, error does not exit.  Use '0' instead.
 sc_error_exit_success:
@@ -431,7 +473,7 @@ sc_error_message_uppercase:
 	@$(VC_LIST_EXCEPT)						\
 	  | xargs $(GREP) -nEA2 '[^rp]error *\(' /dev/null		\
 	  | $(GREP) -E '"[A-Z]'						\
-	  | $(GREP) -vE '"FATAL|"WARNING|"Java|"C#|PRIuMAX'		\
+	  | $(GREP) -vE '"FATAL|"WARNING|"Java|"C#|"PRI'		\
 	  && { echo '$(ME): found capitalized error message' 1>&2;	\
 	       exit 1; }						\
 	  || :
@@ -580,9 +622,9 @@ sc_prohibit_xalloc_without_use:
 	  $(_sc_header_without_use)
 
 # Extract function names:
-# perl -lne '/^(?:extern )?(?:void|char) \*?(\w+) *\(/ and print $1' lib/hash.h
+# perl -lne '/^(?:extern )?(?:void|char|Hash_table) \*?(\w+) *\(/ and print $1' lib/hash.h
 _hash_re = \
-clear|delete|free|get_(first|next)|insert|lookup|print_statistics|reset_tuning
+hash_(re(set_tuning|move)|xin(itialize|sert)|in(itialize|sert)|get_(firs|nex)t|print_statistics|(delet|fre)e|lookup|clear)
 _hash_fn = \<($(_hash_re)) *\(
 _hash_struct = (struct )?\<[Hh]ash_(table|tuning)\>
 sc_prohibit_hash_without_use:
@@ -611,7 +653,7 @@ sc_prohibit_safe_read_without_use:
 
 sc_prohibit_argmatch_without_use:
 	@h='argmatch.h' \
-	re='(\<(ARRAY_CARDINALITY|X?ARGMATCH(|_TO_ARGUMENT|_VERIFY))\>|\<(invalid_arg|argmatch(_exit_fn|_(in)?valid)?) *\()' \
+	re='(\<(ARGMATCH_DEFINE_GROUP|ARRAY_CARDINALITY|X?ARGMATCH(|_TO_ARGUMENT|_VERIFY))\>|\<(invalid_arg|argmatch(_exit_fn|_(in)?valid)?) *\()' \
 	  $(_sc_header_without_use)
 
 sc_prohibit_canonicalize_without_use:
@@ -723,7 +765,7 @@ sc_prohibit_dirent_without_use:
 # Prohibit the inclusion of verify.h without an actual use.
 sc_prohibit_verify_without_use:
 	@h='verify.h'							\
-	re='\<(verify(true|expr)?|assume|static_assert) *\('		\
+	re='\<(verify(_expr)?|assume) *\('				\
 	  $(_sc_header_without_use)
 
 # Don't include xfreopen.h unless you use one of its functions.
@@ -781,7 +823,7 @@ sc_trailing_blank:
 # Match lines like the following, but where there is only one space
 # between the options and the description:
 #   -D, --all-repeated[=delimit-method]  print all duplicate lines\n
-longopt_re = --[a-z][0-9A-Za-z-]*(\[?=[0-9A-Za-z-]*\]?)?
+longopt_re = --[a-z][0-9A-Za-z-]*(\[?=[0-9A-Za-z-]*]?)?
 sc_two_space_separator_in_usage:
 	@prohibit='^   *(-[A-Za-z],)? $(longopt_re) [^ ].*\\$$'		\
 	halt='help2man requires at least two spaces between an option and its description'\
@@ -877,7 +919,7 @@ sc_prohibit_always-defined_macros:
 		dummy /dev/null						\
 	    && { printf '$(ME): define the above'			\
 			' via some gnulib .h file\n' 1>&2;		\
-	         exit 1; }						\
+		 exit 1; }						\
 	    || :;							\
 	fi
 # ==================================================================
@@ -989,7 +1031,7 @@ perl_filename_lineno_text_ =						\
     -e '  }'
 
 prohibit_doubled_words_ = \
-    the then in an on if is it but for or at and do to
+    the then in an on if is it but for or at and do to can
 # expand the regex before running the check to avoid using expensive captures
 prohibit_doubled_word_expanded_ = \
     $(join $(prohibit_doubled_words_),$(addprefix \s+,$(prohibit_doubled_words_)))
@@ -1214,6 +1256,12 @@ sc_makefile_path_separator_check:
 	halt=$(msg)							\
 	  $(_sc_search_regexp)
 
+sc_makefile_DISTCHECK_CONFIGURE_FLAGS:
+	@prohibit='^DISTCHECK_CONFIGURE_FLAGS'				\
+	in_vc_files='akefile|\.mk$$'					\
+	halt="use AM_DISTCHECK_CONFIGURE_FLAGS"				\
+	  $(_sc_search_regexp)
+
 # Check that 'make alpha' will not fail at the end of the process,
 # i.e., when pkg-M.N.tar.xz already exists (either in "." or in ../release)
 # and is read-only.
@@ -1244,7 +1292,7 @@ sc_copyright_check:
 	in_vc_files=$(sample-test)					\
 	halt='out of date copyright in $(sample-test); update it'	\
 	  $(_sc_search_regexp)
-	@require='Copyright @copyright\{\} .*'$$(date +%Y)		\
+	@require='Copyright @copyright\{} .*'$$(date +%Y)		\
 	in_vc_files=$(texi)						\
 	halt='out of date copyright in $(texi); update it'		\
 	  $(_sc_search_regexp)
@@ -1325,6 +1373,10 @@ sc_vulnerable_makefile_CVE-2012-3386:
 	  '  see https://bugzilla.redhat.com/show_bug.cgi?id=CVE-2012-3386 for details') \
 	  $(_sc_search_regexp)
 
+sc_unportable_grep_q:
+	@prohibit='grep -q' halt="unportable 'grep -q', use >/dev/null instead" \
+	  $(_sc_search_regexp)
+
 vc-diff-check:
 	$(AM_V_GEN)(unset CDPATH; cd $(srcdir) && $(VC) diff) > vc-diffs || :
 	$(AM_V_at)if test -s vc-diffs; then			\
@@ -1348,7 +1400,12 @@ gpg_key_ID ?=								\
   $$(cd $(srcdir)							\
      && git cat-file tag v$(VERSION)					\
         | $(gpgv) --status-fd 1 --keyring /dev/null - - 2>/dev/null	\
-        | awk '/^\[GNUPG:\] ERRSIG / {print $$3; exit}')
+        | $(AWK) '/^\[GNUPG:] ERRSIG / {print $$3; exit}')
+gpg_key_email ?=							\
+  $$(gpg --list-key --with-colons $(gpg_key_ID) 2>/dev/null		\
+	| $(AWK) -F: '/^uid/ {print $$10; exit}'			\
+	| $(SED) -n 's/.*<\(.*\)>/\1/p')
+gpg_keyring_url ?= https://savannah.gnu.org/project/release-gpgkeys.php?group=$(PACKAGE)&download=1
 
 translation_project_ ?= coordinator@translationproject.org
 
@@ -1367,7 +1424,7 @@ announcement_mail_headers_alpha =		\
 announcement_mail_Cc_beta = $(announcement_mail_Cc_alpha)
 announcement_mail_headers_beta = $(announcement_mail_headers_alpha)
 
-announcement_mail_Cc_ ?= $(announcement_mail_Cc_$(release-type))
+announcement_Cc_ ?= $(announcement_Cc_$(release-type))
 announcement_mail_headers_ ?= $(announcement_mail_headers_$(release-type))
 announcement: NEWS ChangeLog $(rel-files)
 # Not $(AM_V_GEN) since the output of this command serves as
@@ -1379,12 +1436,15 @@ announcement: NEWS ChangeLog $(rel-files)
 	    --prev=$(PREV_VERSION)					\
 	    --curr=$(VERSION)						\
 	    --gpg-key-id=$(gpg_key_ID)					\
+	    $$(test -n "$(gpg_key_email)" &&				\
+	       echo --gpg-key-email="$(gpg_key_email)")			\
+	    $$(test -n "$(gpg_keyring_url)" &&				\
+	       echo --gpg-keyring-url="$(gpg_keyring_url)")		\
 	    --srcdir=$(srcdir)						\
 	    --news=$(srcdir)/NEWS					\
 	    --bootstrap-tools=$(bootstrap-tools)			\
 	    $$(case ,$(bootstrap-tools), in (*,gnulib,*)		\
 	       echo --gnulib-version=$(gnulib-version);; esac)		\
-	    --no-print-checksums					\
 	    $(addprefix --url-dir=, $(url_dir_list))
 
 .PHONY: release-commit
@@ -1481,7 +1541,7 @@ alpha beta stable: $(local-check) writable-files $(submodule-checks)
 
 release:
 	$(AM_V_GEN)$(MAKE) _version
-	$(AM_V_GEN)$(MAKE) $(release-type)
+	$(AM_V_at)$(MAKE) $(release-type)
 
 # Override this in cfg.mk if you follow different procedures.
 release-prep-hook ?= release-prep
@@ -1590,12 +1650,32 @@ refresh-po:
 	ls $(PODIR)/*.po | $(SED) 's/\.po//;s,$(PODIR)/,,' | \
 	  sort >> $(PODIR)/LINGUAS
 
- # Running indent once is not idempotent, but running it twice is.
+# Indentation
+
+indent_args ?= -ppi 1
+C_SOURCES ?= $$($(VC_LIST_EXCEPT) | grep '\.[ch]\(.in\)\?$$')
 INDENT_SOURCES ?= $(C_SOURCES)
+exclude_file_name_regexp--indent ?= $(exclude_file_name_regexp--sc_indent)
+
 .PHONY: indent
-indent:
-	indent $(INDENT_SOURCES)
-	indent $(INDENT_SOURCES)
+indent: # Running indent once is not idempotent, but running it twice is.
+	$(AM_V_GEN)indent $(indent_args) $(INDENT_SOURCES) && \
+	indent $(indent_args) $(INDENT_SOURCES)
+
+sc_indent:
+	@if ! indent --version 2> /dev/null | grep 'GNU indent' > /dev/null; then \
+	    echo 1>&2 '$(ME): sc_indent: GNU indent is missing';	\
+	else								\
+	  fail=0; files="$(INDENT_SOURCES)";				\
+	  for f in $$files; do						\
+	    indent $(indent_args) -st $$f				\
+		| indent $(indent_args) -st -				\
+		| diff -u $$f - || fail=1;				\
+	  done;								\
+	  test $$fail = 1 &&						\
+	    { echo 1>&2 '$(ME): code format error, try "make indent"';	\
+	      exit 1; } || :;						\
+	fi
 
 # If you want to set UPDATE_COPYRIGHT_* environment variables,
 # put the assignments in this variable.
@@ -1641,9 +1721,8 @@ sc_tight_scope: tight-scope.mk
 	exit $$fail
 
 tight-scope.mk: $(ME)
-	@rm -f $@ $@-t
 	@perl -ne '/^# TS-start/.../^# TS-end/ and print' $(srcdir)/$(ME) > $@-t
-	@chmod a=r $@-t && mv $@-t $@
+	@mv $@-t $@
 
 ifeq (a,b)
 # TS-start
@@ -1674,8 +1753,8 @@ _gl_TS_unmarked_extern_vars ?=
 # a macro like this: GLOBAL(type, var_name, initializer), then you
 # can override this definition to automatically extract those names:
 # export _gl_TS_var_match = \
-#   /^(?:$(_gl_TS_extern)) .*?\**(\w+)(\[.*?\])?;/ || /\bGLOBAL\(.*?,\s*(.*?),/
-_gl_TS_var_match ?= /^(?:$(_gl_TS_extern)) .*?(\w+)(\[.*?\])?;/
+#   /^(?:$(_gl_TS_extern)) .*?\**(\w+)(\[.*?])?;/ || /\bGLOBAL\(.*?,\s*(.*?),/
+_gl_TS_var_match ?= /^(?:$(_gl_TS_extern)) .*?(\w+)(\[.*?])?;/
 
 # The names of object files in (or relative to) $(_gl_TS_dir).
 _gl_TS_obj_files ?= *.$(OBJEXT)

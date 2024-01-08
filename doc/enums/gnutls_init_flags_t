@@ -10,8 +10,8 @@ Connection end is a client.
 Connection is datagram oriented (DTLS). Since 3.0.0.
 @item GNUTLS_@-NONBLOCK
 Connection should not block. Since 3.0.0.
-@item GNUTLS_@-NO_@-EXTENSIONS
-Do not enable any TLS extensions by default (since 3.1.2). As TLS 1.2 and later require extensions this option is considered obsolete and should not be used.
+@item GNUTLS_@-NO_@-DEFAULT_@-EXTENSIONS
+Do not enable any TLS extensions by default such as session tickets and OCSP certificate status request (since 3.1.2). As TLS 1.2 and later require extensions this option is considered obsolete and should not be used.
 @item GNUTLS_@-NO_@-REPLAY_@-PROTECTION
 Disable any replay protection in DTLS. This must only be used if  replay protection is achieved using other means. Since 3.2.2.
 @item GNUTLS_@-NO_@-SIGNAL
@@ -27,7 +27,7 @@ Flag to indicate that the session should not use resumption with session tickets
 @item GNUTLS_@-KEY_@-SHARE_@-TOP
 Generate key share for the first group which is enabled.
 For example x25519. This option is the most performant for client (less CPU spent
-generating keys), but if the server doesn't support the advertized option it may
+generating keys), but if the server doesn't support the advertised option it may
 result to more roundtrips needed to discover the server's choice.
 @item GNUTLS_@-KEY_@-SHARE_@-TOP2
 Generate key shares for the top-2 different groups which are enabled.
@@ -66,6 +66,17 @@ since @code{gnutls_record_recv()}  could be interrupted when sending when this f
 Note this flag may not be used if you are using the same session for sending and receiving
 in different threads.
 @item GNUTLS_@-ENABLE_@-EARLY_@-DATA
-Under TLS1.3 allow the server to receive early data sent as part of the initial ClientHello (0-RTT). 
+Under TLS1.3 allow the server to receive early data sent as part of the initial ClientHello (0-RTT).
+This can also be used to explicitly indicate that the client will send early data.
 This is not enabled by default as early data has weaker security properties than other data. Since 3.6.5.
+@item GNUTLS_@-NO_@-AUTO_@-SEND_@-TICKET
+Under TLS1.3 disable auto-sending of
+session tickets during the handshake.
+@item GNUTLS_@-NO_@-END_@-OF_@-EARLY_@-DATA
+Under TLS1.3 suppress sending EndOfEarlyData message. Since 3.7.2.
+@item GNUTLS_@-NO_@-TICKETS_@-TLS12
+Flag to indicate that the session should not use resumption with session tickets. This flag only has effect if TLS 1.2 is used.
+@item GNUTLS_@-NO_@-STATUS_@-REQUEST
+Prevents client from including the "status_request" TLS extension
+in the client hello, thus disabling the receival of certificate status information. Since 3.8.0.
 @end table

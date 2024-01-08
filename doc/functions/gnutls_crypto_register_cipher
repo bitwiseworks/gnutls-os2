@@ -32,6 +32,8 @@ The functions which are marked as non-AEAD they are not required when
 registering a cipher to be used with the new AEAD API introduced in
 GnuTLS 3.4.0. Internally GnuTLS uses the new AEAD API.
 
+@strong{Deprecated:} since 3.7.0 it is no longer possible to override cipher implementation
+
 @strong{Returns:} @code{GNUTLS_E_SUCCESS}  on success, otherwise a negative error code.
 
 @strong{Since:} 3.4.0

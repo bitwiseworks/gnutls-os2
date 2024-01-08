@@ -27,6 +27,8 @@ by convention kernel implemented algorithms have priority of 90
 and CPU-assisted of 80.
 The algorithm with the lowest priority will be used by gnutls.
 
+@strong{Deprecated:} since 3.7.0 it is no longer possible to override cipher implementation
+
 @strong{Returns:} @code{GNUTLS_E_SUCCESS}  on success, otherwise a negative error code.
 
 @strong{Since:} 3.4.0

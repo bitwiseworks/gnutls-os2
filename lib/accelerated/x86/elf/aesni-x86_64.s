@@ -900,6 +900,7 @@ aesni_ecb_encrypt:
 .type	aesni_ccm64_encrypt_blocks,@function
 .align	16
 aesni_ccm64_encrypt_blocks:
+.cfi_startproc	
 	movl	240(%rcx),%eax
 	movdqu	(%r8),%xmm6
 	movdqa	.Lincrement64(%rip),%xmm9
@@ -958,11 +959,13 @@ aesni_ccm64_encrypt_blocks:
 	pxor	%xmm8,%xmm8
 	pxor	%xmm6,%xmm6
 	.byte	0xf3,0xc3
+.cfi_endproc	
 .size	aesni_ccm64_encrypt_blocks,.-aesni_ccm64_encrypt_blocks
 .globl	aesni_ccm64_decrypt_blocks
 .type	aesni_ccm64_decrypt_blocks,@function
 .align	16
 aesni_ccm64_decrypt_blocks:
+.cfi_startproc	
 	movl	240(%rcx),%eax
 	movups	(%r8),%xmm6
 	movdqu	(%r9),%xmm3
@@ -1055,6 +1058,7 @@ aesni_ccm64_decrypt_blocks:
 	pxor	%xmm8,%xmm8
 	pxor	%xmm6,%xmm6
 	.byte	0xf3,0xc3
+.cfi_endproc	
 .size	aesni_ccm64_decrypt_blocks,.-aesni_ccm64_decrypt_blocks
 .globl	aesni_ctr32_encrypt_blocks
 .type	aesni_ctr32_encrypt_blocks,@function
@@ -1147,7 +1151,7 @@ aesni_ctr32_encrypt_blocks:
 	leaq	7(%r8),%r9
 	movl	%r10d,96+12(%rsp)
 	bswapl	%r9d
-	movl	_gnutls_x86_cpuid_s+4(%rip),%r10d
+	movl	GNUTLS_x86_cpuid_s+4(%rip),%r10d
 	xorl	%ebp,%r9d
 	andl	$71303168,%r10d
 	movl	%r9d,112+12(%rsp)
@@ -2829,6 +2833,7 @@ aesni_ocb_encrypt:
 .type	__ocb_encrypt6,@function
 .align	32
 __ocb_encrypt6:
+.cfi_startproc	
 	pxor	%xmm9,%xmm15
 	movdqu	(%rbx,%r12,1),%xmm11
 	movdqa	%xmm10,%xmm12
@@ -2926,11 +2931,13 @@ __ocb_encrypt6:
 .byte	102,65,15,56,221,246
 .byte	102,65,15,56,221,255
 	.byte	0xf3,0xc3
+.cfi_endproc	
 .size	__ocb_encrypt6,.-__ocb_encrypt6
 
 .type	__ocb_encrypt4,@function
 .align	32
 __ocb_encrypt4:
+.cfi_startproc	
 	pxor	%xmm9,%xmm15
 	movdqu	(%rbx,%r12,1),%xmm11
 	movdqa	%xmm10,%xmm12
@@ -2995,11 +3002,13 @@ __ocb_encrypt4:
 .byte	102,65,15,56,221,228
 .byte	102,65,15,56,221,237
 	.byte	0xf3,0xc3
+.cfi_endproc	
 .size	__ocb_encrypt4,.-__ocb_encrypt4
 
 .type	__ocb_encrypt1,@function
 .align	32
 __ocb_encrypt1:
+.cfi_startproc	
 	pxor	%xmm15,%xmm7
 	pxor	%xmm9,%xmm7
 	pxor	%xmm2,%xmm8
@@ -3030,6 +3039,7 @@ __ocb_encrypt1:
 
 .byte	102,15,56,221,215
 	.byte	0xf3,0xc3
+.cfi_endproc	
 .size	__ocb_encrypt1,.-__ocb_encrypt1
 
 .globl	aesni_ocb_decrypt
@@ -3272,6 +3282,7 @@ aesni_ocb_decrypt:
 .type	__ocb_decrypt6,@function
 .align	32
 __ocb_decrypt6:
+.cfi_startproc	
 	pxor	%xmm9,%xmm15
 	movdqu	(%rbx,%r12,1),%xmm11
 	movdqa	%xmm10,%xmm12
@@ -3363,11 +3374,13 @@ __ocb_decrypt6:
 .byte	102,65,15,56,223,246
 .byte	102,65,15,56,223,255
 	.byte	0xf3,0xc3
+.cfi_endproc	
 .size	__ocb_decrypt6,.-__ocb_decrypt6
 
 .type	__ocb_decrypt4,@function
 .align	32
 __ocb_decrypt4:
+.cfi_startproc	
 	pxor	%xmm9,%xmm15
 	movdqu	(%rbx,%r12,1),%xmm11
 	movdqa	%xmm10,%xmm12
@@ -3428,11 +3441,13 @@ __ocb_decrypt4:
 .byte	102,65,15,56,223,228
 .byte	102,65,15,56,223,237
 	.byte	0xf3,0xc3
+.cfi_endproc	
 .size	__ocb_decrypt4,.-__ocb_decrypt4
 
 .type	__ocb_decrypt1,@function
 .align	32
 __ocb_decrypt1:
+.cfi_startproc	
 	pxor	%xmm15,%xmm7
 	pxor	%xmm9,%xmm7
 	pxor	%xmm7,%xmm2
@@ -3462,6 +3477,7 @@ __ocb_decrypt1:
 
 .byte	102,15,56,223,215
 	.byte	0xf3,0xc3
+.cfi_endproc	
 .size	__ocb_decrypt1,.-__ocb_decrypt1
 .globl	aesni_cbc_encrypt
 .type	aesni_cbc_encrypt,@function
@@ -3584,7 +3600,7 @@ aesni_cbc_encrypt:
 	movdqa	%xmm5,%xmm14
 	movdqu	80(%rdi),%xmm7
 	movdqa	%xmm6,%xmm15
-	movl	_gnutls_x86_cpuid_s+4(%rip),%r9d
+	movl	GNUTLS_x86_cpuid_s+4(%rip),%r9d
 	cmpq	$0x70,%rdx
 	jbe	.Lcbc_dec_six_or_seven
 
@@ -4115,7 +4131,7 @@ __aesni_set_encrypt_key:
 	movl	$268437504,%r10d
 	movups	(%rdi),%xmm0
 	xorps	%xmm4,%xmm4
-	andl	_gnutls_x86_cpuid_s+4(%rip),%r10d
+	andl	GNUTLS_x86_cpuid_s+4(%rip),%r10d
 	leaq	16(%rdx),%rax
 	cmpl	$256,%esi
 	je	.L14rounds
@@ -4400,7 +4416,6 @@ __aesni_set_encrypt_key:
 	addq	$8,%rsp
 .cfi_adjust_cfa_offset	-8
 	.byte	0xf3,0xc3
-.cfi_endproc	
 .LSEH_end_set_encrypt_key:
 
 .align	16
@@ -4471,6 +4486,7 @@ __aesni_set_encrypt_key:
 	shufps	$170,%xmm1,%xmm1
 	xorps	%xmm1,%xmm2
 	.byte	0xf3,0xc3
+.cfi_endproc	
 .size	aesni_set_encrypt_key,.-aesni_set_encrypt_key
 .size	__aesni_set_encrypt_key,.-__aesni_set_encrypt_key
 .align	64

@@ -1,8 +1,8 @@
-# Copyright (C) 2002-2019 Free Software Foundation, Inc.
+# Copyright (C) 2002-2023 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # This file is distributed in the hope that it will be useful,
@@ -32,77 +32,173 @@
 #  --source-base=src/gl \
 #  --m4-base=src/gl/m4 \
 #  --doc-base=doc \
-#  --tests-base=tests \
+#  --tests-base=src/gl/tests \
 #  --aux-dir=build-aux \
+#  --with-tests \
 #  --no-conditional-dependencies \
 #  --libtool \
 #  --macro-prefix=ggl \
 #  --no-vc-files \
 #  accept \
+#  alloca \
 #  arpa_inet \
+#  attribute \
 #  bind \
+#  byteswap \
+#  c-ctype \
+#  c-strcase \
+#  canonicalize-lgpl \
 #  close \
+#  close-stream \
 #  connect \
+#  explicit_bzero \
+#  fopen-gnu \
+#  func \
 #  getaddrinfo \
+#  getline \
 #  getpass \
 #  gettext-h \
+#  gettimeofday \
+#  hash \
+#  hash-pjw-bare \
 #  inet_ntop \
 #  inet_pton \
+#  intprops \
 #  inttypes \
+#  linked-list \
+#  linkedhash-list \
 #  listen \
+#  lock \
+#  memmem-simple \
 #  minmax \
+#  netdb \
+#  netinet_in \
 #  parse-datetime \
+#  pathmax \
 #  progname \
 #  read-file \
+#  reallocarray \
 #  recv \
 #  recvfrom \
+#  secure_getenv \
 #  select \
 #  send \
 #  sendto \
 #  servent \
 #  setsockopt \
 #  shutdown \
+#  snprintf \
 #  socket \
 #  sockets \
-#  socklen
+#  socklen \
+#  stdint \
+#  stpcpy \
+#  strcase \
+#  strdup-posix \
+#  strndup \
+#  strtok_r \
+#  strverscmp \
+#  sys_socket \
+#  sys_stat \
+#  sys_types \
+#  threadlib \
+#  time_r \
+#  tls \
+#  unistd \
+#  valgrind-tests \
+#  vasprintf \
+#  verify \
+#  vsnprintf \
+#  xalloc \
+#  xalloc-oversized \
+#  xlist \
+#  xsize
 
 # Specification in the form of a few gnulib-tool.m4 macro invocations:
 gl_LOCAL_DIR([src/gl/override])
 gl_MODULES([
   accept
+  alloca
   arpa_inet
+  attribute
   bind
+  byteswap
+  c-ctype
+  c-strcase
+  canonicalize-lgpl
   close
+  close-stream
   connect
+  explicit_bzero
+  fopen-gnu
+  func
   getaddrinfo
+  getline
   getpass
   gettext-h
+  gettimeofday
+  hash
+  hash-pjw-bare
   inet_ntop
   inet_pton
+  intprops
   inttypes
+  linked-list
+  linkedhash-list
   listen
+  lock
+  memmem-simple
   minmax
+  netdb
+  netinet_in
   parse-datetime
+  pathmax
   progname
   read-file
+  reallocarray
   recv
   recvfrom
+  secure_getenv
   select
   send
   sendto
   servent
   setsockopt
   shutdown
+  snprintf
   socket
   sockets
   socklen
+  stdint
+  stpcpy
+  strcase
+  strdup-posix
+  strndup
+  strtok_r
+  strverscmp
+  sys_socket
+  sys_stat
+  sys_types
+  threadlib
+  time_r
+  tls
+  unistd
+  valgrind-tests
+  vasprintf
+  verify
+  vsnprintf
+  xalloc
+  xalloc-oversized
+  xlist
+  xsize
 ])
 gl_AVOID([])
 gl_SOURCE_BASE([src/gl])
 gl_M4_BASE([src/gl/m4])
 gl_PO_BASE([])
 gl_DOC_BASE([doc])
-gl_TESTS_BASE([tests])
+gl_TESTS_BASE([src/gl/tests])
+gl_WITH_TESTS
 gl_LIB([libgnu_gpl])
 gl_MAKEFILE_NAME([])
 gl_LIBTOOL

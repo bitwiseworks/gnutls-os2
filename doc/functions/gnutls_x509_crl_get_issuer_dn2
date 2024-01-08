@@ -5,7 +5,7 @@
 @deftypefun {int} {gnutls_x509_crl_get_issuer_dn2} (gnutls_x509_crl_t @var{crl}, gnutls_datum_t * @var{dn})
 @var{crl}: should contain a @code{gnutls_x509_crl_t}  type
 
-@var{dn}: a pointer to a structure to hold the name
+@var{dn}: a pointer to a structure to hold the name; must be freed using @code{gnutls_free()} 
 
 This function will allocate buffer and copy the name of the CRL issuer.
 The name will be in the form "C=xxxx,O=yyyy,CN=zzzz" as

@@ -14,8 +14,7 @@
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this file; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+# along with this file.  If not, see <https://www.gnu.org/licenses/>.
 
 AM_CFLAGS = $(WARN_CFLAGS) $(WERROR_CFLAGS)
 AM_CPPFLAGS = -I$(top_srcdir)/lib/includes		\
@@ -40,7 +39,7 @@ LDADD = $(top_builddir)/tests/libutils.la \
 ctests =
 
 if WINDOWS
-lib_LTLIBRARIES = ncrypt.la crypt32.la
+check_LTLIBRARIES = ncrypt.la crypt32.la
 
 ncrypt_la_SOURCES = ncrypt.c
 crypt32_la_SOURCES = crypt32.c
@@ -73,4 +72,5 @@ TESTS_ENVIRONMENT =						\
 	EXEEXT=$(EXEEXT)			\
 	GNUTLS_SYSTEM_PRIORITY_FILE=$(abs_top_srcdir)/tests/system.prio \
 	top_builddir="$(top_builddir)"		\
+	abs_top_builddir="$(abs_top_builddir)"	\
 	srcdir="$(srcdir)"

@@ -20,7 +20,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #include <gnutls/crypto.h>
@@ -43,12 +43,13 @@ static void start(const char *name, int algo)
 	uint8_t key16[64];
 	uint8_t iv16[32];
 	uint8_t auth[128];
-	uint8_t data[64+56+36];
+	uint8_t data[64 + 56 + 36];
 	gnutls_datum_t key, iv;
 	giovec_t iov[3];
 	giovec_t auth_iov[2];
 	uint8_t tag[64];
 	size_t tag_size = 0;
+	size_t i;
 
 	key.data = key16;
 	key.size = gnutls_cipher_get_key_size(algo);
@@ -77,32 +78,30 @@ static void start(const char *name, int algo)
 
 	success("trying %s\n", name);
 
-	ret =
-	    gnutls_aead_cipher_init(&ch, algo, &key);
+	ret = gnutls_aead_cipher_init(&ch, algo, &key);
 	if (ret < 0)
 		fail("gnutls_cipher_init: %s\n", gnutls_strerror(ret));
 
-	ret = gnutls_aead_cipher_encryptv2(ch,
-					   iv.data, iv.size,
-					   auth_iov, 2,
-					   iov, 3,
-					   tag, &tag_size);
-	if (ret < 0)
-		fail("could not encrypt data: %s\n", gnutls_strerror(ret));
+	for (i = 0; i < 2; i++) {
+		ret = gnutls_aead_cipher_encryptv2(ch, iv.data, iv.size,
+						   auth_iov, 2, iov, i + 1, tag,
+						   &tag_size);
+		if (ret < 0)
+			fail("could not encrypt data: %s\n",
+			     gnutls_strerror(ret));
 
-	ret = gnutls_aead_cipher_decryptv2(ch,
-					   iv.data, iv.size,
-					   auth_iov, 2,
-					   iov, 3,
-					   tag, tag_size);
-	if (ret < 0)
-		fail("could not decrypt data: %s\n", gnutls_strerror(ret));
+		ret = gnutls_aead_cipher_decryptv2(ch, iv.data, iv.size,
+						   auth_iov, 2, iov, i + 1, tag,
+						   tag_size);
+		if (ret < 0)
+			fail("could not decrypt data: %s\n",
+			     gnutls_strerror(ret));
+	}
 
 	gnutls_aead_cipher_deinit(ch);
 }
 
-void
-doit(void)
+void doit(void)
 {
 	int ret;
 
@@ -116,10 +115,13 @@ doit(void)
 	}
 
 	start("aes-128-gcm", GNUTLS_CIPHER_AES_128_GCM);
+	start("aes-192-gcm", GNUTLS_CIPHER_AES_192_GCM);
 	start("aes-256-gcm", GNUTLS_CIPHER_AES_256_GCM);
 	start("aes-128-ccm", GNUTLS_CIPHER_AES_128_CCM);
-	if (!gnutls_fips140_mode_enabled())
+	if (!gnutls_fips140_mode_enabled()) {
+		start("aes-128-siv", GNUTLS_CIPHER_AES_128_SIV);
 		start("chacha20-poly1305", GNUTLS_CIPHER_CHACHA20_POLY1305);
+	}
 
 	gnutls_global_deinit();
 }

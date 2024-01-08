@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2002-2014 Free Software Foundation, Inc.
+ * Copyright (C) 2002-2022 Free Software Foundation, Inc.
  *
  * This file is part of LIBTASN1.
  *
@@ -21,7 +21,7 @@
 
 #include <int.h>
 #ifdef STDC_HEADERS
-#include <stdarg.h>
+# include <stdarg.h>
 #endif
 
 #define LIBTASN1_ERROR_ENTRY(name) { #name, name }
@@ -53,6 +53,7 @@ static const libtasn1_error_entry error_algorithms[] = {
   LIBTASN1_ERROR_ENTRY (ASN1_ARRAY_ERROR),
   LIBTASN1_ERROR_ENTRY (ASN1_ELEMENT_NOT_EMPTY),
   LIBTASN1_ERROR_ENTRY (ASN1_TIME_ENCODING_ERROR),
+  LIBTASN1_ERROR_ENTRY (ASN1_RECURSION),
   {0, 0}
 };
 

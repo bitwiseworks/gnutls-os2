@@ -11,7 +11,7 @@
 
 @var{g}: holds the g
 
-@var{y}: holds the y
+@var{y}: holds the y (optional)
 
 @var{x}: holds the x
 

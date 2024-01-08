@@ -16,9 +16,7 @@
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with GnuTLS-EXTRA; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
+# along with GnuTLS-EXTRA.  If not, see <https://www.gnu.org/licenses/>.
 
 ACLOCAL_AMFLAGS = -I ../m4 -I ../gl/m4
 
@@ -45,7 +43,8 @@ defexec_DATA =
 
 # OpenSSL
 
-libgnutls_openssl_la_LDFLAGS = -no-undefined
+libgnutls_openssl_la_LDFLAGS = -no-undefined \
+			       -export-symbols-regex "^[[:upper:]]"
 
 if ENABLE_OPENSSL
 lib_LTLIBRARIES = libgnutls-openssl.la

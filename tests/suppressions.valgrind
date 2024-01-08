@@ -1,4 +1,4 @@
-# suppressions -- Valgrind suppresion file for libgcrypt
+# suppressions -- Valgrind suppression file for libgcrypt
 
 # Copyright (C) 2008-2012 Free Software Foundation, Inc.
 
@@ -287,5 +287,12 @@
    fun:index
    fun:expand_dynamic_string_token
    fun:fillin_rpath
+   ...
+}
+{
+   gnutls-false-positive
+   Memcheck:Cond
+   fun:decode_complex_string.isra.0
+   fun:_gnutls_x509_dn_to_string
    ...
 }

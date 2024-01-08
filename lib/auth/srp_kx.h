@@ -23,7 +23,7 @@
 #ifndef GNUTLS_LIB_AUTH_SRP_KX_H
 #define GNUTLS_LIB_AUTH_SRP_KX_H
 
-#include <auth.h>
+#include "auth.h"
 
 #define MAX_FAKE_SALT_SEED_SIZE 64
 
@@ -46,16 +46,15 @@ typedef struct gnutls_srp_server_credentials_st {
 	unsigned int fake_salt_length;
 } srp_server_cred_st;
 
-/* these structures should not use allocated data */
 typedef struct srp_server_auth_info_st {
-	char username[MAX_USERNAME_SIZE + 1];
+	char *username;
 } *srp_server_auth_info_t;
 
 #ifdef ENABLE_SRP
 
-int _gnutls_proc_srp_server_hello(gnutls_session_t state,
-				  const uint8_t * data, size_t data_size);
-int _gnutls_gen_srp_server_hello(gnutls_session_t state, uint8_t * data,
+int _gnutls_proc_srp_server_hello(gnutls_session_t state, const uint8_t *data,
+				  size_t data_size);
+int _gnutls_gen_srp_server_hello(gnutls_session_t state, uint8_t *data,
 				 size_t data_size);
 
 int _gnutls_gen_srp_server_kx(gnutls_session_t, gnutls_buffer_st *);
@@ -70,6 +69,6 @@ typedef struct srp_server_auth_info_st srp_server_auth_info_st;
  */
 #define SRP_FAKE_SALT_MAC GNUTLS_MAC_SHA1
 
-#endif				/* ENABLE_SRP */
+#endif /* ENABLE_SRP */
 
 #endif /* GNUTLS_LIB_AUTH_SRP_KX_H */

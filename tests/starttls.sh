@@ -17,12 +17,11 @@
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with GnuTLS; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+# along with GnuTLS.  If not, see <https://www.gnu.org/licenses/>.
 
-srcdir="${srcdir:-.}"
-SERV="${SERV:-../src/gnutls-serv${EXEEXT}}"
-CLI="${CLI:-../src/gnutls-cli${EXEEXT}}"
+: ${srcdir=.}
+: ${SERV=../src/gnutls-serv${EXEEXT}}
+: ${CLI=../src/gnutls-cli${EXEEXT}}
 unset RETCODE
 
 . "${srcdir}/scripts/common.sh"
@@ -33,7 +32,7 @@ SERV="${SERV} -q"
 echo "Checking STARTTLS"
 
 eval "${GETPORT}"
-launch_server $$ --echo --priority "NORMAL:+ANON-ECDH"
+launch_server --echo --priority "NORMAL:+ANON-ECDH"
 PID=$!
 wait_server ${PID}
 

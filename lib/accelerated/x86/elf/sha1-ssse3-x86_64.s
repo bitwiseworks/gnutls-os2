@@ -45,9 +45,9 @@
 .align	16
 sha1_block_data_order:
 .cfi_startproc	
-	movl	_gnutls_x86_cpuid_s+0(%rip),%r9d
-	movl	_gnutls_x86_cpuid_s+4(%rip),%r8d
-	movl	_gnutls_x86_cpuid_s+8(%rip),%r10d
+	movl	GNUTLS_x86_cpuid_s+0(%rip),%r9d
+	movl	GNUTLS_x86_cpuid_s+4(%rip),%r8d
+	movl	GNUTLS_x86_cpuid_s+8(%rip),%r10d
 	testl	$512,%r8d
 	jz	.Lialu
 	testl	$536870912,%r10d
@@ -1460,8 +1460,8 @@ _shaext_shortcut:
 	pshufd	$27,%xmm1,%xmm1
 	movdqu	%xmm0,(%rdi)
 	movd	%xmm1,16(%rdi)
-.cfi_endproc	
 	.byte	0xf3,0xc3
+.cfi_endproc	
 .size	sha1_block_data_order_shaext,.-sha1_block_data_order_shaext
 .type	sha1_block_data_order_ssse3,@function
 .align	16

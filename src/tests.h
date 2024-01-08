@@ -22,7 +22,11 @@
 #define GNUTLS_SRC_TESTS_H
 
 typedef enum {
-	TEST_SUCCEED, TEST_FAILED, TEST_UNSURE, TEST_IGNORE/*keep socket*/, TEST_IGNORE2/*destroy socket*/
+	TEST_SUCCEED,
+	TEST_FAILED,
+	TEST_UNSURE,
+	TEST_IGNORE /*keep socket */,
+	TEST_IGNORE2 /*destroy socket */
 } test_code_t;
 
 test_code_t test_chain_order(gnutls_session_t session);
@@ -36,6 +40,8 @@ test_code_t test_dhe(gnutls_session_t state);
 test_code_t test_rfc7919(gnutls_session_t state);
 test_code_t test_dhe_group(gnutls_session_t state);
 test_code_t test_ssl3(gnutls_session_t state);
+test_code_t test_ssl3_with_extensions(gnutls_session_t state);
+test_code_t test_ssl3_unknown_ciphersuites(gnutls_session_t state);
 test_code_t test_aes(gnutls_session_t state);
 test_code_t test_camellia_cbc(gnutls_session_t state);
 test_code_t test_camellia_gcm(gnutls_session_t state);
@@ -73,8 +79,8 @@ test_code_t test_rsa_pms_version_check(gnutls_session_t session);
 test_code_t test_version_oob(gnutls_session_t session);
 test_code_t test_send_record(gnutls_session_t session);
 test_code_t test_send_record_with_allow_small_records(gnutls_session_t session);
-int _test_srp_username_callback(gnutls_session_t session,
-				char **username, char **password);
+int _test_srp_username_callback(gnutls_session_t session, char **username,
+				char **password);
 
 test_code_t test_rsa(gnutls_session_t session);
 test_code_t test_ecdhe_x25519(gnutls_session_t session);

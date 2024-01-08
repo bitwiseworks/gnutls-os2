@@ -46,7 +46,7 @@ EXTRA_DIST = data/ca-no-pathlen.pem data/no-ca-or-pathlen.pem data/aki-cert.pem 
 	data/name-constraints-ip2.pem data/chain-md5.pem data/pubkey-ecc256.pem \
 	templates/template-dates-after2038.tmpl data/template-dates-after2038.pem \
 	data/gost-cert.pem data/gost-cert-nogost.pem data/gost94-cert.pem \
-	templates/template-tlsfeature.tmpl data/userid.pem data/cert-with-crl.p12 \
+	templates/template-tlsfeature.tmpl data/cert-with-crl.p12 \
 	data/template-tlsfeature.pem data/template-tlsfeature.csr \
 	templates/template-tlsfeature-crq.tmpl templates/arb-extensions.tmpl data/arb-extensions.pem \
 	data/arb-extensions.csr data/pkcs1-pad-ok.pem data/pkcs1-pad-broken.pem \
@@ -101,48 +101,51 @@ EXTRA_DIST = data/ca-no-pathlen.pem data/no-ca-or-pathlen.pem data/aki-cert.pem 
 	data/cert-with-non-digits-time-ca.pem data/cert-with-non-digits-time.pem \
 	data/chain-512-leaf.pem data/chain-512-subca.pem data/chain-512-ca.pem \
 	templates/template-no-ca-honor.tmpl templates/template-no-ca-explicit.tmpl \
-	data/crq-cert-no-ca-explicit.pem data/crq-cert-no-ca-honor.pem
+	data/crq-cert-no-ca-explicit.pem data/crq-cert-no-ca-honor.pem data/commonName.cer \
+	templates/simple-policy.tmpl data/simple-policy.pem templates/template-negative-serial.tmpl
 
-dist_check_SCRIPTS = pathlen aki invalid-sig email \
-	pkcs7 pkcs7-broken-sigs privkey-import name-constraints certtool-long-cn crl provable-privkey \
-	provable-dh userid sha2-test sha2-dsa-test provable-privkey-dsa2048 \
-	provable-privkey-rsa2048 provable-privkey-gen-default pkcs7-constraints \
-	pkcs7-constraints2 certtool-long-oids pkcs7-cat cert-sanity cert-critical \
-	pkcs12 certtool-crl-decoding pkcs12-encode pkcs12-corner-cases inhibit-anypolicy \
-	smime cert-time alt-chain pkcs7-list-sign pkcs7-eddsa certtool-ecdsa \
-	key-id pkcs8 pkcs8-decode ecdsa illegal-rsa pkcs8-invalid key-invalid \
-	pkcs8-eddsa certtool-subca certtool-verify-profiles x509-duplicate-ext
+dist_check_SCRIPTS = pathlen.sh aki.sh invalid-sig.sh email.sh \
+	pkcs7.sh pkcs7-broken-sigs.sh privkey-import.sh name-constraints.sh certtool-long-cn.sh crl.sh provable-privkey.sh \
+	provable-dh.sh sha2-test.sh sha2-dsa-test.sh provable-privkey-dsa2048.sh \
+	provable-privkey-rsa2048.sh provable-privkey-gen-default.sh pkcs7-constraints.sh \
+	pkcs7-constraints2.sh certtool-long-oids.sh pkcs7-cat.sh cert-sanity.sh cert-critical.sh \
+	pkcs12.sh certtool-crl-decoding.sh pkcs12-encode.sh pkcs12-corner-cases.sh inhibit-anypolicy.sh \
+	smime.sh cert-time.sh alt-chain.sh pkcs7-list-sign.sh pkcs7-eddsa.sh certtool-ecdsa.sh \
+	key-id.sh pkcs8.sh pkcs8-decode.sh ecdsa.sh illegal-rsa.sh pkcs8-invalid.sh key-invalid.sh \
+	pkcs8-eddsa.sh certtool-subca.sh certtool-verify-profiles.sh x509-duplicate-ext.sh x25519-and-x448.sh \
+	reject-negative-serial.sh
 
-dist_check_SCRIPTS += key-id ecdsa pkcs8-invalid key-invalid pkcs8-decode pkcs8 pkcs8-eddsa \
-	certtool-utf8 crq
+dist_check_SCRIPTS += key-id.sh ecdsa.sh pkcs8-invalid.sh key-invalid.sh pkcs8-decode.sh pkcs8.sh pkcs8-eddsa.sh \
+	certtool-utf8.sh crq.sh
 
 if STRICT_DER_TIME
-dist_check_SCRIPTS += cert-non-digits-time reject-invalid-time
+dist_check_SCRIPTS += cert-non-digits-time.sh reject-invalid-time.sh
 else
-dist_check_SCRIPTS += tolerate-invalid-time
+dist_check_SCRIPTS += tolerate-invalid-time.sh
 endif
 
 if WANT_TEST_SUITE
-dist_check_SCRIPTS += provable-dh-default
+dist_check_SCRIPTS += provable-dh-default.sh
 endif
 
 if !WINDOWS
-dist_check_SCRIPTS += template-test pem-decoding othername-test krb5-test sha3-test md5-test \
-	tlsfeature-test template-exts-test pkcs1-pad pkcs12-utf8 rsa-pss-pad dsa certtool
+dist_check_SCRIPTS += template-test.sh pem-decoding.sh othername-test.sh krb5-test.sh sha3-test.sh md5-test.sh \
+	tlsfeature-test.sh template-exts-test.sh pkcs1-pad.sh pkcs12-utf8.sh rsa-pss-pad.sh dsa.sh certtool.sh \
+	template-policy-test.sh
 endif
 
 if ENABLE_DANE
-dist_check_SCRIPTS += dane
+dist_check_SCRIPTS += dane.sh
 endif
 
 if ENABLE_GOST
-dist_check_SCRIPTS += gost
+dist_check_SCRIPTS += gost.sh
 if !WINDOWS
-dist_check_SCRIPTS += pkcs12-gost pkcs8-gost
+dist_check_SCRIPTS += pkcs12-gost.sh pkcs8-gost.sh
 endif
 endif
 
-dist_check_SCRIPTS += certtool-rsa-pss certtool-eddsa
+dist_check_SCRIPTS += certtool-rsa-pss.sh certtool-eddsa.sh
 
 TESTS = $(dist_check_SCRIPTS)
 
@@ -150,13 +153,15 @@ TESTS = $(dist_check_SCRIPTS)
 # which are not trivial, and makes no point to address.
 TESTS_ENVIRONMENT = EXEEXT=$(EXEEXT) \
 	LC_ALL="C"				\
-	VALGRIND="$(VALGRIND)"			\
+	VALGRIND='$(LOG_VALGRIND)'		\
 	LIBTOOL="$(LIBTOOL)"			\
 	top_builddir="$(top_builddir)"		\
+	abs_top_builddir="$(abs_top_builddir)"	\
 	ac_cv_sizeof_time_t="$(ac_cv_sizeof_time_t)" \
 	ASAN_OPTIONS="detect_leaks=0:exitcode=6" \
 	GNUTLS_TEST_SUITE_RUN=1			\
 	GNUTLS_SYSTEM_PRIORITY_FILE=$(abs_top_srcdir)/tests/system.prio \
+	PKCS12_ITER_COUNT="$(PKCS12_ITER_COUNT)" \
 	srcdir="$(srcdir)"
 
 if ENABLE_FIPS140
@@ -176,6 +181,17 @@ endif
 if DISABLE_BASH_TESTS
 TESTS_ENVIRONMENT += DISABLE_BASH_TESTS=1
 endif
+
+TESTS_ENVIRONMENT +=					\
+	FAKETIME="$(FAKETIME)"				\
+	FAKETIME_F_OPT="$(FAKETIME_F_OPT)"		\
+	ac_cv_faketime_works="$(ac_cv_faketime_works)"
+
+TEST_EXTENSIONS = .sh
+SH_LOG_COMPILER = $(SHELL)
+
+AM_VALGRINDFLAGS = --suppressions=$(srcdir)/suppressions.valgrind
+LOG_COMPILER = $(LOG_VALGRIND)
 
 distclean-local:
 	rm -rf tmp-* *.tmp

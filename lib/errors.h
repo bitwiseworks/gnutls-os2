@@ -24,77 +24,127 @@
 #define GNUTLS_LIB_ERRORS_H
 
 #include "gnutls_int.h"
-#include <global.h>
-#include <mpi.h>
+#include "global.h"
+#include "mpi.h"
 #include <gnutls/x509.h>
 
 #ifdef __FILE__
 #ifdef __LINE__
-#define gnutls_assert() _gnutls_assert_log( "ASSERT: %s[%s]:%d\n", __FILE__,__func__,__LINE__);
+#define gnutls_assert() \
+	_gnutls_assert_log("ASSERT: %s[%s]:%d\n", __FILE__, __func__, __LINE__);
 #else
 #define gnutls_assert()
 #endif
-#else				/* __FILE__ not defined */
+#else /* __FILE__ not defined */
 #define gnutls_assert()
 #endif
 
-int _gnutls_asn2err(int asn_err) __GNUTLS_CONST__;
+inline static int _gnutls_asn2err(int asn_err) __GNUTLS_CONST__;
+
+inline static int _gnutls_asn2err(int asn_err)
+{
+	switch (asn_err) {
+#ifdef ASN1_TIME_ENCODING_ERROR
+	case ASN1_TIME_ENCODING_ERROR:
+		return GNUTLS_E_ASN1_TIME_ERROR;
+#endif
+	case ASN1_FILE_NOT_FOUND:
+		return GNUTLS_E_FILE_ERROR;
+	case ASN1_ELEMENT_NOT_FOUND:
+		return GNUTLS_E_ASN1_ELEMENT_NOT_FOUND;
+	case ASN1_IDENTIFIER_NOT_FOUND:
+		return GNUTLS_E_ASN1_IDENTIFIER_NOT_FOUND;
+	case ASN1_DER_ERROR:
+		return GNUTLS_E_ASN1_DER_ERROR;
+	case ASN1_VALUE_NOT_FOUND:
+		return GNUTLS_E_ASN1_VALUE_NOT_FOUND;
+	case ASN1_GENERIC_ERROR:
+		return GNUTLS_E_ASN1_GENERIC_ERROR;
+	case ASN1_VALUE_NOT_VALID:
+		return GNUTLS_E_ASN1_VALUE_NOT_VALID;
+	case ASN1_TAG_ERROR:
+		return GNUTLS_E_ASN1_TAG_ERROR;
+	case ASN1_TAG_IMPLICIT:
+		return GNUTLS_E_ASN1_TAG_IMPLICIT;
+	case ASN1_ERROR_TYPE_ANY:
+		return GNUTLS_E_ASN1_TYPE_ANY_ERROR;
+	case ASN1_SYNTAX_ERROR:
+		return GNUTLS_E_ASN1_SYNTAX_ERROR;
+	case ASN1_MEM_ERROR:
+		return GNUTLS_E_SHORT_MEMORY_BUFFER;
+	case ASN1_MEM_ALLOC_ERROR:
+		return GNUTLS_E_MEMORY_ERROR;
+	case ASN1_DER_OVERFLOW:
+		return GNUTLS_E_ASN1_DER_OVERFLOW;
+	default:
+		return GNUTLS_E_ASN1_GENERIC_ERROR;
+	}
+}
 
 void _gnutls_log(int, const char *fmt, ...)
 #ifdef __GNUC__
-    __attribute__ ((format(printf, 2, 3)));
+	__attribute__((format(printf, 2, 3)));
 #else
-;
+	;
 #endif
 
 void _gnutls_audit_log(gnutls_session_t, const char *fmt, ...)
 #ifdef __GNUC__
-    __attribute__ ((format(printf, 2, 3)));
+	__attribute__((format(printf, 2, 3)));
 #else
-;
+	;
 #endif
 
 void _gnutls_mpi_log(const char *prefix, bigint_t a);
 
-#define _gnutls_cert_log(str, cert) \
-	do { \
-		if (unlikely(_gnutls_log_level >= 3 && cert != NULL)) { \
-			gnutls_datum_t _cl_out; int _cl_ret; \
-			_cl_ret = gnutls_x509_crt_print(cert, GNUTLS_CRT_PRINT_ONELINE, &_cl_out); \
-			if (_cl_ret >= 0) { \
-				_gnutls_log( 3, "%s: %s\n", str, _cl_out.data); \
-				gnutls_free(_cl_out.data); \
-	                } \
-		} \
-        } while(0)
+#define _gnutls_cert_log(str, cert)                                            \
+	do {                                                                   \
+		if (unlikely(_gnutls_log_level >= 3)) {                        \
+			gnutls_datum_t _cl_out;                                \
+			int _cl_ret;                                           \
+			_cl_ret = gnutls_x509_crt_print(                       \
+				cert, GNUTLS_CRT_PRINT_ONELINE, &_cl_out);     \
+			if (_cl_ret >= 0) {                                    \
+				_gnutls_log(3, "%s: %s\n", str, _cl_out.data); \
+				gnutls_free(_cl_out.data);                     \
+			}                                                      \
+		}                                                              \
+	} while (0)
 
-#define _gnutls_dn_log(str, dn) \
-	do { \
-		if (unlikely(_gnutls_log_level >= 3)) { \
-			gnutls_datum_t _cl_out; int _cl_ret; \
-			_cl_ret = gnutls_x509_rdn_get2((dn), &_cl_out, 0); \
-			if (_cl_ret >= 0) { \
-				_gnutls_log( 3, "%s: %s\n", str, _cl_out.data); \
-				gnutls_free(_cl_out.data); \
-	                } \
-		} \
-        } while(0)
+#define _gnutls_dn_log(str, dn)                                                \
+	do {                                                                   \
+		if (unlikely(_gnutls_log_level >= 3)) {                        \
+			gnutls_datum_t _cl_out;                                \
+			int _cl_ret;                                           \
+			_cl_ret = gnutls_x509_rdn_get2((dn), &_cl_out, 0);     \
+			if (_cl_ret >= 0) {                                    \
+				_gnutls_log(3, "%s: %s\n", str, _cl_out.data); \
+				gnutls_free(_cl_out.data);                     \
+			}                                                      \
+		}                                                              \
+	} while (0)
 
-#define _gnutls_reason_log(str, status) \
-	do { \
-		if (unlikely(_gnutls_log_level >= 3)) { \
-			gnutls_datum_t _cl_out; int _cl_ret; \
-			_cl_ret = gnutls_certificate_verification_status_print(status, GNUTLS_CRT_X509, &_cl_out, 0); \
-			if (_cl_ret >= 0) { \
-				_gnutls_log( 3, "%s: %s\n", str, _cl_out.data); \
-				gnutls_free(_cl_out.data); \
-	                } \
-		} \
-         } while(0)
+#define _gnutls_reason_log(str, status)                                        \
+	do {                                                                   \
+		if (unlikely(_gnutls_log_level >= 3)) {                        \
+			gnutls_datum_t _cl_out;                                \
+			int _cl_ret;                                           \
+			_cl_ret =                                              \
+				gnutls_certificate_verification_status_print(  \
+					status, GNUTLS_CRT_X509, &_cl_out, 0); \
+			if (_cl_ret >= 0) {                                    \
+				_gnutls_log(3, "%s: %s\n", str, _cl_out.data); \
+				gnutls_free(_cl_out.data);                     \
+			}                                                      \
+		}                                                              \
+	} while (0)
 
 #ifdef C99_MACROS
-#define LEVEL(l, ...) do { if (unlikely(_gnutls_log_level >= l)) \
-      _gnutls_log( l, __VA_ARGS__); } while(0)
+#define LEVEL(l, ...)                                 \
+	do {                                          \
+		if (unlikely(_gnutls_log_level >= l)) \
+			_gnutls_log(l, __VA_ARGS__);  \
+	} while (0)
 
 #define _gnutls_debug_log(...) LEVEL(2, __VA_ARGS__)
 #define _gnutls_assert_log(...) LEVEL(3, __VA_ARGS__)
@@ -124,7 +174,7 @@ void _gnutls_mpi_log(const char *prefix, bigint_t a);
 
 void _gnutls_null_log(void *, ...);
 
-#endif				/* C99_MACROS */
+#endif /* C99_MACROS */
 
 /* GCC won't inline this by itself and results in a "fatal warning"
    otherwise. Making this a macro has been tried, but it interacts
@@ -132,15 +182,21 @@ void _gnutls_null_log(void *, ...);
    side. */
 static inline
 #ifdef __GNUC__
-    __attribute__ ((always_inline))
+	__attribute__((always_inline))
 #endif
-int gnutls_assert_val_int(int val, const char *file, const char *func, int line)
+	int
+	gnutls_assert_val_int(int val, const char *file, const char *func,
+			      int line)
 {
-	_gnutls_assert_log( "ASSERT: %s[%s]:%d\n", file,func,line);
+	_gnutls_assert_log("ASSERT: %s[%s]:%d\n", file, func, line);
 	return val;
 }
 
-#define gnutls_assert_val(x) gnutls_assert_val_int(x, __FILE__, __func__, __LINE__)
-#define gnutls_assert_val_fatal(x) (((x)!=GNUTLS_E_AGAIN && (x)!=GNUTLS_E_INTERRUPTED)?gnutls_assert_val_int(x, __FILE__, __func__, __LINE__):(x))
+#define gnutls_assert_val(x) \
+	gnutls_assert_val_int(x, __FILE__, __func__, __LINE__)
+#define gnutls_assert_val_fatal(x)                                        \
+	(((x) != GNUTLS_E_AGAIN && (x) != GNUTLS_E_INTERRUPTED) ?         \
+		 gnutls_assert_val_int(x, __FILE__, __func__, __LINE__) : \
+		 (x))
 
 #endif /* GNUTLS_LIB_ERRORS_H */

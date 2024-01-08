@@ -16,12 +16,11 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GnuTLS; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ * along with GnuTLS.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #include <stdio.h>
@@ -34,8 +33,9 @@
 #ifndef _WIN32
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #else
-#include <windows.h>		/* for Sleep */
+#include <windows.h> /* for Sleep */
 #include <winbase.h>
 #endif
 
@@ -50,47 +50,41 @@ int debug = 0;
 int error_count = 0;
 int break_on_error = 0;
 
+/* doc/credentials/dhparams/rfc3526-group-14-2048.pem */
 const char *pkcs3 =
-    "-----BEGIN DH PARAMETERS-----\n"
-    "MIGGAoGAtkxw2jlsVCsrfLqxrN+IrF/3W8vVFvDzYbLmxi2GQv9s/PQGWP1d9i22\n"
-    "P2DprfcJknWt7KhCI1SaYseOQIIIAYP78CfyIpGScW/vS8khrw0rlQiyeCvQgF3O\n"
-    "GeGOEywcw+oQT4SmFOD7H0smJe2CNyjYpexBXQ/A0mbTF9QKm1cCAQU=\n"
-    "-----END DH PARAMETERS-----\n";
+	"-----BEGIN DH PARAMETERS-----\n"
+	"MIIBCAKCAQEA///////////JD9qiIWjCNMTGYouA3BzRKQJOCIpnzHQCC76mOxOb\n"
+	"IlFKCHmONATd75UZs806QxswKwpt8l8UN0/hNW1tUcJF5IW1dmJefsb0TELppjft\n"
+	"awv/XLb0Brft7jhr+1qJn6WunyQRfEsf5kkoZlHs5Fs9wgB8uKFjvwWY2kg2HFXT\n"
+	"mmkWP6j9JM9fg2VdI9yjrZYcYvNWIIVSu57VKQdwlpZtZww1Tkq8mATxdGwIyhgh\n"
+	"fDKQXkYuNs474553LBgOhgObJ4Oi7Aeij7XFXfBvTFLJ3ivL9pVYFxg5lUl86pVq\n"
+	"5RXSJhiY+gUQFXKOWoqsqmj//////////wIBAg==\n"
+	"-----END DH PARAMETERS-----\n";
 
+/* doc/credentials/dhparams/rfc7919-ffdhe2048.pem */
 const char *pkcs3_2048 =
-    "-----BEGIN DH PARAMETERS-----\n"
-    "MIICDgKCAQEAvVNCqM8M9ZoVYBKEkV2KN8ELHHJ75aTZiK9z6170iKSgbITkOxsd\n"
-    "aBCLzHZd7d6/2aNofUeuWdDGHm73d8v53ma2HRVCNESeC2LKsEDFG9FjjUeugvfl\n"
-    "zb85TLZwWT9Lb35Ddhdk7CtxoukjS0/JkCE+8RGzmk5+57N8tNffs4aSSHSe4+cw\n"
-    "i4wULDxiG2p052czAMP3YR5egWvMuiByhy0vKShiZmOy1/Os5r6E/GUF+298gDjG\n"
-    "OeaEUF9snrTcoBwB4yNjVSEbuAh5fMd5zFtz2+dzrk9TYZ44u4DQYkgToW05WcmC\n"
-    "+LG0bLAH6lrJR5OMgyheZEo6F20z/d2yyQKCAQEAtzcuTHW61SFQiDRouk6eD0Yx\n"
-    "0k1RJdaQdlRf6/Dcc6lEqnbezL90THzvxkBwfJ5jG1VZE7JlVCvLRkBtgb0/6SCf\n"
-    "MATfEKG2JMOnKsJxvidmKEp4uN32LketXRrrEBl7rS+HABEfKAzqx+J6trBaq25E\n"
-    "7FVJFsyoa8IL8N8YUWwhE2UuEfmiqQQaeoIUYC/xD2arMXn9N0W84Nyy2S9IL4ct\n"
-    "e3Azi1Wc8MMfpbxxDRxXCnM2uMkLYWs1lQmcUUX+Uygv3P8lgS+RJ1Pi3+BWMx0S\n"
-    "ocsZXqOr6dbEF1WOLObQRK7h/MZp80iVUyrBgX0MbVFN9M5i2u4KKTG95VKRtgIC\n"
-    "AQA=\n" "-----END DH PARAMETERS-----\n";
+	"-----BEGIN DH PARAMETERS-----\n"
+	"MIIBCAKCAQEA//////////+t+FRYortKmq/cViAnPTzx2LnFg84tNpWp4TZBFGQz\n"
+	"+8yTnc4kmz75fS/jY2MMddj2gbICrsRhetPfHtXV/WVhJDP1H18GbtCFY2VVPe0a\n"
+	"87VXE15/V8k1mE8McODmi3fipona8+/och3xWKE2rec1MKzKT0g6eXq8CrGCsyT7\n"
+	"YdEIqUuyyOP7uWrat2DX9GgdT0Kj3jlN9K5W7edjcrsZCwenyO4KbXCeAvzhzffi\n"
+	"7MA0BM0oNC9hkXL+nOmFg/+OTxIy7vKBg8P+OxtMb61zO7X8vC7CIAXFjvGDfRaD\n"
+	"ssbzSibBsu/6iGtCOGEoXJf//////////wIBAg==\n"
+	"-----END DH PARAMETERS-----\n";
 
+/* doc/credentials/dhparams/rfc7919-ffdhe3072.pem */
 const char *pkcs3_3072 =
-    "-----BEGIN DH PARAMETERS-----\n"
-    "MIIDDgKCAYEAtRUay8nDgwE5dSVzW525wEu/d0vrFolvYJSevxg2myj5S+gr3Fgq\n"
-    "OGaZc4zrBxkxsELc7GuCqaXSOWL4yobT8N05yGbYWkWRPf4crRMx3P7/Gba9WsmH\n"
-    "BlL71uPf1IN9CanAlabkhV89RKiYaCpUI19+/sq+N2dO874ToBZCNhxZnTgRZ+po\n"
-    "Gdr6XWM0lQ8imIKSer0px3ZHI+/5gmyPry35tGpwlbyclJAg3wlTSdnqDcLxq7AF\n"
-    "OZ23PzC3ij7SFErOX9EFBdS2bjtU47O3OkPc9EIYMEv5nwnXICLHslwVifmURAjV\n"
-    "LfpObL8LYGN4Gac4tFxuDa0PMg0ES5ADugYBwdRFTAtCy5WOYXINzAAOrH9MommT\n"
-    "rMkELf7JOCaV2ktBsvTlrgMAXeyqbf2YSG6CGjj4QnUuqPybSgwPru7VlahsS2lo\n"
-    "qjutBPpgIxS53o97Wi3V5kQedKJiNuIDNnJMFNuTADAM+OYwClTH7ZSwTsxEgVpr\n"
-    "tMH+WnTI7KTJAoIBgQCrELwIUB4oNbf0x+fIpVndhDpl/WcFc/lDtmiRuym5gWbb\n"
-    "NPeI+1rdhnS2R3+nCJODFQTcPNMgIJuSu2EnDCSs5xJ2k08SAgSzyxEdjBpY7qJe\n"
-    "+lJPJ12zhcl0vgcvMhb/YgqVe2MKz0RvnYZPwHM/aJbjYjq/6OpK3fVw4M1ZccBK\n"
-    "QD4OHK8HOvGU7Wf6kRIcxUlfn15spMCIsrAZQBddWLmQgktsxJNUS+AnaPwTBoOv\n"
-    "nGCr1vzw8OS1DtS03VCmtqt3otXhJ3D2oCIG6ogxVAKfHR30KIfzZLBfmCjdzHmH\n"
-    "x4OwYTN1wy5juA438QtiDtcgK60ZqSzQO08ZklRncA/TkkyEH6kPn5KSh/hW9O3D\n"
-    "KZeAY/KF0/Bc1XNtqPEYFb7Vo3rbTsyjXkICN1Hk9S0OIKL42K7rWBepO9KuddSd\n"
-    "aXgH9staP0HXCyyW1VAyqo0TwcWDhE/R7IQQGGwGyd4rD0T+ySW/t09ox23O6X8J\n"
-    "FSp6mOVNcuvhB5U2gW8CAgEA\n" "-----END DH PARAMETERS-----\n";
+	"-----BEGIN DH PARAMETERS-----\n"
+	"MIIBiAKCAYEA//////////+t+FRYortKmq/cViAnPTzx2LnFg84tNpWp4TZBFGQz\n"
+	"+8yTnc4kmz75fS/jY2MMddj2gbICrsRhetPfHtXV/WVhJDP1H18GbtCFY2VVPe0a\n"
+	"87VXE15/V8k1mE8McODmi3fipona8+/och3xWKE2rec1MKzKT0g6eXq8CrGCsyT7\n"
+	"YdEIqUuyyOP7uWrat2DX9GgdT0Kj3jlN9K5W7edjcrsZCwenyO4KbXCeAvzhzffi\n"
+	"7MA0BM0oNC9hkXL+nOmFg/+OTxIy7vKBg8P+OxtMb61zO7X8vC7CIAXFjvGDfRaD\n"
+	"ssbzSibBsu/6iGtCOGEfz9zeNVs7ZRkDW7w09N75nAI4YbRvydbmyQd62R0mkff3\n"
+	"7lmMsPrBhtkcrv4TCYUTknC0EwyTvEN5RPT9RFLi103TZPLiHnH1S/9croKrnJ32\n"
+	"nuhtK8UiNjoNq8Uhl5sN6todv5pC1cRITgq80Gv6U93vPBsg7j/VnXwl5B0rZsYu\n"
+	"N///////////AgEC\n"
+	"-----END DH PARAMETERS-----\n";
 
 void _fail(const char *format, ...)
 {
@@ -168,8 +162,8 @@ void escapeprint(const char *str, size_t len)
 	for (i = 0; i < len; i++) {
 		if (((str[i] & 0xFF) >= 'A' && (str[i] & 0xFF) <= 'Z') ||
 		    ((str[i] & 0xFF) >= 'a' && (str[i] & 0xFF) <= 'z') ||
-		    ((str[i] & 0xFF) >= '0' && (str[i] & 0xFF) <= '9')
-		    || (str[i] & 0xFF) == ' ' || (str[i] & 0xFF) == '.')
+		    ((str[i] & 0xFF) >= '0' && (str[i] & 0xFF) <= '9') ||
+		    (str[i] & 0xFF) == ' ' || (str[i] & 0xFF) == '.')
 			printf("%c", (str[i] & 0xFF));
 		else
 			printf("\\x%02X", (str[i] & 0xFF));
@@ -215,15 +209,14 @@ void binprint(const void *_str, size_t len)
 
 	printf("\t;; ");
 	for (i = 0; i < len; i++) {
-		printf("%d%d%d%d%d%d%d%d ",
-			(str[i] & 0xFF) & 0x80 ? 1 : 0,
-			(str[i] & 0xFF) & 0x40 ? 1 : 0,
-			(str[i] & 0xFF) & 0x20 ? 1 : 0,
-			(str[i] & 0xFF) & 0x10 ? 1 : 0,
-			(str[i] & 0xFF) & 0x08 ? 1 : 0,
-			(str[i] & 0xFF) & 0x04 ? 1 : 0,
-			(str[i] & 0xFF) & 0x02 ? 1 : 0,
-			(str[i] & 0xFF) & 0x01 ? 1 : 0);
+		printf("%d%d%d%d%d%d%d%d ", (str[i] & 0xFF) & 0x80 ? 1 : 0,
+		       (str[i] & 0xFF) & 0x40 ? 1 : 0,
+		       (str[i] & 0xFF) & 0x20 ? 1 : 0,
+		       (str[i] & 0xFF) & 0x10 ? 1 : 0,
+		       (str[i] & 0xFF) & 0x08 ? 1 : 0,
+		       (str[i] & 0xFF) & 0x04 ? 1 : 0,
+		       (str[i] & 0xFF) & 0x02 ? 1 : 0,
+		       (str[i] & 0xFF) & 0x01 ? 1 : 0);
 		if ((i + 1) % 3 == 0)
 			printf(" ");
 		if ((i + 1) % 6 == 0 && i + 1 < len)
@@ -244,18 +237,17 @@ int main(int argc, char *argv[])
 		else if (strcmp(argv[argc - 1], "-h") == 0 ||
 			 strcmp(argv[argc - 1], "-?") == 0 ||
 			 strcmp(argv[argc - 1], "--help") == 0) {
-			printf
-			    ("Usage: %s [-vbh?] [--verbose] [--break-on-error] [--help]\n",
-			     argv[0]);
+			printf("Usage: %s [-vbh?] [--verbose] [--break-on-error] [--help]\n",
+			       argv[0]);
 			return 1;
 		}
-	while (argc-- > 1) ;
+	while (argc-- > 1);
 
 	doit();
 
 	if (debug || error_count > 0)
 		printf("Self test `%s' finished with %d errors\n", argv[0],
-			error_count);
+		       error_count);
 
 	return error_count ? 1 : 0;
 }
@@ -265,13 +257,13 @@ struct tmp_file_st {
 	struct tmp_file_st *next;
 };
 
-static struct tmp_file_st *temp_files = (void*)-1;
+static struct tmp_file_st *temp_files = (void *)-1;
 
 static void append(const char *file)
 {
 	struct tmp_file_st *p;
 
-	if (temp_files == (void*)-1)
+	if (temp_files == (void *)-1)
 		return;
 
 	p = calloc(1, sizeof(*p));
@@ -303,8 +295,9 @@ char *get_tmpname(char s[TMPNAME_SIZE])
 	else
 		p = s;
 
-	snprintf(p, TMPNAME_SIZE, "%s/tmpfile-%02x%02x%02x%02x%02x%02x.tmp", path, (unsigned)rnd[0], (unsigned)rnd[1],
-		(unsigned)rnd[2], (unsigned)rnd[3], (unsigned)rnd[4], (unsigned)rnd[5]);
+	snprintf(p, TMPNAME_SIZE, "%s/tmpfile-%02x%02x%02x%02x%02x%02x.tmp",
+		 path, (unsigned)rnd[0], (unsigned)rnd[1], (unsigned)rnd[2],
+		 (unsigned)rnd[3], (unsigned)rnd[4], (unsigned)rnd[5]);
 
 	append(p);
 
@@ -321,13 +314,37 @@ void delete_temp_files(void)
 	struct tmp_file_st *p = temp_files;
 	struct tmp_file_st *next;
 
-	if (p == (void*)-1)
+	if (p == (void *)-1)
 		return;
 
-	while(p != NULL) {
+	while (p != NULL) {
 		remove(p->file);
 		next = p->next;
 		free(p);
 		p = next;
 	}
 }
+
+#ifndef _WIN32
+int tcp_connect(const char *addr, unsigned port)
+{
+	int sock;
+	struct sockaddr_in sa;
+	memset(&sa, 0, sizeof(sa));
+	sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (sock == -1) {
+		return -1;
+	}
+	sa.sin_family = AF_INET;
+	sa.sin_port = htons(port);
+	if (inet_pton(AF_INET, addr, &sa.sin_addr) != 1) {
+		close(sock);
+		return -1;
+	}
+	if (connect(sock, (struct sockaddr *)&sa, sizeof(sa)) != 0) {
+		close(sock);
+		return -1;
+	}
+	return sock;
+}
+#endif

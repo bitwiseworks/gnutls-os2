@@ -18,7 +18,7 @@
  * <https://www.gnu.org/licenses/>.
  */
 
-#include <config.h>
+#include "config.h"
 
 /* Gnulib portability files. */
 
@@ -37,11 +37,13 @@ int main(int argc, char **argv)
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <gnutls/gnutls.h>
-#include <psktool-args.h>
+#include "psktool-options.h"
 
-#include <gnutls/crypto.h>	/* for random */
+#include <gnutls/crypto.h> /* for random */
 
+#include <stdbool.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -54,10 +56,12 @@ int main(int argc, char **argv)
 
 /* Gnulib portability files. */
 #include <minmax.h>
+#include "close-stream.h"
 #include "getpass.h"
+#include "xsize.h"
 
-static int write_key(const char *username, const char *key, int key_size,
-		     const char *passwd_file);
+static int write_key(const char *username, const unsigned char *key,
+		     size_t key_size, const char *passwd_file);
 
 #define MAX_KEY_SIZE 512
 int main(int argc, char **argv)
@@ -67,11 +71,8 @@ int main(int argc, char **argv)
 	struct passwd *pwd;
 #endif
 	unsigned char key[MAX_KEY_SIZE];
-	char hex_key[MAX_KEY_SIZE * 2 + 1];
-	int key_size;
-	gnutls_datum_t dkey;
+	size_t key_size;
 	const char *passwd, *username;
-	size_t hex_key_size = sizeof(hex_key);
 
 	if ((ret = gnutls_global_init()) < 0) {
 		fprintf(stderr, "global_init: %s\n", gnutls_strerror(ret));
@@ -117,22 +118,13 @@ int main(int argc, char **argv)
 
 	printf("Generating a random key for user '%s'\n", username);
 
-	ret = gnutls_rnd(GNUTLS_RND_RANDOM, (char *) key, key_size);
+	ret = gnutls_rnd(GNUTLS_RND_RANDOM, (char *)key, key_size);
 	if (ret < 0) {
 		fprintf(stderr, "Not enough randomness\n");
 		exit(1);
 	}
 
-	dkey.data = key;
-	dkey.size = key_size;
-
-	ret = gnutls_hex_encode(&dkey, hex_key, &hex_key_size);
-	if (ret < 0) {
-		fprintf(stderr, "HEX encoding error\n");
-		exit(1);
-	}
-
-	ret = write_key(username, hex_key, hex_key_size, passwd);
+	ret = write_key(username, key, key_size, passwd);
 	if (ret == 0)
 		printf("Key stored to %s\n", passwd);
 
@@ -141,53 +133,50 @@ int main(int argc, char **argv)
 
 static int filecopy(const char *src, const char *dst)
 {
-	FILE *fd, *fd2;
+	FILE *fp, *fp2;
 	char line[5 * 1024];
 	char *p;
 
-	fd = fopen(dst, "w");
-	if (fd == NULL) {
+	fp = fopen(dst, "w");
+	if (fp == NULL) {
 		fprintf(stderr, "Cannot open '%s' for write\n", dst);
 		return -1;
 	}
 
-	fd2 = fopen(src, "r");
-	if (fd2 == NULL) {
+	fp2 = fopen(src, "r");
+	if (fp2 == NULL) {
 		/* empty file */
-		fclose(fd);
+		fclose(fp);
 		return 0;
 	}
 
 	line[sizeof(line) - 1] = 0;
 	do {
-		p = fgets(line, sizeof(line) - 1, fd2);
+		p = fgets(line, sizeof(line) - 1, fp2);
 		if (p == NULL)
 			break;
 
-		fputs(line, fd);
-	}
-	while (1);
+		fputs(line, fp);
+	} while (1);
 
-	fclose(fd);
-	fclose(fd2);
+	fclose(fp);
+	fclose(fp2);
 
 	return 0;
 }
 
-static int
-write_key(const char *username, const char *key, int key_size,
-	  const char *passwd_file)
+static int write_key(const char *username, const unsigned char *key,
+		     size_t key_size, const char *passwd_file)
 {
-	FILE *fd;
+	FILE *fp;
 	char line[5 * 1024];
 	char *p, *pp;
 	char tmpname[1024];
-
-
-	/* delete previous entry */
+	gnutls_datum_t tmp, _username = { NULL, 0 }, _key = { NULL, 0 };
 	struct stat st;
-	FILE *fd2;
-	int put;
+	FILE *fp2;
+	bool put;
+	int ret = 0;
 
 	if (strlen(passwd_file) + 5 > sizeof(tmpname)) {
 		fprintf(stderr, "file '%s' is tooooo long\n", passwd_file);
@@ -207,25 +196,75 @@ write_key(const char *username, const char *key, int key_size,
 		return -1;
 	}
 
-	fd = fopen(passwd_file, "w");
-	if (fd == NULL) {
-		fprintf(stderr, "Cannot open '%s' for write\n",
-			passwd_file);
+	fp = fopen(passwd_file, "w");
+	if (fp == NULL) {
+		fprintf(stderr, "Cannot open '%s' for write\n", passwd_file);
 		(void)remove(tmpname);
 		return -1;
 	}
 
-	fd2 = fopen(tmpname, "r");
-	if (fd2 == NULL) {
+	fp2 = fopen(tmpname, "r");
+	if (fp2 == NULL) {
 		fprintf(stderr, "Cannot open '%s' for read\n", tmpname);
 		(void)remove(tmpname);
-		fclose(fd);
+		fclose(fp);
 		return -1;
 	}
 
-	put = 0;
-	do {
-		p = fgets(line, sizeof(line) - 1, fd2);
+	/* encode username if it contains special characters */
+	if (strcspn(username, ":\n") != strlen(username)) {
+		char *new_data;
+		size_t new_size;
+
+		tmp.data = (void *)username;
+		tmp.size = strlen(username);
+
+		ret = gnutls_hex_encode2(&tmp, &_username);
+		if (ret < 0) {
+			fprintf(stderr, "HEX encoding error\n");
+			ret = -1;
+			goto out;
+		}
+
+		/* prepend '#' */
+		new_size = xsum(_username.size, 2);
+		if (size_overflow_p(new_size)) {
+			ret = -1;
+			goto out;
+		}
+		new_data = gnutls_realloc(_username.data, new_size);
+		if (!new_data) {
+			ret = -1;
+			goto out;
+		}
+		memmove(new_data + 1, new_data, _username.size);
+		new_data[0] = '#';
+		new_data[_username.size + 1] = '\0';
+		_username.data = (void *)new_data;
+		_username.size = new_size - 1;
+	} else {
+		_username.data = (void *)gnutls_strdup(username);
+		if (!_username.data) {
+			ret = -1;
+			goto out;
+		}
+		_username.size = strlen(username);
+	}
+
+	/* encode key */
+	tmp.data = (void *)key;
+	tmp.size = key_size;
+
+	ret = gnutls_hex_encode2(&tmp, &_key);
+	if (ret < 0) {
+		fprintf(stderr, "HEX encoding error\n");
+		ret = -1;
+		goto out;
+	}
+
+	put = false;
+	while (true) {
+		p = fgets(line, sizeof(line) - 1, fp2);
 		if (p == NULL)
 			break;
 
@@ -233,28 +272,33 @@ write_key(const char *username, const char *key, int key_size,
 		if (pp == NULL)
 			continue;
 
-		if (strncmp(p, username,
-			    MAX(strlen(username),
-				(unsigned int) (pp - p))) == 0) {
-			put = 1;
-			fprintf(fd, "%s:%s\n", username, key);
+		if (strncmp(p, (const char *)_username.data,
+			    MAX(_username.size, (unsigned int)(pp - p))) == 0) {
+			put = true;
+			fprintf(fp, "%s:%s\n", _username.data, _key.data);
 		} else {
-			fputs(line, fd);
+			fputs(line, fp);
 		}
 	}
-	while (1);
 
-	if (put == 0) {
-		fprintf(fd, "%s:%s\n", username, key);
+	if (!put) {
+		fprintf(fp, "%s:%s\n", _username.data, _key.data);
 	}
 
-	fclose(fd);
-	fclose(fd2);
+out:
+	if (close_stream(fp) == EOF) {
+		fprintf(stderr, "Error writing %s: %s\n", passwd_file,
+			strerror(errno));
+		ret = -1;
+	}
+
+	fclose(fp2);
 
 	(void)remove(tmpname);
+	gnutls_free(_username.data);
+	gnutls_free(_key.data);
 
-
-	return 0;
+	return ret;
 }
 
-#endif				/* ENABLE_PSK */
+#endif /* ENABLE_PSK */

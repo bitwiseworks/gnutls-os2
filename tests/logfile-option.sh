@@ -17,12 +17,11 @@
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with GnuTLS; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+# along with GnuTLS.  If not, see <https://www.gnu.org/licenses/>.
 
-srcdir="${srcdir:-.}"
-SERV="${SERV:-../src/gnutls-serv${EXEEXT}}"
-CLI="${CLI:-../src/gnutls-cli${EXEEXT}}"
+: ${srcdir=.}
+: ${SERV=../src/gnutls-serv${EXEEXT}}
+: ${CLI=../src/gnutls-cli${EXEEXT}}
 unset RETCODE
 
 if ! test -x "${SERV}"; then
@@ -59,7 +58,7 @@ TMPFILE2=save-data2.$$.tmp
 OPTS="--sni-hostname example.com --verify-hostname example.com"
 
 eval "${GETPORT}"
-launch_server $$ --echo --priority NORMAL:+ECDHE-PSK:+DHE-PSK:+PSK --pskpasswd=${PSK}
+launch_server --echo --priority NORMAL:+ECDHE-PSK:+DHE-PSK:+PSK --pskpasswd=${PSK}
 PID=$!
 wait_server ${PID}
 
@@ -76,7 +75,7 @@ if ! test -s ${TMPFILE2};then
 	echo "Stdout should not be empty!"
 	exit 1
 fi
-if grep -q "Handshake was completed" ${TMPFILE2};then
+if grep "Handshake was completed" ${TMPFILE2} >/dev/null; then
 	echo "Find the expected output!"
 else
 	echo "Cannot find the expected output!"
@@ -86,7 +85,7 @@ fi
 rm -f ${TMPFILE1} ${TMPFILE2}
 
 eval "${GETPORT}"
-launch_server $$ --echo --priority NORMAL:+ECDHE-PSK:+DHE-PSK:+PSK --pskpasswd=${PSK}
+launch_server --echo --priority NORMAL:+ECDHE-PSK:+DHE-PSK:+PSK --pskpasswd=${PSK}
 PID=$!
 wait_server ${PID}
 
@@ -96,7 +95,7 @@ kill ${PID}
 wait
 
 if ! test -f ${TMPFILE1};then
-	echo "Logfile shoule be created!"
+	echo "Logfile should be created!"
 	exit 1
 fi
 if test -s ${TMPFILE2};then
@@ -104,7 +103,7 @@ if test -s ${TMPFILE2};then
 	exit 1
 fi
 
-if grep -q "Handshake was completed" ${TMPFILE1}; then
+if grep "Handshake was completed" ${TMPFILE1} >/dev/null; then
 	echo "Found the expected output!"
 else
 	echo "Cannot find the expected output!"
@@ -115,7 +114,7 @@ rm -f ${TMPFILE1} ${TMPFILE2}
 
 echo "x509 functionality test"
 eval "${GETPORT}"
-launch_server $$ --echo --sni-hostname-fatal --sni-hostname example.com --x509keyfile ${KEY1} --x509certfile ${CERT1}
+launch_server --echo --sni-hostname-fatal --sni-hostname example.com --x509keyfile ${KEY1} --x509certfile ${CERT1}
 PID=$!
 wait_server ${PID}
 
@@ -131,7 +130,7 @@ if ! test -s ${TMPFILE2};then
         echo "Stdout should not be empty!"
         exit 1
 fi
-if grep -q "Handshake was completed" ${TMPFILE2};then
+if grep "Handshake was completed" ${TMPFILE2} >/dev/null; then
         echo "Find the expected output!"
 else
         echo "Cannot find the expected output!"
@@ -141,7 +140,7 @@ fi
 rm -f ${TMPFILE1} ${TMPFILE2}
 
 eval "${GETPORT}"
-launch_server $$ --echo --sni-hostname-fatal --sni-hostname example.com --x509keyfile ${KEY1} --x509certfile ${CERT1}
+launch_server --echo --sni-hostname-fatal --sni-hostname example.com --x509keyfile ${KEY1} --x509certfile ${CERT1}
 PID=$!
 wait_server ${PID}
 
@@ -150,7 +149,7 @@ kill ${PID}
 wait
 
 if ! test -f ${TMPFILE1};then
-       echo "Logfile shoule be created!"
+       echo "Logfile should be created!"
        exit 1
 fi
 if test -s ${TMPFILE2};then
@@ -158,7 +157,7 @@ if test -s ${TMPFILE2};then
        exit 1
 fi
 
-if grep -q "Handshake was completed" ${TMPFILE1}; then
+if grep "Handshake was completed" ${TMPFILE1} >/dev/null; then
        echo "Found the expected output!"
 else
        echo "Cannot find the expected output!"

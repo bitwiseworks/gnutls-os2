@@ -16,8 +16,7 @@
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this file; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+# along with this file.  If not, see <https://www.gnu.org/licenses/>.
 
 man_MANS =
 EXTRA_DIST = stamp_mans
@@ -43,61 +42,108 @@ endif
 EXTRA_DIST += $(TOOLS_MANS) $(SRP_MANS) $(DANE_MANS)
 MAINTAINERCLEANFILES += $(TOOLS_MANS) $(SRP_MANS) $(DANE_MANS)
 
-# Note that our .def files depend on autogen
-# supporting the @subheading texi keyword. This
-# is not currently the case so we do remove it
-# before processing. Once the new version of autogen
-# is out, replace the sed and tmp files with a simple
-# autogen -L ../../src -DMAN_SECTION=1 -Tagman-cmd.tpl $<
-certtool.1: ../../src/certtool-args.def
-	-sed 's/@subheading \(.*\)/@*\n@var{\1}\n@*/' $< > "$<".tmp && \
-	autogen -L ../../src -DMAN_SECTION=1 -Tagman-cmd.tpl "$<".tmp && \
-	rm -f "$<".tmp
+$(man_MANS): $(top_srcdir)/cligen/cli-docgen.py
 
-ocsptool.1: ../../src/ocsptool-args.def
-	-sed 's/@subheading \(.*\)/@*\n@var{\1}\n@*/' $< > "$<".tmp && \
-	autogen -L ../../src -DMAN_SECTION=1 -Tagman-cmd.tpl "$<".tmp && \
-	rm -f "$<".tmp
+CLIGEN_ARGS = \
+	--license=gpl3+ \
+	--package '$(PACKAGE)' \
+	--version='$(VERSION)' \
+	--authors='Nikos Mavrogiannopoulos, Simon Josefsson and others; see /usr/share/doc/gnutls/AUTHORS for a complete list.' \
+	--copyright-year=2020-2023 \
+	--copyright-holder='Free Software Foundation, and others all rights reserved.' \
+	--bug-email=bugs@gnutls.org
 
-danetool.1: ../../src/danetool-args.def
-	-sed 's/@subheading \(.*\)/@*\n@var{\1}\n@*/' $< > "$<".tmp && \
-	autogen -L ../../src -DMAN_SECTION=1 -Tagman-cmd.tpl "$<".tmp && \
-	rm -f "$<".tmp
+certtool.1: $(top_srcdir)/doc/certtool-see-also.texi $(top_srcdir)/doc/certtool-examples.texi $(top_srcdir)/doc/certtool-files.texi
+certtool.1: $(top_srcdir)/src/certtool-options.json
+	$(AM_V_GEN) PYTHONPATH='$(top_srcdir)/cligen' \
+		$(PYTHON) $(top_srcdir)/cligen/cli-docgen.py \
+		--format man $(CLIGEN_ARGS) \
+		--include see-also=$(top_srcdir)/doc/certtool-see-also.texi \
+		--include examples=$(top_srcdir)/doc/certtool-examples.texi \
+		--include files=$(top_srcdir)/doc/certtool-files.texi \
+		$< $@
 
-gnutls-cli.1: ../../src/cli-args.def
-	-sed 's/@subheading \(.*\)/@*\n@var{\1}\n@*/' $< > "$<".tmp && \
-	autogen -L ../../src -DMAN_SECTION=1 -Tagman-cmd.tpl "$<".tmp && \
-	rm -f "$<".tmp
+ocsptool.1: $(top_srcdir)/doc/ocsptool-see-also.texi $(top_srcdir)/doc/ocsptool-examples.texi $(top_srcdir)/doc/ocsptool-description.texi
+ocsptool.1: $(top_srcdir)/src/ocsptool-options.json
+	$(AM_V_GEN) PYTHONPATH='$(top_srcdir)/cligen' \
+		$(PYTHON) $(top_srcdir)/cligen/cli-docgen.py \
+		--format man $(CLIGEN_ARGS) \
+		--include see-also=$(top_srcdir)/doc/ocsptool-see-also.texi \
+		--include examples=$(top_srcdir)/doc/ocsptool-examples.texi \
+		--include description=$(top_srcdir)/doc/ocsptool-description.texi \
+		$< $@
 
-gnutls-serv.1: ../../src/serv-args.def
-	-sed 's/@subheading \(.*\)/@*\n@var{\1}\n@*/' $< > "$<".tmp && \
-	autogen -L ../../src -DMAN_SECTION=1 -Tagman-cmd.tpl "$<".tmp && \
-	rm -f "$<".tmp
+danetool.1: $(top_srcdir)/doc/danetool-see-also.texi $(top_srcdir)/doc/danetool-examples.texi
+danetool.1: $(top_srcdir)/src/danetool-options.json
+	$(AM_V_GEN) PYTHONPATH='$(top_srcdir)/cligen' \
+		$(PYTHON) $(top_srcdir)/cligen/cli-docgen.py \
+		--format man $(CLIGEN_ARGS) \
+		--include see-also=$(top_srcdir)/doc/danetool-see-also.texi \
+		--include examples=$(top_srcdir)/doc/danetool-examples.texi \
+		$< $@
 
-gnutls-cli-debug.1: ../../src/cli-debug-args.def
-	-sed 's/@subheading \(.*\)/@*\n@var{\1}\n@*/' $< > "$<".tmp && \
-	autogen -L ../../src -DMAN_SECTION=1 -Tagman-cmd.tpl "$<".tmp && \
-	rm -f "$<".tmp
+gnutls-cli.1: $(top_srcdir)/doc/gnutls-cli-see-also.texi $(top_srcdir)/doc/gnutls-cli-examples.texi
+gnutls-cli.1: $(top_srcdir)/src/gnutls-cli-options.json
+	$(AM_V_GEN) PYTHONPATH='$(top_srcdir)/cligen' \
+		$(PYTHON) $(top_srcdir)/cligen/cli-docgen.py \
+		--format man $(CLIGEN_ARGS) \
+		--include see-also=$(top_srcdir)/doc/gnutls-cli-see-also.texi \
+		--include examples=$(top_srcdir)/doc/gnutls-cli-examples.texi \
+		$< $@
 
-srptool.1: ../../src/srptool-args.def
-	-sed 's/@subheading \(.*\)/@*\n@var{\1}\n@*/' $< > "$<".tmp && \
-	autogen -L ../../src -DMAN_SECTION=1 -Tagman-cmd.tpl "$<".tmp && \
-	rm -f "$<".tmp
+gnutls-serv.1: $(top_srcdir)/doc/gnutls-serv-see-also.texi $(top_srcdir)/doc/gnutls-serv-examples.texi
+gnutls-serv.1: $(top_srcdir)/src/gnutls-serv-options.json
+	$(AM_V_GEN) PYTHONPATH='$(top_srcdir)/cligen' \
+		$(PYTHON) $(top_srcdir)/cligen/cli-docgen.py \
+		--format man $(CLIGEN_ARGS) \
+		--include see-also=$(top_srcdir)/doc/gnutls-serv-see-also.texi \
+		--include examples=$(top_srcdir)/doc/gnutls-serv-examples.texi \
+		$< $@
 
-p11tool.1: ../../src/p11tool-args.def
-	-sed 's/@subheading \(.*\)/@*\n@var{\1}\n@*/' $< > "$<".tmp && \
-	autogen -L ../../src -DMAN_SECTION=1 -Tagman-cmd.tpl "$<".tmp && \
-	rm -f "$<".tmp
+gnutls-cli-debug.1: $(top_srcdir)/doc/gnutls-cli-debug-see-also.texi $(top_srcdir)/doc/gnutls-cli-debug-examples.texi
+gnutls-cli-debug.1: $(top_srcdir)/src/gnutls-cli-debug-options.json
+	$(AM_V_GEN) PYTHONPATH='$(top_srcdir)/cligen' \
+		$(PYTHON) $(top_srcdir)/cligen/cli-docgen.py \
+		--format man $(CLIGEN_ARGS) \
+		--include see-also=$(top_srcdir)/doc/gnutls-cli-debug-see-also.texi \
+		--include examples=$(top_srcdir)/doc/gnutls-cli-debug-examples.texi \
+		$< $@
 
-tpmtool.1: ../../src/tpmtool-args.def
-	-sed 's/@subheading \(.*\)/@*\n@var{\1}\n@*/' $< > "$<".tmp && \
-	autogen -L ../../src -DMAN_SECTION=1 -Tagman-cmd.tpl "$<".tmp && \
-	rm -f "$<".tmp
+srptool.1: $(top_srcdir)/doc/srptool-see-also.texi $(top_srcdir)/doc/srptool-examples.texi
+srptool.1: $(top_srcdir)/src/srptool-options.json
+	$(AM_V_GEN) PYTHONPATH='$(top_srcdir)/cligen' \
+		$(PYTHON) $(top_srcdir)/cligen/cli-docgen.py \
+		--format man $(CLIGEN_ARGS) \
+		--include see-also=$(top_srcdir)/doc/srptool-see-also.texi \
+		--include examples=$(top_srcdir)/doc/srptool-examples.texi \
+		$< $@
 
-psktool.1: ../../src/psktool-args.def
-	-sed 's/@subheading \(.*\)/@*\n@var{\1}\n@*/' $< > "$<".tmp && \
-	autogen -L ../../src -DMAN_SECTION=1 -Tagman-cmd.tpl "$<".tmp && \
-	rm -f "$<".tmp
+p11tool.1: $(top_srcdir)/doc/p11tool-see-also.texi $(top_srcdir)/doc/p11tool-examples.texi
+p11tool.1: $(top_srcdir)/src/p11tool-options.json
+	$(AM_V_GEN) PYTHONPATH='$(top_srcdir)/cligen' \
+		$(PYTHON) $(top_srcdir)/cligen/cli-docgen.py \
+		--format man $(CLIGEN_ARGS) \
+		--include see-also=$(top_srcdir)/doc/p11tool-see-also.texi \
+		--include examples=$(top_srcdir)/doc/p11tool-examples.texi \
+		$< $@
+
+tpmtool.1: $(top_srcdir)/doc/tpmtool-see-also.texi $(top_srcdir)/doc/tpmtool-examples.texi
+tpmtool.1: $(top_srcdir)/src/tpmtool-options.json
+	$(AM_V_GEN) PYTHONPATH='$(top_srcdir)/cligen' \
+		$(PYTHON) $(top_srcdir)/cligen/cli-docgen.py \
+		--format man $(CLIGEN_ARGS) \
+		--include see-also=$(top_srcdir)/doc/tpmtool-see-also.texi \
+		--include examples=$(top_srcdir)/doc/tpmtool-examples.texi \
+		$< $@
+
+psktool.1: $(top_srcdir)/doc/psktool-see-also.texi $(top_srcdir)/doc/psktool-examples.texi
+psktool.1: $(top_srcdir)/src/psktool-options.json
+	$(AM_V_GEN) PYTHONPATH='$(top_srcdir)/cligen' \
+		$(PYTHON) $(top_srcdir)/cligen/cli-docgen.py \
+		--format man $(CLIGEN_ARGS) \
+		--include see-also=$(top_srcdir)/doc/psktool-see-also.texi \
+		--include examples=$(top_srcdir)/doc/psktool-examples.texi \
+		$< $@
 
 APIMANS =
 APIMANS += dane_cert_type_name.3
@@ -125,11 +171,13 @@ APIMANS += gnutls_aead_cipher_encrypt.3
 APIMANS += gnutls_aead_cipher_encryptv.3
 APIMANS += gnutls_aead_cipher_encryptv2.3
 APIMANS += gnutls_aead_cipher_init.3
+APIMANS += gnutls_aead_cipher_set_key.3
 APIMANS += gnutls_alert_get.3
 APIMANS += gnutls_alert_get_name.3
 APIMANS += gnutls_alert_get_strname.3
 APIMANS += gnutls_alert_send.3
 APIMANS += gnutls_alert_send_appropriate.3
+APIMANS += gnutls_alert_set_read_function.3
 APIMANS += gnutls_alpn_get_selected_protocol.3
 APIMANS += gnutls_alpn_set_protocols.3
 APIMANS += gnutls_anon_allocate_client_credentials.3
@@ -224,9 +272,11 @@ APIMANS += gnutls_check_version.3
 APIMANS += gnutls_cipher_add_auth.3
 APIMANS += gnutls_cipher_decrypt.3
 APIMANS += gnutls_cipher_decrypt2.3
+APIMANS += gnutls_cipher_decrypt3.3
 APIMANS += gnutls_cipher_deinit.3
 APIMANS += gnutls_cipher_encrypt.3
 APIMANS += gnutls_cipher_encrypt2.3
+APIMANS += gnutls_cipher_encrypt3.3
 APIMANS += gnutls_cipher_get.3
 APIMANS += gnutls_cipher_get_block_size.3
 APIMANS += gnutls_cipher_get_id.3
@@ -237,9 +287,12 @@ APIMANS += gnutls_cipher_get_tag_size.3
 APIMANS += gnutls_cipher_init.3
 APIMANS += gnutls_cipher_list.3
 APIMANS += gnutls_cipher_set_iv.3
+APIMANS += gnutls_ciphersuite_get.3
 APIMANS += gnutls_cipher_suite_get_name.3
 APIMANS += gnutls_cipher_suite_info.3
 APIMANS += gnutls_cipher_tag.3
+APIMANS += gnutls_compress_certificate_get_selected_method.3
+APIMANS += gnutls_compress_certificate_set_methods.3
 APIMANS += gnutls_compression_get.3
 APIMANS += gnutls_compression_get_id.3
 APIMANS += gnutls_compression_get_name.3
@@ -288,6 +341,7 @@ APIMANS += gnutls_digest_get_id.3
 APIMANS += gnutls_digest_get_name.3
 APIMANS += gnutls_digest_get_oid.3
 APIMANS += gnutls_digest_list.3
+APIMANS += gnutls_digest_set_secure.3
 APIMANS += gnutls_dtls_cookie_send.3
 APIMANS += gnutls_dtls_cookie_verify.3
 APIMANS += gnutls_dtls_get_data_mtu.3
@@ -297,6 +351,8 @@ APIMANS += gnutls_dtls_prestate_set.3
 APIMANS += gnutls_dtls_set_data_mtu.3
 APIMANS += gnutls_dtls_set_mtu.3
 APIMANS += gnutls_dtls_set_timeouts.3
+APIMANS += gnutls_early_cipher_get.3
+APIMANS += gnutls_early_prf_hash_get.3
 APIMANS += gnutls_ecc_curve_get.3
 APIMANS += gnutls_ecc_curve_get_id.3
 APIMANS += gnutls_ecc_curve_get_name.3
@@ -304,6 +360,7 @@ APIMANS += gnutls_ecc_curve_get_oid.3
 APIMANS += gnutls_ecc_curve_get_pk.3
 APIMANS += gnutls_ecc_curve_get_size.3
 APIMANS += gnutls_ecc_curve_list.3
+APIMANS += gnutls_ecc_curve_set_enabled.3
 APIMANS += gnutls_encode_ber_digest_info.3
 APIMANS += gnutls_encode_gost_rs_value.3
 APIMANS += gnutls_encode_rs_value.3
@@ -313,12 +370,20 @@ APIMANS += gnutls_est_record_overhead_size.3
 APIMANS += gnutls_ext_get_current_msg.3
 APIMANS += gnutls_ext_get_data.3
 APIMANS += gnutls_ext_get_name.3
+APIMANS += gnutls_ext_get_name2.3
 APIMANS += gnutls_ext_raw_parse.3
 APIMANS += gnutls_ext_register.3
 APIMANS += gnutls_ext_set_data.3
 APIMANS += gnutls_fingerprint.3
+APIMANS += gnutls_fips140_context_deinit.3
+APIMANS += gnutls_fips140_context_init.3
+APIMANS += gnutls_fips140_get_operation_state.3
 APIMANS += gnutls_fips140_mode_enabled.3
+APIMANS += gnutls_fips140_pop_context.3
+APIMANS += gnutls_fips140_push_context.3
+APIMANS += gnutls_fips140_run_self_tests.3
 APIMANS += gnutls_fips140_set_mode.3
+APIMANS += gnutls_get_library_config.3
 APIMANS += gnutls_get_system_config_file.3
 APIMANS += gnutls_global_deinit.3
 APIMANS += gnutls_global_init.3
@@ -343,7 +408,10 @@ APIMANS += gnutls_handshake_set_max_packet_length.3
 APIMANS += gnutls_handshake_set_post_client_hello_function.3
 APIMANS += gnutls_handshake_set_private_extensions.3
 APIMANS += gnutls_handshake_set_random.3
+APIMANS += gnutls_handshake_set_read_function.3
+APIMANS += gnutls_handshake_set_secret_function.3
 APIMANS += gnutls_handshake_set_timeout.3
+APIMANS += gnutls_handshake_write.3
 APIMANS += gnutls_hash.3
 APIMANS += gnutls_hash_copy.3
 APIMANS += gnutls_hash_deinit.3
@@ -362,6 +430,8 @@ APIMANS += gnutls_hex_decode.3
 APIMANS += gnutls_hex_decode2.3
 APIMANS += gnutls_hex_encode.3
 APIMANS += gnutls_hex_encode2.3
+APIMANS += gnutls_hkdf_expand.3
+APIMANS += gnutls_hkdf_extract.3
 APIMANS += gnutls_hmac.3
 APIMANS += gnutls_hmac_copy.3
 APIMANS += gnutls_hmac_deinit.3
@@ -440,6 +510,7 @@ APIMANS += gnutls_openpgp_privkey_sign_hash.3
 APIMANS += gnutls_openpgp_send_cert.3
 APIMANS += gnutls_packet_deinit.3
 APIMANS += gnutls_packet_get.3
+APIMANS += gnutls_pbkdf2.3
 APIMANS += gnutls_pcert_deinit.3
 APIMANS += gnutls_pcert_export_openpgp.3
 APIMANS += gnutls_pcert_export_x509.3
@@ -567,6 +638,7 @@ APIMANS += gnutls_pkcs7_get_signature_info.3
 APIMANS += gnutls_pkcs7_import.3
 APIMANS += gnutls_pkcs7_init.3
 APIMANS += gnutls_pkcs7_print.3
+APIMANS += gnutls_pkcs7_print_signature_info.3
 APIMANS += gnutls_pkcs7_set_crl.3
 APIMANS += gnutls_pkcs7_set_crl_raw.3
 APIMANS += gnutls_pkcs7_set_crt.3
@@ -585,6 +657,7 @@ APIMANS += gnutls_pk_list.3
 APIMANS += gnutls_pk_to_sign.3
 APIMANS += gnutls_prf.3
 APIMANS += gnutls_prf_early.3
+APIMANS += gnutls_prf_hash_get.3
 APIMANS += gnutls_prf_raw.3
 APIMANS += gnutls_prf_rfc5705.3
 APIMANS += gnutls_priority_certificate_type_list.3
@@ -607,6 +680,8 @@ APIMANS += gnutls_priority_string_list.3
 APIMANS += gnutls_privkey_decrypt_data.3
 APIMANS += gnutls_privkey_decrypt_data2.3
 APIMANS += gnutls_privkey_deinit.3
+APIMANS += gnutls_privkey_derive_secret.3
+APIMANS += gnutls_privkey_export_dh_raw.3
 APIMANS += gnutls_privkey_export_dsa_raw.3
 APIMANS += gnutls_privkey_export_dsa_raw2.3
 APIMANS += gnutls_privkey_export_ecc_raw.3
@@ -623,6 +698,7 @@ APIMANS += gnutls_privkey_get_pk_algorithm.3
 APIMANS += gnutls_privkey_get_seed.3
 APIMANS += gnutls_privkey_get_spki.3
 APIMANS += gnutls_privkey_get_type.3
+APIMANS += gnutls_privkey_import_dh_raw.3
 APIMANS += gnutls_privkey_import_dsa_raw.3
 APIMANS += gnutls_privkey_import_ecc_raw.3
 APIMANS += gnutls_privkey_import_ext.3
@@ -655,17 +731,25 @@ APIMANS += gnutls_protocol_get_id.3
 APIMANS += gnutls_protocol_get_name.3
 APIMANS += gnutls_protocol_get_version.3
 APIMANS += gnutls_protocol_list.3
+APIMANS += gnutls_protocol_set_enabled.3
 APIMANS += gnutls_psk_allocate_client_credentials.3
 APIMANS += gnutls_psk_allocate_server_credentials.3
 APIMANS += gnutls_psk_client_get_hint.3
+APIMANS += gnutls_psk_format_imported_identity.3
 APIMANS += gnutls_psk_free_client_credentials.3
 APIMANS += gnutls_psk_free_server_credentials.3
 APIMANS += gnutls_psk_server_get_username.3
+APIMANS += gnutls_psk_server_get_username2.3
 APIMANS += gnutls_psk_set_client_credentials.3
+APIMANS += gnutls_psk_set_client_credentials2.3
 APIMANS += gnutls_psk_set_client_credentials_function.3
+APIMANS += gnutls_psk_set_client_credentials_function2.3
+APIMANS += gnutls_psk_set_client_credentials_function3.3
 APIMANS += gnutls_psk_set_params_function.3
 APIMANS += gnutls_psk_set_server_credentials_file.3
 APIMANS += gnutls_psk_set_server_credentials_function.3
+APIMANS += gnutls_psk_set_server_credentials_function2.3
+APIMANS += gnutls_psk_set_server_credentials_function3.3
 APIMANS += gnutls_psk_set_server_credentials_hint.3
 APIMANS += gnutls_psk_set_server_dh_params.3
 APIMANS += gnutls_psk_set_server_known_dh_params.3
@@ -674,6 +758,7 @@ APIMANS += gnutls_pubkey_deinit.3
 APIMANS += gnutls_pubkey_encrypt_data.3
 APIMANS += gnutls_pubkey_export.3
 APIMANS += gnutls_pubkey_export2.3
+APIMANS += gnutls_pubkey_export_dh_raw.3
 APIMANS += gnutls_pubkey_export_dsa_raw.3
 APIMANS += gnutls_pubkey_export_dsa_raw2.3
 APIMANS += gnutls_pubkey_export_ecc_raw.3
@@ -689,6 +774,7 @@ APIMANS += gnutls_pubkey_get_pk_algorithm.3
 APIMANS += gnutls_pubkey_get_preferred_hash_algorithm.3
 APIMANS += gnutls_pubkey_get_spki.3
 APIMANS += gnutls_pubkey_import.3
+APIMANS += gnutls_pubkey_import_dh_raw.3
 APIMANS += gnutls_pubkey_import_dsa_raw.3
 APIMANS += gnutls_pubkey_import_ecc_raw.3
 APIMANS += gnutls_pubkey_import_ecc_x962.3
@@ -734,6 +820,7 @@ APIMANS += gnutls_record_recv_seq.3
 APIMANS += gnutls_record_send.3
 APIMANS += gnutls_record_send2.3
 APIMANS += gnutls_record_send_early_data.3
+APIMANS += gnutls_record_send_file.3
 APIMANS += gnutls_record_send_range.3
 APIMANS += gnutls_record_set_max_early_data_size.3
 APIMANS += gnutls_record_set_max_recv_size.3
@@ -763,6 +850,7 @@ APIMANS += gnutls_session_get_desc.3
 APIMANS += gnutls_session_get_flags.3
 APIMANS += gnutls_session_get_id.3
 APIMANS += gnutls_session_get_id2.3
+APIMANS += gnutls_session_get_keylog_function.3
 APIMANS += gnutls_session_get_master_secret.3
 APIMANS += gnutls_session_get_ptr.3
 APIMANS += gnutls_session_get_random.3
@@ -772,11 +860,13 @@ APIMANS += gnutls_session_key_update.3
 APIMANS += gnutls_session_resumption_requested.3
 APIMANS += gnutls_session_set_data.3
 APIMANS += gnutls_session_set_id.3
+APIMANS += gnutls_session_set_keylog_function.3
 APIMANS += gnutls_session_set_premaster.3
 APIMANS += gnutls_session_set_ptr.3
 APIMANS += gnutls_session_set_verify_cert.3
 APIMANS += gnutls_session_set_verify_cert2.3
 APIMANS += gnutls_session_set_verify_function.3
+APIMANS += gnutls_session_set_verify_output_function.3
 APIMANS += gnutls_session_supplemental_register.3
 APIMANS += gnutls_session_ticket_enable_client.3
 APIMANS += gnutls_session_ticket_enable_server.3
@@ -795,6 +885,8 @@ APIMANS += gnutls_sign_get_pk_algorithm.3
 APIMANS += gnutls_sign_is_secure.3
 APIMANS += gnutls_sign_is_secure2.3
 APIMANS += gnutls_sign_list.3
+APIMANS += gnutls_sign_set_secure.3
+APIMANS += gnutls_sign_set_secure_for_certs.3
 APIMANS += gnutls_sign_supports_pk_algorithm.3
 APIMANS += gnutls_srp_allocate_client_credentials.3
 APIMANS += gnutls_srp_allocate_server_credentials.3
@@ -851,6 +943,7 @@ APIMANS += gnutls_transport_get_int.3
 APIMANS += gnutls_transport_get_int2.3
 APIMANS += gnutls_transport_get_ptr.3
 APIMANS += gnutls_transport_get_ptr2.3
+APIMANS += gnutls_transport_is_ktls_enabled.3
 APIMANS += gnutls_transport_set_errno.3
 APIMANS += gnutls_transport_set_errno_function.3
 APIMANS += gnutls_transport_set_fastopen.3
@@ -1107,6 +1200,8 @@ APIMANS += gnutls_x509_crt_sign.3
 APIMANS += gnutls_x509_crt_sign2.3
 APIMANS += gnutls_x509_crt_verify.3
 APIMANS += gnutls_x509_crt_verify_data2.3
+APIMANS += gnutls_x509_ct_sct_get.3
+APIMANS += gnutls_x509_ct_sct_get_version.3
 APIMANS += gnutls_x509_dn_deinit.3
 APIMANS += gnutls_x509_dn_export.3
 APIMANS += gnutls_x509_dn_export2.3
@@ -1118,6 +1213,10 @@ APIMANS += gnutls_x509_dn_init.3
 APIMANS += gnutls_x509_dn_oid_known.3
 APIMANS += gnutls_x509_dn_oid_name.3
 APIMANS += gnutls_x509_dn_set_str.3
+APIMANS += gnutls_x509_ext_ct_export_scts.3
+APIMANS += gnutls_x509_ext_ct_import_scts.3
+APIMANS += gnutls_x509_ext_ct_scts_deinit.3
+APIMANS += gnutls_x509_ext_ct_scts_init.3
 APIMANS += gnutls_x509_ext_deinit.3
 APIMANS += gnutls_x509_ext_export_aia.3
 APIMANS += gnutls_x509_ext_export_authority_key_id.3
@@ -1187,6 +1286,7 @@ APIMANS += gnutls_x509_privkey_get_seed.3
 APIMANS += gnutls_x509_privkey_get_spki.3
 APIMANS += gnutls_x509_privkey_import.3
 APIMANS += gnutls_x509_privkey_import2.3
+APIMANS += gnutls_x509_privkey_import_dh_raw.3
 APIMANS += gnutls_x509_privkey_import_dsa_raw.3
 APIMANS += gnutls_x509_privkey_import_ecc_raw.3
 APIMANS += gnutls_x509_privkey_import_gost_raw.3
@@ -1227,12 +1327,15 @@ APIMANS += gnutls_x509_trust_list_deinit.3
 APIMANS += gnutls_x509_trust_list_get_issuer.3
 APIMANS += gnutls_x509_trust_list_get_issuer_by_dn.3
 APIMANS += gnutls_x509_trust_list_get_issuer_by_subject_key_id.3
+APIMANS += gnutls_x509_trust_list_get_ptr.3
 APIMANS += gnutls_x509_trust_list_init.3
 APIMANS += gnutls_x509_trust_list_iter_deinit.3
 APIMANS += gnutls_x509_trust_list_iter_get_ca.3
 APIMANS += gnutls_x509_trust_list_remove_cas.3
 APIMANS += gnutls_x509_trust_list_remove_trust_file.3
 APIMANS += gnutls_x509_trust_list_remove_trust_mem.3
+APIMANS += gnutls_x509_trust_list_set_getissuer_function.3
+APIMANS += gnutls_x509_trust_list_set_ptr.3
 APIMANS += gnutls_x509_trust_list_verify_crt.3
 APIMANS += gnutls_x509_trust_list_verify_crt2.3
 APIMANS += gnutls_x509_trust_list_verify_named_crt.3
@@ -1270,7 +1373,7 @@ stamp_mans: $(HEADER_FILES)
 			-pkg-site "https://www.gnutls.org" \
 			-include "gnutls/`basename $$header .in`" \
 			-seeinfo $(PACKAGE) -verbatimcopying \
-			-copyright "2001-$(YEAR) Free Software Foundation, Inc., and others" \
+			-copyright "2001-2023 Free Software Foundation, Inc., and others" \
 			-function $$i \
 			$(C_SOURCE_FILES) > $$i.3 && \
 		echo $(ECHO_N) "."; \

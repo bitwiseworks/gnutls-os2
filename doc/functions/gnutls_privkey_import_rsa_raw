@@ -9,7 +9,7 @@
 
 @var{e}: holds the public exponent
 
-@var{d}: holds the private exponent
+@var{d}: holds the private exponent (optional)
 
 @var{p}: holds the first prime (p)
 

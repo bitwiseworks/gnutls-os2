@@ -30,17 +30,21 @@
 #include <gnutls/crypto.h>
 #include "errors.h"
 #ifdef HAVE_LIBNETTLE
-# include <nettle/aes.h>		/* for key generation in 192 and 256 bits */
-# include "sha-aarch64.h"
-# include "aes-aarch64.h"
+#include <nettle/aes.h> /* for key generation in 192 and 256 bits */
+#include "sha-aarch64.h"
+#include "aes-aarch64.h"
 #endif
 #include "aarch64-common.h"
 
 #ifdef HAVE_GETAUXVAL
-# include <sys/auxv.h>
-# ifdef AT_HWCAP
-#  define USE_AUXVAL
-# endif
+#include <sys/auxv.h>
+#ifdef AT_HWCAP
+#define USE_AUXVAL
+#endif
+#elif defined(__OpenBSD__)
+#include <sys/sysctl.h>
+#include <machine/cpu.h>
+#include <machine/armreg.h>
 #endif
 
 #if defined(__GNUC__)
@@ -49,7 +53,6 @@ __attribute__((visibility("hidden")))
 __hidden
 #endif
 unsigned int _gnutls_arm_cpuid_s = 0;
-
 
 /* Our internal bit-string for cpu capabilities. Should be set
  * in GNUTLS_CPUID_OVERRIDE */
@@ -67,12 +70,12 @@ static void capabilities_to_cpuid(unsigned capabilities)
 
 /* Correspond to asm/hwcap.h for aarch64 */
 #ifdef USE_AUXVAL
-#define HWCAP_ASIMD  (1 << 1)
-#define HWCAP_AES    (1 << 3)
-#define HWCAP_PMULL  (1 << 4)
-#define HWCAP_SHA1   (1 << 5)
-#define HWCAP_SHA2   (1 << 6)
-#define HWCAP_SHA3   (1 << 17)
+#define HWCAP_ASIMD (1 << 1)
+#define HWCAP_AES (1 << 3)
+#define HWCAP_PMULL (1 << 4)
+#define HWCAP_SHA1 (1 << 5)
+#define HWCAP_SHA2 (1 << 6)
+#define HWCAP_SHA3 (1 << 17)
 #define HWCAP_SHA512 (1 << 21)
 #endif
 
@@ -94,11 +97,28 @@ static void discover_caps(unsigned int *caps)
 		*caps |= ARMV8_SHA256;
 	if (c & HWCAP_SHA512)
 		*caps |= ARMV8_SHA512;
+#elif defined(__OpenBSD__) && defined(CPU_ID_AA64ISAR0)
+	const int isar0_mib[] = { CTL_MACHDEP, CPU_ID_AA64ISAR0 };
+	uint64_t isar0;
+	size_t len = sizeof(isar0);
+
+	*caps |= ARMV7_NEON;
+	if (sysctl(isar0_mib, 2, &isar0, &len, NULL, 0) < 0)
+		return;
+	if (ID_AA64ISAR0_AES(isar0) >= ID_AA64ISAR0_AES_BASE)
+		*caps |= ARMV8_AES;
+	if (ID_AA64ISAR0_AES(isar0) >= ID_AA64ISAR0_AES_PMULL)
+		*caps |= ARMV8_PMULL;
+	if (ID_AA64ISAR0_SHA1(isar0) >= ID_AA64ISAR0_SHA1_BASE)
+		*caps |= ARMV8_SHA1;
+	if (ID_AA64ISAR0_SHA2(isar0) >= ID_AA64ISAR0_SHA2_BASE)
+		*caps |= ARMV8_SHA256;
+	if (ID_AA64ISAR0_SHA2(isar0) >= ID_AA64ISAR0_SHA2_512)
+		*caps |= ARMV8_SHA512;
 #endif
 }
 
-static
-void _register_aarch64_crypto(unsigned capabilities)
+static void _register_aarch64_crypto(unsigned capabilities)
 {
 	int ret;
 
@@ -111,17 +131,14 @@ void _register_aarch64_crypto(unsigned capabilities)
 	if (_gnutls_arm_cpuid_s & ARMV8_SHA1) {
 		_gnutls_debug_log("Aarch64 SHA1 was detected\n");
 
-		ret =
-		    gnutls_crypto_single_digest_register(GNUTLS_DIG_SHA1,
-							 80,
-							 &_gnutls_sha_aarch64, 0);
+		ret = gnutls_crypto_single_digest_register(
+			GNUTLS_DIG_SHA1, 80, &_gnutls_sha_aarch64, 0);
 		if (ret < 0) {
 			gnutls_assert();
 		}
 
-		ret =
-		    gnutls_crypto_single_mac_register
-		    (GNUTLS_MAC_SHA1, 80, &_gnutls_hmac_sha_aarch64, 0);
+		ret = gnutls_crypto_single_mac_register(
+			GNUTLS_MAC_SHA1, 80, &_gnutls_hmac_sha_aarch64, 0);
 		if (ret < 0) {
 			gnutls_assert();
 		}
@@ -130,62 +147,50 @@ void _register_aarch64_crypto(unsigned capabilities)
 	if (_gnutls_arm_cpuid_s & ARMV8_SHA256) {
 		_gnutls_debug_log("Aarch64 SHA2 was detected\n");
 
-		ret =
-		    gnutls_crypto_single_digest_register(GNUTLS_DIG_SHA224,
-							 80,
-							 &_gnutls_sha_aarch64, 0);
+		ret = gnutls_crypto_single_digest_register(
+			GNUTLS_DIG_SHA224, 80, &_gnutls_sha_aarch64, 0);
 		if (ret < 0) {
 			gnutls_assert();
 		}
 
-		ret =
-		    gnutls_crypto_single_mac_register
-		    (GNUTLS_MAC_SHA224, 80, &_gnutls_hmac_sha_aarch64, 0);
+		ret = gnutls_crypto_single_mac_register(
+			GNUTLS_MAC_SHA224, 80, &_gnutls_hmac_sha_aarch64, 0);
 		if (ret < 0) {
 			gnutls_assert();
 		}
 
-		ret =
-		    gnutls_crypto_single_digest_register(GNUTLS_DIG_SHA256,
-							 80,
-							 &_gnutls_sha_aarch64, 0);
+		ret = gnutls_crypto_single_digest_register(
+			GNUTLS_DIG_SHA256, 80, &_gnutls_sha_aarch64, 0);
 		if (ret < 0) {
 			gnutls_assert();
 		}
 
-		ret =
-		    gnutls_crypto_single_mac_register
-		    (GNUTLS_MAC_SHA256, 80, &_gnutls_hmac_sha_aarch64, 0);
+		ret = gnutls_crypto_single_mac_register(
+			GNUTLS_MAC_SHA256, 80, &_gnutls_hmac_sha_aarch64, 0);
 		if (ret < 0) {
 			gnutls_assert();
 		}
 
-		ret =
-		    gnutls_crypto_single_digest_register(GNUTLS_DIG_SHA384,
-							 80,
-							 &_gnutls_sha_aarch64, 0);
+		ret = gnutls_crypto_single_digest_register(
+			GNUTLS_DIG_SHA384, 80, &_gnutls_sha_aarch64, 0);
 		if (ret < 0) {
 			gnutls_assert();
 		}
 
-		ret =
-		    gnutls_crypto_single_mac_register
-		    (GNUTLS_MAC_SHA384, 80, &_gnutls_hmac_sha_aarch64, 0);
+		ret = gnutls_crypto_single_mac_register(
+			GNUTLS_MAC_SHA384, 80, &_gnutls_hmac_sha_aarch64, 0);
 		if (ret < 0) {
 			gnutls_assert();
 		}
 
-		ret =
-		    gnutls_crypto_single_digest_register(GNUTLS_DIG_SHA512,
-							 80,
-							 &_gnutls_sha_aarch64, 0);
+		ret = gnutls_crypto_single_digest_register(
+			GNUTLS_DIG_SHA512, 80, &_gnutls_sha_aarch64, 0);
 		if (ret < 0) {
 			gnutls_assert();
 		}
 
-		ret =
-		    gnutls_crypto_single_mac_register
-		    (GNUTLS_MAC_SHA512, 80, &_gnutls_hmac_sha_aarch64, 0);
+		ret = gnutls_crypto_single_mac_register(
+			GNUTLS_MAC_SHA512, 80, &_gnutls_hmac_sha_aarch64, 0);
 		if (ret < 0) {
 			gnutls_assert();
 		}
@@ -197,47 +202,52 @@ void _register_aarch64_crypto(unsigned capabilities)
 		if (_gnutls_arm_cpuid_s & ARMV8_PMULL) {
 			_gnutls_debug_log("Aarch64 PMULL was detected\n");
 
-			ret =
-			    gnutls_crypto_single_cipher_register
-			    (GNUTLS_CIPHER_AES_128_GCM, 90,
-			     &_gnutls_aes_gcm_aarch64, 0);
+			ret = gnutls_crypto_single_cipher_register(
+				GNUTLS_CIPHER_AES_128_GCM, 90,
+				&_gnutls_aes_gcm_aarch64, 0);
 			if (ret < 0) {
-					gnutls_assert();
-				}
+				gnutls_assert();
+			}
 
-			ret =
-			    gnutls_crypto_single_cipher_register
-			    (GNUTLS_CIPHER_AES_256_GCM, 90,
-			     &_gnutls_aes_gcm_aarch64, 0);
+			ret = gnutls_crypto_single_cipher_register(
+				GNUTLS_CIPHER_AES_192_GCM, 90,
+				&_gnutls_aes_gcm_aarch64, 0);
+			if (ret < 0) {
+				gnutls_assert();
+			}
+
+			ret = gnutls_crypto_single_cipher_register(
+				GNUTLS_CIPHER_AES_256_GCM, 90,
+				&_gnutls_aes_gcm_aarch64, 0);
 			if (ret < 0) {
 				gnutls_assert();
 			}
 		}
 
-		ret =
-		    gnutls_crypto_single_cipher_register
-		    (GNUTLS_CIPHER_AES_128_CBC, 90, &_gnutls_aes_cbc_aarch64, 0);
+		ret = gnutls_crypto_single_cipher_register(
+			GNUTLS_CIPHER_AES_128_CBC, 90, &_gnutls_aes_cbc_aarch64,
+			0);
 		if (ret < 0) {
 			gnutls_assert();
 		}
 
-		ret =
-		    gnutls_crypto_single_cipher_register
-		    (GNUTLS_CIPHER_AES_256_CBC, 90, &_gnutls_aes_cbc_aarch64, 0);
+		ret = gnutls_crypto_single_cipher_register(
+			GNUTLS_CIPHER_AES_256_CBC, 90, &_gnutls_aes_cbc_aarch64,
+			0);
 		if (ret < 0) {
 			gnutls_assert();
 		}
 
-		ret =
-		    gnutls_crypto_single_cipher_register
-		    (GNUTLS_CIPHER_AES_128_CCM, 90, &_gnutls_aes_ccm_aarch64, 0);
+		ret = gnutls_crypto_single_cipher_register(
+			GNUTLS_CIPHER_AES_128_CCM, 90, &_gnutls_aes_ccm_aarch64,
+			0);
 		if (ret < 0) {
 			gnutls_assert();
 		}
 
-		ret =
-		    gnutls_crypto_single_cipher_register
-		    (GNUTLS_CIPHER_AES_256_CCM, 90, &_gnutls_aes_ccm_aarch64, 0);
+		ret = gnutls_crypto_single_cipher_register(
+			GNUTLS_CIPHER_AES_256_CCM, 90, &_gnutls_aes_ccm_aarch64,
+			0);
 		if (ret < 0) {
 			gnutls_assert();
 		}
@@ -245,7 +255,6 @@ void _register_aarch64_crypto(unsigned capabilities)
 
 	return;
 }
-
 
 void register_aarch64_crypto(void)
 {
@@ -258,4 +267,3 @@ void register_aarch64_crypto(void)
 
 	_register_aarch64_crypto(capabilities);
 }
-

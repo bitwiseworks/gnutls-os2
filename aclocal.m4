@@ -1,6 +1,6 @@
-# generated automatically by aclocal 1.16.1 -*- Autoconf -*-
+# generated automatically by aclocal 1.16.5 -*- Autoconf -*-
 
-# Copyright (C) 1996-2018 Free Software Foundation, Inc.
+# Copyright (C) 1996-2021 Free Software Foundation, Inc.
 
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -14,13 +14,13 @@
 m4_ifndef([AC_CONFIG_MACRO_DIRS], [m4_defun([_AM_CONFIG_MACRO_DIRS], [])m4_defun([AC_CONFIG_MACRO_DIRS], [_AM_CONFIG_MACRO_DIRS($@)])])
 m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
-m4_if(m4_defn([AC_AUTOCONF_VERSION]), [2.69],,
-[m4_warning([this file was generated for autoconf 2.69.
+m4_if(m4_defn([AC_AUTOCONF_VERSION]), [2.71],,
+[m4_warning([this file was generated for autoconf 2.71.
 You have another version of autoconf.  It may work, but is not guaranteed to.
 If you have problems, you may need to regenerate the build system entirely.
 To do so, use the procedure documented by the package, typically 'autoreconf'.])])
 
-# Copyright (C) 2002-2018 Free Software Foundation, Inc.
+# Copyright (C) 2002-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -35,7 +35,7 @@ AC_DEFUN([AM_AUTOMAKE_VERSION],
 [am__api_version='1.16'
 dnl Some users find AM_AUTOMAKE_VERSION and mistake it for a way to
 dnl require some minimum version.  Point them to the right macro.
-m4_if([$1], [1.16.1], [],
+m4_if([$1], [1.16.5], [],
       [AC_FATAL([Do not call $0, use AM_INIT_AUTOMAKE([$1]).])])dnl
 ])
 
@@ -51,12 +51,12 @@ m4_define([_AM_AUTOCONF_VERSION], [])
 # Call AM_AUTOMAKE_VERSION and AM_AUTOMAKE_VERSION so they can be traced.
 # This function is AC_REQUIREd by AM_INIT_AUTOMAKE.
 AC_DEFUN([AM_SET_CURRENT_AUTOMAKE_VERSION],
-[AM_AUTOMAKE_VERSION([1.16.1])dnl
+[AM_AUTOMAKE_VERSION([1.16.5])dnl
 m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
 _AM_AUTOCONF_VERSION(m4_defn([AC_AUTOCONF_VERSION]))])
 
-# Copyright (C) 2011-2018 Free Software Foundation, Inc.
+# Copyright (C) 2011-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -118,7 +118,7 @@ AC_SUBST([AR])dnl
 
 # Figure out how to run the assembler.                      -*- Autoconf -*-
 
-# Copyright (C) 2001-2018 Free Software Foundation, Inc.
+# Copyright (C) 2001-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -138,7 +138,7 @@ _AM_IF_OPTION([no-dependencies],, [_AM_DEPENDENCIES([CCAS])])dnl
 
 # AM_AUX_DIR_EXPAND                                         -*- Autoconf -*-
 
-# Copyright (C) 2001-2018 Free Software Foundation, Inc.
+# Copyright (C) 2001-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -188,9 +188,46 @@ AC_DEFUN([AM_AUX_DIR_EXPAND],
 am_aux_dir=`cd "$ac_aux_dir" && pwd`
 ])
 
+# AM_COND_IF                                            -*- Autoconf -*-
+
+# Copyright (C) 2008-2021 Free Software Foundation, Inc.
+#
+# This file is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+# _AM_COND_IF
+# _AM_COND_ELSE
+# _AM_COND_ENDIF
+# --------------
+# These macros are only used for tracing.
+m4_define([_AM_COND_IF])
+m4_define([_AM_COND_ELSE])
+m4_define([_AM_COND_ENDIF])
+
+# AM_COND_IF(COND, [IF-TRUE], [IF-FALSE])
+# ---------------------------------------
+# If the shell condition COND is true, execute IF-TRUE, otherwise execute
+# IF-FALSE.  Allow automake to learn about conditional instantiating macros
+# (the AC_CONFIG_FOOS).
+AC_DEFUN([AM_COND_IF],
+[m4_ifndef([_AM_COND_VALUE_$1],
+	   [m4_fatal([$0: no such condition "$1"])])dnl
+_AM_COND_IF([$1])dnl
+if test -z "$$1_TRUE"; then :
+  m4_n([$2])[]dnl
+m4_ifval([$3],
+[_AM_COND_ELSE([$1])dnl
+else
+  $3
+])dnl
+_AM_COND_ENDIF([$1])dnl
+fi[]dnl
+])
+
 # AM_CONDITIONAL                                            -*- Autoconf -*-
 
-# Copyright (C) 1997-2018 Free Software Foundation, Inc.
+# Copyright (C) 1997-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -221,7 +258,7 @@ AC_CONFIG_COMMANDS_PRE(
 Usually this means the macro was only invoked conditionally.]])
 fi])])
 
-# Copyright (C) 1999-2018 Free Software Foundation, Inc.
+# Copyright (C) 1999-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -412,7 +449,7 @@ _AM_SUBST_NOTMAKE([am__nodep])dnl
 
 # Generate code to set up dependency tracking.              -*- Autoconf -*-
 
-# Copyright (C) 1999-2018 Free Software Foundation, Inc.
+# Copyright (C) 1999-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -451,7 +488,9 @@ AC_DEFUN([_AM_OUTPUT_DEPENDENCY_COMMANDS],
   done
   if test $am_rc -ne 0; then
     AC_MSG_FAILURE([Something went wrong bootstrapping makefile fragments
-    for automatic dependency tracking.  Try re-running configure with the
+    for automatic dependency tracking.  If GNU make was not used, consider
+    re-running the configure script with MAKE="gmake" (or whatever is
+    necessary).  You can also try re-running configure with the
     '--disable-dependency-tracking' option to at least be able to build
     the package (albeit without support for automatic dependency tracking).])
   fi
@@ -478,7 +517,7 @@ AC_DEFUN([AM_OUTPUT_DEPENDENCY_COMMANDS],
 
 # Do all the work for Automake.                             -*- Autoconf -*-
 
-# Copyright (C) 1996-2018 Free Software Foundation, Inc.
+# Copyright (C) 1996-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -506,6 +545,10 @@ m4_defn([AC_PROG_CC])
 # release and drop the old call support.
 AC_DEFUN([AM_INIT_AUTOMAKE],
 [AC_PREREQ([2.65])dnl
+m4_ifdef([_$0_ALREADY_INIT],
+  [m4_fatal([$0 expanded multiple times
+]m4_defn([_$0_ALREADY_INIT]))],
+  [m4_define([_$0_ALREADY_INIT], m4_expansion_stack)])dnl
 dnl Autoconf wants to disallow AM_ names.  We explicitly allow
 dnl the ones we care about.
 m4_pattern_allow([^AM_[A-Z]+FLAGS$])dnl
@@ -542,7 +585,7 @@ m4_ifval([$3], [_AM_SET_OPTION([no-define])])dnl
 [_AM_SET_OPTIONS([$1])dnl
 dnl Diagnose old-style AC_INIT with new-style AM_AUTOMAKE_INIT.
 m4_if(
-  m4_ifdef([AC_PACKAGE_NAME], [ok]):m4_ifdef([AC_PACKAGE_VERSION], [ok]),
+  m4_ifset([AC_PACKAGE_NAME], [ok]):m4_ifset([AC_PACKAGE_VERSION], [ok]),
   [ok:ok],,
   [m4_fatal([AC_INIT should be called with package and version arguments])])dnl
  AC_SUBST([PACKAGE], ['AC_PACKAGE_TARNAME'])dnl
@@ -594,6 +637,20 @@ AC_PROVIDE_IFELSE([AC_PROG_OBJCXX],
 		  [m4_define([AC_PROG_OBJCXX],
 			     m4_defn([AC_PROG_OBJCXX])[_AM_DEPENDENCIES([OBJCXX])])])dnl
 ])
+# Variables for tags utilities; see am/tags.am
+if test -z "$CTAGS"; then
+  CTAGS=ctags
+fi
+AC_SUBST([CTAGS])
+if test -z "$ETAGS"; then
+  ETAGS=etags
+fi
+AC_SUBST([ETAGS])
+if test -z "$CSCOPE"; then
+  CSCOPE=cscope
+fi
+AC_SUBST([CSCOPE])
+
 AC_REQUIRE([AM_SILENT_RULES])dnl
 dnl The testsuite driver may need to know about EXEEXT, so add the
 dnl 'am__EXEEXT' conditional if _AM_COMPILER_EXEEXT was seen.  This
@@ -675,7 +732,7 @@ for _am_header in $config_headers :; do
 done
 echo "timestamp for $_am_arg" >`AS_DIRNAME(["$_am_arg"])`/stamp-h[]$_am_stamp_count])
 
-# Copyright (C) 2001-2018 Free Software Foundation, Inc.
+# Copyright (C) 2001-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -696,7 +753,7 @@ if test x"${install_sh+set}" != xset; then
 fi
 AC_SUBST([install_sh])])
 
-# Copyright (C) 2003-2018 Free Software Foundation, Inc.
+# Copyright (C) 2003-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -718,7 +775,7 @@ AC_SUBST([am__leading_dot])])
 # Add --enable-maintainer-mode option to configure.         -*- Autoconf -*-
 # From Jim Meyering
 
-# Copyright (C) 1996-2018 Free Software Foundation, Inc.
+# Copyright (C) 1996-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -753,7 +810,7 @@ AC_MSG_CHECKING([whether to enable maintainer-specific portions of Makefiles])
 
 # Check to see how 'make' treats includes.	            -*- Autoconf -*-
 
-# Copyright (C) 2001-2018 Free Software Foundation, Inc.
+# Copyright (C) 2001-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -796,7 +853,7 @@ AC_SUBST([am__quote])])
 
 # Fake the existence of programs that GNU maintainers use.  -*- Autoconf -*-
 
-# Copyright (C) 1997-2018 Free Software Foundation, Inc.
+# Copyright (C) 1997-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -817,12 +874,7 @@ AC_DEFUN([AM_MISSING_HAS_RUN],
 [AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
 AC_REQUIRE_AUX_FILE([missing])dnl
 if test x"${MISSING+set}" != xset; then
-  case $am_aux_dir in
-  *\ * | *\	*)
-    MISSING="\${SHELL} \"$am_aux_dir/missing\"" ;;
-  *)
-    MISSING="\${SHELL} $am_aux_dir/missing" ;;
-  esac
+  MISSING="\${SHELL} '$am_aux_dir/missing'"
 fi
 # Use eval to expand $SHELL
 if eval "$MISSING --is-lightweight"; then
@@ -835,7 +887,7 @@ fi
 
 # Helper functions for option handling.                     -*- Autoconf -*-
 
-# Copyright (C) 2001-2018 Free Software Foundation, Inc.
+# Copyright (C) 2001-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -864,7 +916,7 @@ AC_DEFUN([_AM_SET_OPTIONS],
 AC_DEFUN([_AM_IF_OPTION],
 [m4_ifset(_AM_MANGLE_OPTION([$1]), [$2], [$3])])
 
-# Copyright (C) 1999-2018 Free Software Foundation, Inc.
+# Copyright (C) 1999-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -911,7 +963,351 @@ AC_LANG_POP([C])])
 # For backward compatibility.
 AC_DEFUN_ONCE([AM_PROG_CC_C_O], [AC_REQUIRE([AC_PROG_CC])])
 
-# Copyright (C) 2001-2018 Free Software Foundation, Inc.
+# Copyright (C) 1999-2021 Free Software Foundation, Inc.
+#
+# This file is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+
+# AM_PATH_PYTHON([MINIMUM-VERSION], [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
+# ---------------------------------------------------------------------------
+# Adds support for distributing Python modules and packages.  To
+# install modules, copy them to $(pythondir), using the python_PYTHON
+# automake variable.  To install a package with the same name as the
+# automake package, install to $(pkgpythondir), or use the
+# pkgpython_PYTHON automake variable.
+#
+# The variables $(pyexecdir) and $(pkgpyexecdir) are provided as
+# locations to install python extension modules (shared libraries).
+# Another macro is required to find the appropriate flags to compile
+# extension modules.
+#
+# If your package is configured with a different prefix to python,
+# users will have to add the install directory to the PYTHONPATH
+# environment variable, or create a .pth file (see the python
+# documentation for details).
+#
+# If the MINIMUM-VERSION argument is passed, AM_PATH_PYTHON will
+# cause an error if the version of python installed on the system
+# doesn't meet the requirement.  MINIMUM-VERSION should consist of
+# numbers and dots only.
+AC_DEFUN([AM_PATH_PYTHON],
+ [
+  dnl Find a Python interpreter.  Python versions prior to 2.0 are not
+  dnl supported. (2.0 was released on October 16, 2000).
+  m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
+[python python2 python3 dnl
+ python3.9 python3.8 python3.7 python3.6 python3.5 python3.4 python3.3 dnl
+ python3.2 python3.1 python3.0 dnl
+ python2.7 python2.6 python2.5 python2.4 python2.3 python2.2 python2.1 dnl
+ python2.0])
+
+  AC_ARG_VAR([PYTHON], [the Python interpreter])
+
+  m4_if([$1],[],[
+    dnl No version check is needed.
+    # Find any Python interpreter.
+    if test -z "$PYTHON"; then
+      AC_PATH_PROGS([PYTHON], _AM_PYTHON_INTERPRETER_LIST, :)
+    fi
+    am_display_PYTHON=python
+  ], [
+    dnl A version check is needed.
+    if test -n "$PYTHON"; then
+      # If the user set $PYTHON, use it and don't search something else.
+      AC_MSG_CHECKING([whether $PYTHON version is >= $1])
+      AM_PYTHON_CHECK_VERSION([$PYTHON], [$1],
+			      [AC_MSG_RESULT([yes])],
+			      [AC_MSG_RESULT([no])
+			       AC_MSG_ERROR([Python interpreter is too old])])
+      am_display_PYTHON=$PYTHON
+    else
+      # Otherwise, try each interpreter until we find one that satisfies
+      # VERSION.
+      AC_CACHE_CHECK([for a Python interpreter with version >= $1],
+	[am_cv_pathless_PYTHON],[
+	for am_cv_pathless_PYTHON in _AM_PYTHON_INTERPRETER_LIST none; do
+	  test "$am_cv_pathless_PYTHON" = none && break
+	  AM_PYTHON_CHECK_VERSION([$am_cv_pathless_PYTHON], [$1], [break])
+	done])
+      # Set $PYTHON to the absolute path of $am_cv_pathless_PYTHON.
+      if test "$am_cv_pathless_PYTHON" = none; then
+	PYTHON=:
+      else
+        AC_PATH_PROG([PYTHON], [$am_cv_pathless_PYTHON])
+      fi
+      am_display_PYTHON=$am_cv_pathless_PYTHON
+    fi
+  ])
+
+  if test "$PYTHON" = :; then
+    dnl Run any user-specified action, or abort.
+    m4_default([$3], [AC_MSG_ERROR([no suitable Python interpreter found])])
+  else
+
+  dnl Query Python for its version number.  Although site.py simply uses
+  dnl sys.version[:3], printing that failed with Python 3.10, since the
+  dnl trailing zero was eliminated. So now we output just the major
+  dnl and minor version numbers, as numbers. Apparently the tertiary
+  dnl version is not of interest.
+  dnl
+  AC_CACHE_CHECK([for $am_display_PYTHON version], [am_cv_python_version],
+    [am_cv_python_version=`$PYTHON -c "import sys; print ('%u.%u' % sys.version_info[[:2]])"`])
+  AC_SUBST([PYTHON_VERSION], [$am_cv_python_version])
+
+  dnl At times, e.g., when building shared libraries, you may want
+  dnl to know which OS platform Python thinks this is.
+  dnl
+  AC_CACHE_CHECK([for $am_display_PYTHON platform], [am_cv_python_platform],
+    [am_cv_python_platform=`$PYTHON -c "import sys; sys.stdout.write(sys.platform)"`])
+  AC_SUBST([PYTHON_PLATFORM], [$am_cv_python_platform])
+
+  dnl emacs-page
+  dnl If --with-python-sys-prefix is given, use the values of sys.prefix
+  dnl and sys.exec_prefix for the corresponding values of PYTHON_PREFIX
+  dnl and PYTHON_EXEC_PREFIX. Otherwise, use the GNU ${prefix} and
+  dnl ${exec_prefix} variables.
+  dnl
+  dnl The two are made distinct variables so they can be overridden if
+  dnl need be, although general consensus is that you shouldn't need
+  dnl this separation.
+  dnl
+  dnl Also allow directly setting the prefixes via configure options,
+  dnl overriding any default.
+  dnl
+  if test "x$prefix" = xNONE; then
+    am__usable_prefix=$ac_default_prefix
+  else
+    am__usable_prefix=$prefix
+  fi
+
+  # Allow user to request using sys.* values from Python,
+  # instead of the GNU $prefix values.
+  AC_ARG_WITH([python-sys-prefix],
+  [AS_HELP_STRING([--with-python-sys-prefix],
+                  [use Python's sys.prefix and sys.exec_prefix values])],
+  [am_use_python_sys=:],
+  [am_use_python_sys=false])
+
+  # Allow user to override whatever the default Python prefix is.
+  AC_ARG_WITH([python_prefix],
+  [AS_HELP_STRING([--with-python_prefix],
+                  [override the default PYTHON_PREFIX])],
+  [am_python_prefix_subst=$withval
+   am_cv_python_prefix=$withval
+   AC_MSG_CHECKING([for explicit $am_display_PYTHON prefix])
+   AC_MSG_RESULT([$am_cv_python_prefix])],
+  [
+   if $am_use_python_sys; then
+     # using python sys.prefix value, not GNU
+     AC_CACHE_CHECK([for python default $am_display_PYTHON prefix],
+     [am_cv_python_prefix],
+     [am_cv_python_prefix=`$PYTHON -c "import sys; sys.stdout.write(sys.prefix)"`])
+
+     dnl If sys.prefix is a subdir of $prefix, replace the literal value of
+     dnl $prefix with a variable reference so it can be overridden.
+     case $am_cv_python_prefix in
+     $am__usable_prefix*)
+       am__strip_prefix=`echo "$am__usable_prefix" | sed 's|.|.|g'`
+       am_python_prefix_subst=`echo "$am_cv_python_prefix" | sed "s,^$am__strip_prefix,\\${prefix},"`
+       ;;
+     *)
+       am_python_prefix_subst=$am_cv_python_prefix
+       ;;
+     esac
+   else # using GNU prefix value, not python sys.prefix
+     am_python_prefix_subst='${prefix}'
+     am_python_prefix=$am_python_prefix_subst
+     AC_MSG_CHECKING([for GNU default $am_display_PYTHON prefix])
+     AC_MSG_RESULT([$am_python_prefix])
+   fi])
+  # Substituting python_prefix_subst value.
+  AC_SUBST([PYTHON_PREFIX], [$am_python_prefix_subst])
+
+  # emacs-page Now do it all over again for Python exec_prefix, but with yet
+  # another conditional: fall back to regular prefix if that was specified.
+  AC_ARG_WITH([python_exec_prefix],
+  [AS_HELP_STRING([--with-python_exec_prefix],
+                  [override the default PYTHON_EXEC_PREFIX])],
+  [am_python_exec_prefix_subst=$withval
+   am_cv_python_exec_prefix=$withval
+   AC_MSG_CHECKING([for explicit $am_display_PYTHON exec_prefix])
+   AC_MSG_RESULT([$am_cv_python_exec_prefix])],
+  [
+   # no explicit --with-python_exec_prefix, but if
+   # --with-python_prefix was given, use its value for python_exec_prefix too.
+   AS_IF([test -n "$with_python_prefix"],
+   [am_python_exec_prefix_subst=$with_python_prefix
+    am_cv_python_exec_prefix=$with_python_prefix
+    AC_MSG_CHECKING([for python_prefix-given $am_display_PYTHON exec_prefix])
+    AC_MSG_RESULT([$am_cv_python_exec_prefix])],
+   [
+    # Set am__usable_exec_prefix whether using GNU or Python values,
+    # since we use that variable for pyexecdir.
+    if test "x$exec_prefix" = xNONE; then
+      am__usable_exec_prefix=$am__usable_prefix
+    else
+      am__usable_exec_prefix=$exec_prefix
+    fi
+    #
+    if $am_use_python_sys; then # using python sys.exec_prefix, not GNU
+      AC_CACHE_CHECK([for python default $am_display_PYTHON exec_prefix],
+      [am_cv_python_exec_prefix],
+      [am_cv_python_exec_prefix=`$PYTHON -c "import sys; sys.stdout.write(sys.exec_prefix)"`])
+      dnl If sys.exec_prefix is a subdir of $exec_prefix, replace the
+      dnl literal value of $exec_prefix with a variable reference so it can
+      dnl be overridden.
+      case $am_cv_python_exec_prefix in
+      $am__usable_exec_prefix*)
+        am__strip_prefix=`echo "$am__usable_exec_prefix" | sed 's|.|.|g'`
+        am_python_exec_prefix_subst=`echo "$am_cv_python_exec_prefix" | sed "s,^$am__strip_prefix,\\${exec_prefix},"`
+        ;;
+      *)
+        am_python_exec_prefix_subst=$am_cv_python_exec_prefix
+        ;;
+     esac
+   else # using GNU $exec_prefix, not python sys.exec_prefix
+     am_python_exec_prefix_subst='${exec_prefix}'
+     am_python_exec_prefix=$am_python_exec_prefix_subst
+     AC_MSG_CHECKING([for GNU default $am_display_PYTHON exec_prefix])
+     AC_MSG_RESULT([$am_python_exec_prefix])
+   fi])])
+  # Substituting python_exec_prefix_subst.
+  AC_SUBST([PYTHON_EXEC_PREFIX], [$am_python_exec_prefix_subst])
+
+  # Factor out some code duplication into this shell variable.
+  am_python_setup_sysconfig="\
+import sys
+# Prefer sysconfig over distutils.sysconfig, for better compatibility
+# with python 3.x.  See automake bug#10227.
+try:
+    import sysconfig
+except ImportError:
+    can_use_sysconfig = 0
+else:
+    can_use_sysconfig = 1
+# Can't use sysconfig in CPython 2.7, since it's broken in virtualenvs:
+# <https://github.com/pypa/virtualenv/issues/118>
+try:
+    from platform import python_implementation
+    if python_implementation() == 'CPython' and sys.version[[:3]] == '2.7':
+        can_use_sysconfig = 0
+except ImportError:
+    pass"
+
+  dnl emacs-page Set up 4 directories:
+
+  dnl 1. pythondir: where to install python scripts.  This is the
+  dnl    site-packages directory, not the python standard library
+  dnl    directory like in previous automake betas.  This behavior
+  dnl    is more consistent with lispdir.m4 for example.
+  dnl Query distutils for this directory.
+  dnl
+  AC_CACHE_CHECK([for $am_display_PYTHON script directory (pythondir)],
+  [am_cv_python_pythondir],
+  [if test "x$am_cv_python_prefix" = x; then
+     am_py_prefix=$am__usable_prefix
+   else
+     am_py_prefix=$am_cv_python_prefix
+   fi
+   am_cv_python_pythondir=`$PYTHON -c "
+$am_python_setup_sysconfig
+if can_use_sysconfig:
+  sitedir = sysconfig.get_path('purelib', vars={'base':'$am_py_prefix'})
+else:
+  from distutils import sysconfig
+  sitedir = sysconfig.get_python_lib(0, 0, prefix='$am_py_prefix')
+sys.stdout.write(sitedir)"`
+   #
+   case $am_cv_python_pythondir in
+   $am_py_prefix*)
+     am__strip_prefix=`echo "$am_py_prefix" | sed 's|.|.|g'`
+     am_cv_python_pythondir=`echo "$am_cv_python_pythondir" | sed "s,^$am__strip_prefix,\\${PYTHON_PREFIX},"`
+     ;;
+   *)
+     case $am_py_prefix in
+       /usr|/System*) ;;
+       *) am_cv_python_pythondir="\${PYTHON_PREFIX}/lib/python$PYTHON_VERSION/site-packages"
+          ;;
+     esac
+     ;;
+   esac
+  ])
+  AC_SUBST([pythondir], [$am_cv_python_pythondir])
+
+  dnl 2. pkgpythondir: $PACKAGE directory under pythondir.  Was
+  dnl    PYTHON_SITE_PACKAGE in previous betas, but this naming is
+  dnl    more consistent with the rest of automake.
+  dnl
+  AC_SUBST([pkgpythondir], [\${pythondir}/$PACKAGE])
+
+  dnl 3. pyexecdir: directory for installing python extension modules
+  dnl    (shared libraries).
+  dnl Query distutils for this directory.
+  dnl
+  AC_CACHE_CHECK([for $am_display_PYTHON extension module directory (pyexecdir)],
+  [am_cv_python_pyexecdir],
+  [if test "x$am_cv_python_exec_prefix" = x; then
+     am_py_exec_prefix=$am__usable_exec_prefix
+   else
+     am_py_exec_prefix=$am_cv_python_exec_prefix
+   fi
+   am_cv_python_pyexecdir=`$PYTHON -c "
+$am_python_setup_sysconfig
+if can_use_sysconfig:
+  sitedir = sysconfig.get_path('platlib', vars={'platbase':'$am_py_exec_prefix'})
+else:
+  from distutils import sysconfig
+  sitedir = sysconfig.get_python_lib(1, 0, prefix='$am_py_exec_prefix')
+sys.stdout.write(sitedir)"`
+   #
+   case $am_cv_python_pyexecdir in
+   $am_py_exec_prefix*)
+     am__strip_prefix=`echo "$am_py_exec_prefix" | sed 's|.|.|g'`
+     am_cv_python_pyexecdir=`echo "$am_cv_python_pyexecdir" | sed "s,^$am__strip_prefix,\\${PYTHON_EXEC_PREFIX},"`
+     ;;
+   *)
+     case $am_py_exec_prefix in
+       /usr|/System*) ;;
+       *) am_cv_python_pyexecdir="\${PYTHON_EXEC_PREFIX}/lib/python$PYTHON_VERSION/site-packages"
+          ;;
+     esac
+     ;;
+   esac
+  ])
+  AC_SUBST([pyexecdir], [$am_cv_python_pyexecdir])
+
+  dnl 4. pkgpyexecdir: $(pyexecdir)/$(PACKAGE)
+  dnl
+  AC_SUBST([pkgpyexecdir], [\${pyexecdir}/$PACKAGE])
+
+  dnl Run any user-specified action.
+  $2
+  fi
+])
+
+
+# AM_PYTHON_CHECK_VERSION(PROG, VERSION, [ACTION-IF-TRUE], [ACTION-IF-FALSE])
+# ---------------------------------------------------------------------------
+# Run ACTION-IF-TRUE if the Python interpreter PROG has version >= VERSION.
+# Run ACTION-IF-FALSE otherwise.
+# This test uses sys.hexversion instead of the string equivalent (first
+# word of sys.version), in order to cope with versions such as 2.2c1.
+# This supports Python 2.0 or higher. (2.0 was released on October 16, 2000).
+AC_DEFUN([AM_PYTHON_CHECK_VERSION],
+ [prog="import sys
+# split strings by '.' and convert to numeric.  Append some zeros
+# because we need at least 4 digits for the hex conversion.
+# map returns an iterator in Python 3.0 and a list in 2.x
+minver = list(map(int, '$2'.split('.'))) + [[0, 0, 0]]
+minverhex = 0
+# xrange is not present in Python 3.0 and range returns an iterator
+for i in list(range(0, 4)): minverhex = (minverhex << 8) + minver[[i]]
+sys.exit(sys.hexversion < minverhex)"
+  AS_IF([AM_RUN_LOG([$1 -c "$prog"])], [$3], [$4])])
+
+# Copyright (C) 2001-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -930,7 +1326,7 @@ AC_DEFUN([AM_RUN_LOG],
 
 # Check to make sure that the build environment is sane.    -*- Autoconf -*-
 
-# Copyright (C) 1996-2018 Free Software Foundation, Inc.
+# Copyright (C) 1996-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -1011,7 +1407,7 @@ AC_CONFIG_COMMANDS_PRE(
 rm -f conftest.file
 ])
 
-# Copyright (C) 2009-2018 Free Software Foundation, Inc.
+# Copyright (C) 2009-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -1071,7 +1467,7 @@ AC_SUBST([AM_BACKSLASH])dnl
 _AM_SUBST_NOTMAKE([AM_BACKSLASH])dnl
 ])
 
-# Copyright (C) 2001-2018 Free Software Foundation, Inc.
+# Copyright (C) 2001-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -1099,7 +1495,7 @@ fi
 INSTALL_STRIP_PROGRAM="\$(install_sh) -c -s"
 AC_SUBST([INSTALL_STRIP_PROGRAM])])
 
-# Copyright (C) 2006-2018 Free Software Foundation, Inc.
+# Copyright (C) 2006-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -1118,7 +1514,7 @@ AC_DEFUN([AM_SUBST_NOTMAKE], [_AM_SUBST_NOTMAKE($@)])
 
 # Check how to create a tarball.                            -*- Autoconf -*-
 
-# Copyright (C) 2004-2018 Free Software Foundation, Inc.
+# Copyright (C) 2004-2021 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -1252,30 +1648,89 @@ AC_SUBST([am__untar])
 m4_include([lib/unistring/m4/gnulib-comp.m4])
 m4_include([lib/unistring/m4/inline.m4])
 m4_include([lib/unistring/m4/libunistring-base.m4])
-m4_include([src/gl/m4/__inline.m4])
+m4_include([src/gl/m4/atoll.m4])
 m4_include([src/gl/m4/bison.m4])
+m4_include([src/gl/m4/calloc.m4])
 m4_include([src/gl/m4/clock_time.m4])
+m4_include([src/gl/m4/codeset.m4])
+m4_include([src/gl/m4/ctype_h.m4])
+m4_include([src/gl/m4/environ.m4])
+m4_include([src/gl/m4/error.m4])
+m4_include([src/gl/m4/error_h.m4])
+m4_include([src/gl/m4/fdopen.m4])
+m4_include([src/gl/m4/flexmember.m4])
+m4_include([src/gl/m4/fpending.m4])
+m4_include([src/gl/m4/fpieee.m4])
 m4_include([src/gl/m4/fseek.m4])
+m4_include([src/gl/m4/ftruncate.m4])
 m4_include([src/gl/m4/getaddrinfo.m4])
+m4_include([src/gl/m4/getcwd.m4])
+m4_include([src/gl/m4/getpagesize.m4])
 m4_include([src/gl/m4/getpass.m4])
+m4_include([src/gl/m4/getprogname.m4])
 m4_include([src/gl/m4/gettime.m4])
 m4_include([src/gl/m4/gnulib-comp.m4])
 m4_include([src/gl/m4/hostent.m4])
+m4_include([src/gl/m4/intl-thread-locale.m4])
+m4_include([src/gl/m4/inttostr.m4])
+m4_include([src/gl/m4/ioctl.m4])
+m4_include([src/gl/m4/isblank.m4])
+m4_include([src/gl/m4/langinfo_h.m4])
+m4_include([src/gl/m4/lcmessage.m4])
+m4_include([src/gl/m4/locale-fr.m4])
+m4_include([src/gl/m4/locale-ja.m4])
+m4_include([src/gl/m4/locale-tr.m4])
+m4_include([src/gl/m4/locale-zh.m4])
+m4_include([src/gl/m4/locale_h.m4])
+m4_include([src/gl/m4/localename.m4])
 m4_include([src/gl/m4/mktime.m4])
+m4_include([src/gl/m4/nanosleep.m4])
 m4_include([src/gl/m4/nstrftime.m4])
 m4_include([src/gl/m4/parse-datetime.m4])
+m4_include([src/gl/m4/perror.m4])
+m4_include([src/gl/m4/pipe.m4])
+m4_include([src/gl/m4/pselect.m4])
+m4_include([src/gl/m4/pthread-thread.m4])
+m4_include([src/gl/m4/pthread_h.m4])
+m4_include([src/gl/m4/pthread_sigmask.m4])
+m4_include([src/gl/m4/putenv.m4])
+m4_include([src/gl/m4/raise.m4])
+m4_include([src/gl/m4/reallocarray.m4])
+m4_include([src/gl/m4/sched_h.m4])
+m4_include([src/gl/m4/sched_yield.m4])
+m4_include([src/gl/m4/select.m4])
+m4_include([src/gl/m4/semaphore.m4])
 m4_include([src/gl/m4/servent.m4])
+m4_include([src/gl/m4/setenv.m4])
+m4_include([src/gl/m4/setlocale.m4])
+m4_include([src/gl/m4/setlocale_null.m4])
+m4_include([src/gl/m4/signal_h.m4])
+m4_include([src/gl/m4/signalblocking.m4])
+m4_include([src/gl/m4/sleep.m4])
+m4_include([src/gl/m4/sockets.m4])
+m4_include([src/gl/m4/strerror.m4])
+m4_include([src/gl/m4/strerror_r.m4])
+m4_include([src/gl/m4/strtoll.m4])
+m4_include([src/gl/m4/symlink.m4])
+m4_include([src/gl/m4/sys_ioctl_h.m4])
+m4_include([src/gl/m4/sys_select_h.m4])
+m4_include([src/gl/m4/tcgetattr.m4])
+m4_include([src/gl/m4/thread.m4])
 m4_include([src/gl/m4/time_rz.m4])
 m4_include([src/gl/m4/timegm.m4])
 m4_include([src/gl/m4/timespec.m4])
 m4_include([src/gl/m4/tm_gmtoff.m4])
 m4_include([src/gl/m4/tzset.m4])
-m4_include([src/libopts/m4/libopts.m4])
-m4_include([src/libopts/m4/stdnoreturn.m4])
+m4_include([src/gl/m4/usleep.m4])
+m4_include([src/gl/m4/visibility.m4])
+m4_include([src/gl/m4/xalloc.m4])
+m4_include([src/gl/m4/yield.m4])
 m4_include([m4/00gnulib.m4])
+m4_include([m4/__inline.m4])
 m4_include([m4/absolute-header.m4])
 m4_include([m4/alloca.m4])
 m4_include([m4/arpa_inet_h.m4])
+m4_include([m4/assert_h.m4])
 m4_include([m4/ax_ac_append_to_file.m4])
 m4_include([m4/ax_ac_print_to_file.m4])
 m4_include([m4/ax_add_am_macro_static.m4])
@@ -1285,74 +1740,56 @@ m4_include([m4/ax_code_coverage.m4])
 m4_include([m4/ax_file_escapes.m4])
 m4_include([m4/builtin-expect.m4])
 m4_include([m4/byteswap.m4])
+m4_include([m4/c-bool.m4])
+m4_include([m4/canonicalize.m4])
 m4_include([m4/close.m4])
-m4_include([m4/codeset.m4])
-m4_include([m4/ctype.m4])
+m4_include([m4/double-slash-root.m4])
 m4_include([m4/dup2.m4])
 m4_include([m4/eealloc.m4])
-m4_include([m4/environ.m4])
 m4_include([m4/errno_h.m4])
+m4_include([m4/explicit_bzero.m4])
 m4_include([m4/exponentd.m4])
 m4_include([m4/extensions.m4])
 m4_include([m4/extern-inline.m4])
 m4_include([m4/fcntl-o.m4])
 m4_include([m4/fcntl.m4])
 m4_include([m4/fcntl_h.m4])
-m4_include([m4/fdopen.m4])
-m4_include([m4/flexmember.m4])
 m4_include([m4/float_h.m4])
-m4_include([m4/fpieee.m4])
+m4_include([m4/fopen.m4])
+m4_include([m4/free.m4])
 m4_include([m4/fseeko.m4])
 m4_include([m4/fstat.m4])
 m4_include([m4/ftell.m4])
 m4_include([m4/ftello.m4])
-m4_include([m4/ftruncate.m4])
 m4_include([m4/func.m4])
-m4_include([m4/getcwd.m4])
 m4_include([m4/getdelim.m4])
 m4_include([m4/getdtablesize.m4])
 m4_include([m4/getline.m4])
-m4_include([m4/getpagesize.m4])
 m4_include([m4/gettext.m4])
 m4_include([m4/gettimeofday.m4])
 m4_include([m4/gnulib-common.m4])
 m4_include([m4/gnulib-comp.m4])
 m4_include([m4/gtk-doc.m4])
-m4_include([m4/guile.m4])
 m4_include([m4/hooks.m4])
 m4_include([m4/host-cpu-c-abi.m4])
 m4_include([m4/iconv.m4])
 m4_include([m4/include_next.m4])
 m4_include([m4/inet_ntop.m4])
 m4_include([m4/inet_pton.m4])
-m4_include([m4/intl-thread-locale.m4])
 m4_include([m4/intlmacosx.m4])
 m4_include([m4/intmax_t.m4])
-m4_include([m4/inttostr.m4])
-m4_include([m4/inttypes-pri.m4])
 m4_include([m4/inttypes.m4])
 m4_include([m4/inttypes_h.m4])
-m4_include([m4/ioctl.m4])
-m4_include([m4/isblank.m4])
-m4_include([m4/langinfo_h.m4])
 m4_include([m4/largefile.m4])
-m4_include([m4/lcmessage.m4])
 m4_include([m4/ld-output-def.m4])
 m4_include([m4/ld-version-script.m4])
+m4_include([m4/ldd.m4])
 m4_include([m4/lib-ld.m4])
 m4_include([m4/lib-link.m4])
 m4_include([m4/lib-prefix.m4])
 m4_include([m4/libtool.m4])
 m4_include([m4/limits-h.m4])
-m4_include([m4/locale-fr.m4])
-m4_include([m4/locale-ja.m4])
-m4_include([m4/locale-tr.m4])
-m4_include([m4/locale-zh.m4])
-m4_include([m4/locale_h.m4])
-m4_include([m4/localename.m4])
-m4_include([m4/localtime-buffer.m4])
 m4_include([m4/lock.m4])
-m4_include([m4/longlong.m4])
 m4_include([m4/lseek.m4])
 m4_include([m4/lstat.m4])
 m4_include([m4/ltoptions.m4])
@@ -1364,68 +1801,56 @@ m4_include([m4/malloca.m4])
 m4_include([m4/manywarnings.m4])
 m4_include([m4/memchr.m4])
 m4_include([m4/memmem.m4])
+m4_include([m4/mempcpy.m4])
+m4_include([m4/memset_explicit.m4])
 m4_include([m4/minmax.m4])
 m4_include([m4/mmap-anon.m4])
 m4_include([m4/mode_t.m4])
 m4_include([m4/msvc-inval.m4])
 m4_include([m4/msvc-nothrow.m4])
 m4_include([m4/multiarch.m4])
-m4_include([m4/nanosleep.m4])
 m4_include([m4/netdb_h.m4])
 m4_include([m4/netinet_in_h.m4])
 m4_include([m4/nls.m4])
+m4_include([m4/nocrash.m4])
 m4_include([m4/off_t.m4])
 m4_include([m4/open-cloexec.m4])
+m4_include([m4/open-slash.m4])
 m4_include([m4/open.m4])
 m4_include([m4/pathmax.m4])
-m4_include([m4/perror.m4])
-m4_include([m4/pipe.m4])
 m4_include([m4/pkg.m4])
 m4_include([m4/po.m4])
 m4_include([m4/printf.m4])
 m4_include([m4/progtest.m4])
 m4_include([m4/pthread_rwlock_rdlock.m4])
-m4_include([m4/putenv.m4])
-m4_include([m4/raise.m4])
+m4_include([m4/rawmemchr.m4])
 m4_include([m4/read-file.m4])
+m4_include([m4/readlink.m4])
 m4_include([m4/realloc.m4])
 m4_include([m4/secure_getenv.m4])
-m4_include([m4/select.m4])
-m4_include([m4/setenv.m4])
-m4_include([m4/setlocale.m4])
-m4_include([m4/sigaction.m4])
-m4_include([m4/signal_h.m4])
-m4_include([m4/signalblocking.m4])
 m4_include([m4/size_max.m4])
-m4_include([m4/sleep.m4])
 m4_include([m4/snprintf.m4])
 m4_include([m4/socketlib.m4])
-m4_include([m4/sockets.m4])
 m4_include([m4/socklen.m4])
 m4_include([m4/sockpfaf.m4])
 m4_include([m4/ssize_t.m4])
 m4_include([m4/stat-time.m4])
 m4_include([m4/stat.m4])
 m4_include([m4/stdalign.m4])
-m4_include([m4/stdbool.m4])
 m4_include([m4/stddef_h.m4])
 m4_include([m4/stdint.m4])
 m4_include([m4/stdint_h.m4])
 m4_include([m4/stdio_h.m4])
 m4_include([m4/stdlib_h.m4])
+m4_include([m4/stpcpy.m4])
 m4_include([m4/strcase.m4])
 m4_include([m4/strdup.m4])
-m4_include([m4/strerror.m4])
-m4_include([m4/strerror_r.m4])
 m4_include([m4/string_h.m4])
 m4_include([m4/strings_h.m4])
 m4_include([m4/strndup.m4])
 m4_include([m4/strnlen.m4])
 m4_include([m4/strtok_r.m4])
 m4_include([m4/strverscmp.m4])
-m4_include([m4/symlink.m4])
-m4_include([m4/sys_ioctl_h.m4])
-m4_include([m4/sys_select_h.m4])
 m4_include([m4/sys_socket_h.m4])
 m4_include([m4/sys_stat_h.m4])
 m4_include([m4/sys_time_h.m4])
@@ -1434,6 +1859,7 @@ m4_include([m4/sys_uio_h.m4])
 m4_include([m4/threadlib.m4])
 m4_include([m4/time_h.m4])
 m4_include([m4/time_r.m4])
+m4_include([m4/tls.m4])
 m4_include([m4/ungetc.m4])
 m4_include([m4/unistd_h.m4])
 m4_include([m4/valgrind-tests.m4])
@@ -1446,3 +1872,4 @@ m4_include([m4/wchar_h.m4])
 m4_include([m4/wchar_t.m4])
 m4_include([m4/wint_t.m4])
 m4_include([m4/xsize.m4])
+m4_include([m4/zzgnulib.m4])

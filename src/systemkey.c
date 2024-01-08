@@ -20,7 +20,7 @@
  * <https://www.gnu.org/licenses/>.
  */
 
-#include <config.h>
+#include "config.h"
 
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
@@ -44,18 +44,17 @@
 #include <read-file.h>
 
 #include "certtool-common.h"
-#include "systemkey-args.h"
+#include "systemkey-tool-options.h"
 
 static void cmd_parser(int argc, char **argv);
-static void systemkey_delete(const char *url, FILE * outfile);
-static void systemkey_list(FILE * outfile);
+static void systemkey_delete(const char *url, FILE *outfile);
+static void systemkey_list(FILE *outfile);
 
-static gnutls_x509_crt_fmt_t incert_format, outcert_format;
-static gnutls_x509_crt_fmt_t inkey_format, outkey_format;
+static gnutls_x509_crt_fmt_t outcert_format;
+static gnutls_x509_crt_fmt_t outkey_format;
 
 static FILE *outfile;
 static const char *outfile_name = NULL;
-static FILE *infile;
 int batch = 0;
 int ask_pass = 0;
 
@@ -72,7 +71,6 @@ static void tls_log_func(int level, const char *str)
 {
 	fprintf(stderr, "|<%d>| %s", level, str);
 }
-
 
 int main(int argc, char **argv)
 {
@@ -92,15 +90,7 @@ static void cmd_parser(int argc, char **argv)
 
 	if (HAVE_OPT(DEBUG)) {
 		gnutls_global_set_log_level(OPT_VALUE_DEBUG);
-		printf("Setting log level to %d\n", (int) OPT_VALUE_DEBUG);
-	}
-
-	if (HAVE_OPT(INDER)) {
-		incert_format = GNUTLS_X509_FMT_DER;
-		inkey_format = GNUTLS_X509_FMT_DER;
-	} else {
-		incert_format = GNUTLS_X509_FMT_PEM;
-		inkey_format = GNUTLS_X509_FMT_PEM;
+		printf("Setting log level to %d\n", (int)OPT_VALUE_DEBUG);
 	}
 
 	if (HAVE_OPT(OUTDER)) {
@@ -121,15 +111,6 @@ static void cmd_parser(int argc, char **argv)
 	} else
 		outfile = stdout;
 
-	if (HAVE_OPT(INFILE)) {
-		infile = fopen(OPT_ARG(INFILE), "rb");
-		if (infile == NULL) {
-			fprintf(stderr, "%s", OPT_ARG(INFILE));
-			app_exit(1);
-		}
-	} else
-		infile = stdin;
-
 	if (HAVE_OPT(DELETE)) {
 		systemkey_delete(OPT_ARG(DELETE), outfile);
 	} else if (HAVE_OPT(LIST)) {
@@ -142,7 +123,8 @@ static void cmd_parser(int argc, char **argv)
 
 	gnutls_global_deinit();
 }
-static void systemkey_delete(const char *url, FILE * out)
+
+static void systemkey_delete(const char *url, FILE *out)
 {
 	int ret;
 
@@ -156,22 +138,26 @@ static void systemkey_delete(const char *url, FILE * out)
 	fprintf(out, "Key %s deleted\n", url);
 }
 
-static void systemkey_list(FILE * out)
+static void systemkey_list(FILE *out)
 {
 	int ret;
 	gnutls_system_key_iter_t iter = NULL;
 	char *cert_url, *key_url, *label;
 
 	do {
-		ret = gnutls_system_key_iter_get_info(&iter, GNUTLS_CRT_X509, &cert_url, &key_url, &label, NULL, 0);
+		ret = gnutls_system_key_iter_get_info(&iter, GNUTLS_CRT_X509,
+						      &cert_url, &key_url,
+						      &label, NULL, 0);
 		if (ret >= 0) {
-			fprintf(out, "Label:\t%s\nCert:\t%s\nKey:\t%s\n\n", label, cert_url, key_url);
+			fprintf(out, "Label:\t%s\nCert:\t%s\nKey:\t%s\n\n",
+				label, cert_url, key_url);
 		}
-	} while(ret >= 0);
+	} while (ret >= 0);
 
-	if (ret < 0 && ret != GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE) {
+	if (ret != GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE) {
 		if (ret == GNUTLS_E_UNIMPLEMENTED_FEATURE) {
-			fprintf(stderr, "Native key store is not supported, or not present on this system\n");
+			fprintf(stderr,
+				"Native key store is not supported, or not present on this system\n");
 		} else {
 			fprintf(stderr, "Error: %s\n", gnutls_strerror(ret));
 		}
