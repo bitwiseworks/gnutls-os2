@@ -5,7 +5,7 @@
 @deftypefun {int} {gnutls_x509_crt_get_issuer_dn3} (gnutls_x509_crt_t @var{cert}, gnutls_datum_t * @var{dn}, unsigned @var{flags})
 @var{cert}: should contain a @code{gnutls_x509_crt_t}  type
 
-@var{dn}: a pointer to a structure to hold the name
+@var{dn}: a pointer to a structure to hold the name; must be freed using @code{gnutls_free()} 
 
 @var{flags}: zero or @code{GNUTLS_X509_DN_FLAG_COMPAT} 
 

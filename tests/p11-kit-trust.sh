@@ -15,15 +15,14 @@
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with GnuTLS; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+# along with GnuTLS.  If not, see <https://www.gnu.org/licenses/>.
 
 #set -e
 
-srcdir="${srcdir:-.}"
-P11TOOL="${P11TOOL:-../src/p11tool${EXEEXT}}"
-CERTTOOL="${CERTTOOL:-../src/certtool${EXEEXT}}"
-DIFF="${DIFF:-diff}"
+: ${srcdir=.}
+: ${P11TOOL=../src/p11tool${EXEEXT}}
+: ${CERTTOOL=../src/certtool${EXEEXT}}
+: ${DIFF=diff}
 
 EXPORTED_FILE=out.$$.tmp
 DER_FILE=out-der.$$.tmp

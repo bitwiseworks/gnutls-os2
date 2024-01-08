@@ -40,9 +40,9 @@ AC_DEFUN([LIBGNUTLS_HOOKS],
   #     in CONTRIBUTION.md for more info.
   #
   # Interfaces removed:                           AGE=0 (+bump all symbol versions in .map)
-  AC_SUBST(LT_CURRENT, 56)
-  AC_SUBST(LT_REVISION, 2)
-  AC_SUBST(LT_AGE, 26)
+  AC_SUBST(LT_CURRENT, 67)
+  AC_SUBST(LT_REVISION, 0)
+  AC_SUBST(LT_AGE, 37)
 
   AC_SUBST(LT_SSL_CURRENT, 27)
   AC_SUBST(LT_SSL_REVISION, 2)
@@ -56,9 +56,9 @@ AC_DEFUN([LIBGNUTLS_HOOKS],
   AC_SUBST(LT_XSSL_REVISION, 0)
   AC_SUBST(LT_XSSL_AGE, 0)
 
-  AC_SUBST(CXX_LT_CURRENT, 29)
+  AC_SUBST(CXX_LT_CURRENT, 30)
   AC_SUBST(CXX_LT_REVISION, 0)
-  AC_SUBST(CXX_LT_AGE, 1)
+  AC_SUBST(CXX_LT_AGE, 0)
 
   AC_SUBST(CRYWRAP_PATCHLEVEL, 3)
 
@@ -68,7 +68,7 @@ AC_DEFUN([LIBGNUTLS_HOOKS],
   DLL_SSL_VERSION=`expr ${LT_SSL_CURRENT} - ${LT_SSL_AGE}`
   AC_SUBST(DLL_SSL_VERSION)
 
-NETTLE_MINIMUM=3.4.1
+NETTLE_MINIMUM=3.6
   PKG_CHECK_MODULES(NETTLE, [nettle >= $NETTLE_MINIMUM], [cryptolib="nettle"], [
 AC_MSG_ERROR([[
   ***
@@ -232,11 +232,11 @@ LIBTASN1_MINIMUM=4.9
   fi
   AM_CONDITIONAL(ENABLE_ALPN, test "$ac_enable_alpn" != "no")
 
-  ac_enable_heartbeat=yes
+  ac_enable_heartbeat=no
   AC_MSG_CHECKING([whether to enable TLS heartbeat support])
   AC_ARG_ENABLE(heartbeat-support,
-    AS_HELP_STRING([--disable-heartbeat-support],
-                   [disable support for the heartbeat extension]),
+    AS_HELP_STRING([--enable-heartbeat-support],
+                   [enable support for the heartbeat extension]),
     ac_enable_heartbeat=$enableval)
   if test x$ac_enable_heartbeat != xno; then
    AC_MSG_RESULT(yes)
@@ -246,18 +246,18 @@ LIBTASN1_MINIMUM=4.9
   fi
   AM_CONDITIONAL(ENABLE_HEARTBEAT, test "$ac_enable_heartbeat" != "no")
 
-  ac_enable_srp=yes
-  AC_MSG_CHECKING([whether to disable SRP authentication support])
+  ac_enable_srp=no
+  AC_MSG_CHECKING([whether to enable SRP authentication support])
   AC_ARG_ENABLE(srp-authentication,
-    AS_HELP_STRING([--disable-srp-authentication],
-                   [disable the SRP authentication support]),
+    AS_HELP_STRING([--enable-srp-authentication],
+                   [enable the SRP authentication support]),
     ac_enable_srp=$enableval)
   if test x$ac_enable_srp != xno; then
-   AC_MSG_RESULT(no)
+   AC_MSG_RESULT(yes)
    AC_DEFINE([ENABLE_SRP], 1, [enable SRP authentication])
   else
    ac_full=0
-   AC_MSG_RESULT(yes)
+   AC_MSG_RESULT(no)
   fi
   AM_CONDITIONAL(ENABLE_SRP, test "$ac_enable_srp" != "no")
 
@@ -344,6 +344,47 @@ LIBTASN1_MINIMUM=4.9
     AC_DEFINE([ENABLE_CRYPTODEV], 1, [Enable cryptodev support])
   fi
 
+  # For AF_ALG
+  AC_MSG_CHECKING([whether to add AF_ALG support])
+  AC_ARG_ENABLE(afalg,
+    AS_HELP_STRING([--enable-afalg], [enable AF_ALG support]),
+  enable_afalg=$enableval,enable_afalg=no)
+  AC_MSG_RESULT($enable_afalg)
+
+  if test "$enable_afalg" = "yes"; then
+    PKG_CHECK_MODULES(LIBKCAPI, [libkcapi >= 1.3.0], [], [enable_afalg=no])
+  fi
+  if test "$enable_afalg" = "yes"; then
+    AC_DEFINE([ENABLE_AFALG], 1, [Enable AF_ALG support])
+  fi
+  AM_CONDITIONAL(ENABLE_AFALG, test "$enable_afalg" != "no")
+
+  # For KTLS
+  AC_MSG_CHECKING([whether to add KTLS support])
+  AC_ARG_ENABLE(ktls,
+    AS_HELP_STRING([--enable-ktls], [enable KTLS support]),
+  enable_ktls=$enableval,enable_ktls=no)
+  AC_MSG_RESULT($enable_ktls)
+
+  if test "$enable_ktls" = "yes"; then
+    AC_MSG_CHECKING([whethwe KTLS is supported by the OS])
+    AS_CASE([$host_os], 
+      [freebsd*], [AC_CHECK_HEADERS([sys/ktls.h], [
+        AC_DEFINE([HAVE_KTLS],[1],[KTLS headers found at compile time])
+      ], [
+        AC_MSG_ERROR([<sys/ktls.h> not found])
+      ])],
+      [linux*], [AC_CHECK_HEADERS([linux/tls.h], [
+        AC_DEFINE([HAVE_KTLS],[1],[KTLS headers found at compile time])
+      ], [
+        AC_MSG_ERROR([<linux/tls.h> not found])
+      ])]
+    )
+    AC_DEFINE([ENABLE_KTLS], 1, [Enable KTLS support])
+  fi
+  AM_CONDITIONAL(ENABLE_KTLS, test "$enable_ktls" != "no")
+
+  # For OCSP
   AC_MSG_CHECKING([whether to disable OCSP support])
   AC_ARG_ENABLE(ocsp,
     AS_HELP_STRING([--disable-ocsp],

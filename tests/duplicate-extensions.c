@@ -16,14 +16,14 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GnuTLS; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ * along with GnuTLS.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -61,7 +61,6 @@ static void tls_log_func(int level, const char *str)
 /* A very basic TLS client, with anonymous authentication.
  */
 
-
 static unsigned char tls1_hello[] =
 	"\x16\x03\x01\x01\x5e\x01\x00\x01\x5a\x03\x03\x59\x41\x25\x0e\x19"
 	"\x02\x56\xa2\xe4\x97\x00\xea\x18\xd2\xb0\x00\xb9\xa2\x8a\x61\xb3"
@@ -92,10 +91,11 @@ static void client(int sd)
 	char buf[1024];
 	int ret;
 	struct pollfd pfd;
+	unsigned int timeout;
 
 	/* send a TLS 1.x hello with duplicate extensions */
-	
-	ret = send(sd, tls1_hello, sizeof(tls1_hello)-1, 0);
+
+	ret = send(sd, tls1_hello, sizeof(tls1_hello) - 1, 0);
 	if (ret < 0)
 		fail("error sending hello\n");
 
@@ -103,8 +103,12 @@ static void client(int sd)
 	pfd.events = POLLIN;
 	pfd.revents = 0;
 
+	timeout = get_timeout();
+	if (timeout > INT_MAX)
+		fail("invalid timeout value\n");
+
 	do {
-		ret = poll(&pfd, 1, 10000);
+		ret = poll(&pfd, 1, (int)timeout);
 	} while (ret == -1 && errno == EINTR);
 
 	if (ret == -1 || ret == 0) {
@@ -147,7 +151,8 @@ static void server(int sd)
 	gnutls_certificate_set_x509_trust_mem(x509_cred, &ca3_cert,
 					      GNUTLS_X509_FMT_PEM);
 
-	gnutls_certificate_set_x509_key_mem(x509_cred, &server_ca3_localhost_cert,
+	gnutls_certificate_set_x509_key_mem(x509_cred,
+					    &server_ca3_localhost_cert,
 					    &server_ca3_key,
 					    GNUTLS_X509_FMT_PEM);
 
@@ -156,22 +161,25 @@ static void server(int sd)
 	/* avoid calling all the priority functions, since the defaults
 	 * are adequate.
 	 */
-	gnutls_priority_set_direct(session, "NORMAL:-VERS-ALL:+VERS-TLS1.0:+VERS-TLS1.1:+VERS-TLS1.2", NULL);
-	gnutls_handshake_set_timeout(session, 20 * 1000);
+	gnutls_priority_set_direct(
+		session,
+		"NORMAL:-VERS-ALL:+VERS-TLS1.0:+VERS-TLS1.1:+VERS-TLS1.2",
+		NULL);
+	gnutls_handshake_set_timeout(session, get_timeout());
 
 	gnutls_credentials_set(session, GNUTLS_CRD_CERTIFICATE, x509_cred);
 
 	gnutls_transport_set_int(session, sd);
 	do {
 		ret = gnutls_handshake(session);
-	} while(ret == GNUTLS_E_INTERRUPTED || ret == GNUTLS_E_AGAIN);
+	} while (ret == GNUTLS_E_INTERRUPTED || ret == GNUTLS_E_AGAIN);
 
 	if (ret != GNUTLS_E_RECEIVED_ILLEGAL_EXTENSION) {
 		fail("server: Handshake succeeded unexpectedly\n");
 	}
 
 	gnutls_alert_send_appropriate(session, ret);
-	
+
 	close(sd);
 	gnutls_deinit(session);
 
@@ -182,7 +190,6 @@ static void server(int sd)
 	if (debug)
 		success("server: finished\n");
 }
-
 
 void doit(void)
 {
@@ -208,13 +215,15 @@ void doit(void)
 	if (child) {
 		int status;
 
+		close(sockets[0]);
 		client(sockets[1]);
 		wait(&status);
 		check_wait_status(status);
 	} else {
+		close(sockets[1]);
 		server(sockets[0]);
 		_exit(0);
 	}
 }
 
-#endif				/* _WIN32 */
+#endif /* _WIN32 */

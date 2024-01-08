@@ -21,7 +21,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #include <stdlib.h>
@@ -35,18 +35,18 @@
 
 static unsigned char saved_crq_pem[] =
 	"-----BEGIN NEW CERTIFICATE REQUEST-----\n"
-	"MIIBhTCB7wIBADAAMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC7ZkP18sXX\n"
+	"MIIBgzCB7QIBADAAMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC7ZkP18sXX\n"
 	"tozMxd/1iDuxyUtqDqGtIFBACIChT1yj0Phsz+Y89+wEdhMXi2SJIlvA3VN8O+18\n"
 	"BLuAuSi+jpvGjqClEsv1Vx6i57u3M0mf47tKrmpNaP/JEeIyjc49gAuNde/YAIGP\n"
-	"KAQDoCKNYQQH+rY3fSEHSdIJYWmYkKNYqQIDAQABoEYwRAYJKoZIhvcNAQkOMTcw\n"
-	"NTAPBgNVHRMBAf8EBTADAgEAMA8GA1UdDwEB/wQFAwMHAAAwEQYDVR0RAQH/BAcw\n"
-	"BYIDZm9vMA0GCSqGSIb3DQEBCwUAA4GBAK7iC1R9oKxpHuVHksT1Y8yC0PzxreJz\n"
-	"2d4DZKQeycaAAFHGCxVJw3t5S+/W81l0nj1z8vW5VJEsgT8loFRb1LWWlyGDUBHY\n"
-	"0aZ/9CLbRFGq4SenPU4dridwiwZVdXzF/NNFIMDp85qbCcw4qZlKinrKolqs3ymE\n"
-	"qjSnoJuZmwSQ\n"
+	"KAQDoCKNYQQH+rY3fSEHSdIJYWmYkKNYqQIDAQABoEQwQgYJKoZIhvcNAQkOMTUw\n"
+	"MzAPBgNVHRMBAf8EBTADAgEAMA0GA1UdDwEB/wQDAwEAMBEGA1UdEQEB/wQHMAWC\n"
+	"A2ZvbzANBgkqhkiG9w0BAQsFAAOBgQBKFQhbmY8RJBPiXm80PmYnZH7WaMeaOLJZ\n"
+	"JBVjsmdjFtDbgHaY9Vizrbh9jFM8iyvw01y+FZqCt2kSzvaPRoQad06NCV00oN6W\n"
+	"mG2iRKBSwVEX7JleigliK3M3Y5dlHV77CC1Or9BGC9Rbx9n9mV6z/NAWW5LyPHb5\n"
+	"gf4oXM6OPw==\n"
 	"-----END NEW CERTIFICATE REQUEST-----\n";
 
-const gnutls_datum_t saved_crq = { saved_crq_pem, sizeof(saved_crq_pem)-1 };
+const gnutls_datum_t saved_crq = { saved_crq_pem, sizeof(saved_crq_pem) - 1 };
 
 static unsigned char key_pem[] =
 	"-----BEGIN RSA PRIVATE KEY-----\n"
@@ -64,9 +64,9 @@ static unsigned char key_pem[] =
 	"/iVX2cmMTSh3w3z8MaECQEp0XJWDVKOwcTW6Ajp9SowtmiZ3YDYo1LF9igb4iaLv\n"
 	"sWZGfbnU3ryjvkb6YuFjgtzbZDZHWQCo8/cOtOBmPdk=\n"
 	"-----END RSA PRIVATE KEY-----\n";
-const gnutls_datum_t key = { key_pem, sizeof(key_pem)-1 };
+const gnutls_datum_t key = { key_pem, sizeof(key_pem) - 1 };
 
-static time_t mytime(time_t * t)
+static time_t mytime(time_t *t)
 {
 	time_t then = 1207000800;
 
@@ -135,7 +135,7 @@ static void verify_crq(const gnutls_datum_t *pem)
 	gnutls_x509_crq_t crq;
 
 	assert(gnutls_x509_crq_init(&crq) >= 0);
-	assert(gnutls_x509_crq_import(crq, pem, GNUTLS_X509_FMT_PEM)>=0);
+	assert(gnutls_x509_crq_import(crq, pem, GNUTLS_X509_FMT_PEM) >= 0);
 	assert(gnutls_x509_crq_verify(crq, 0) >= 0);
 	gnutls_x509_crq_deinit(crq);
 }
@@ -155,7 +155,7 @@ void doit(void)
 		printf("%s\n", out.data);
 
 	assert(out.size == saved_crq.size);
-	assert(memcmp(out.data, saved_crq.data, out.size)==0);
+	assert(memcmp(out.data, saved_crq.data, out.size) == 0);
 
 	verify_crq(&out);
 

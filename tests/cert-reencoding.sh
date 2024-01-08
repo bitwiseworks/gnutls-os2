@@ -18,15 +18,14 @@
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with GnuTLS; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+# along with GnuTLS.  If not, see <https://www.gnu.org/licenses/>.
 
-srcdir="${srcdir:-.}"
-CERTTOOL="${CERTTOOL:-../src/certtool${EXEEXT}}"
-OCSPTOOL="${OCSPTOOL:-../src/ocsptool${EXEEXT}}"
-GNUTLS_SERV="${GNUTLS_SERV:-../src/gnutls-serv${EXEEXT}}"
-GNUTLS_CLI="${GNUTLS_CLI:-../src/gnutls-cli${EXEEXT}}"
-DIFF="${DIFF:-diff}"
+: ${srcdir=.}
+: ${CERTTOOL=../src/certtool${EXEEXT}}
+: ${OCSPTOOL=../src/ocsptool${EXEEXT}}
+: ${SERV=../src/gnutls-serv${EXEEXT}}
+: ${CLI=../src/gnutls-cli${EXEEXT}}
+: ${DIFF=diff}
 SERVER_CERT_FILE="cert.$$.pem.tmp"
 SERVER_KEY_FILE="key.$$.pem.tmp"
 CLIENT_CERT_FILE="cli-cert.$$.pem.tmp"
@@ -41,11 +40,11 @@ if ! test -x "${OCSPTOOL}"; then
 	exit 77
 fi
 
-if ! test -x "${GNUTLS_SERV}"; then
+if ! test -x "${SERV}"; then
 	exit 77
 fi
 
-if ! test -x "${GNUTLS_CLI}"; then
+if ! test -x "${CLI}"; then
 	exit 77
 fi
 
@@ -57,7 +56,7 @@ export TZ="UTC"
 
 . "${srcdir}/scripts/common.sh"
 
-check_for_datefudge
+skip_if_no_datefudge
 
 eval "${GETPORT}"
 # Port for gnutls-serv
@@ -68,8 +67,8 @@ TLS_SERVER_PORT=$PORT
 eval "${GETPORT}"
 
 # Check for OpenSSL
-OPENSSL=`which openssl`
-if ! test -x "${OPENSSL}"; then
+: ${OPENSSL=openssl}
+if ! ("$OPENSSL" version) > /dev/null 2>&1; then
     echo "You need openssl to run this test."
     exit 77
 fi
@@ -239,19 +238,18 @@ _EOF
 
 echo "=== Bringing TLS server up ==="
 
-TESTDATE="2018-03-01"
+TESTDATE="2018-03-01 00:00:00"
 
 # Start OpenSSL TLS server
 #
-launch_bare_server $$ \
-	  datefudge "${TESTDATE}" \
+launch_bare_server \
+	  "$FAKETIME" "${TESTDATE}" \
 	  "${OPENSSL}" s_server -cert ${SERVER_CERT_FILE} -key ${SERVER_KEY_FILE} \
 	  -CAfile ${CA_FILE} -port ${PORT} -Verify 1 -verify_return_error -www
 SERVER_PID="${!}"
 wait_server "${SERVER_PID}"
 
-datefudge -s "${TESTDATE}" \
-      "${GNUTLS_CLI}" --x509certfile ${CLIENT_CERT_FILE} \
+"${CLI}" --attime "${TESTDATE}" --x509certfile ${CLIENT_CERT_FILE} \
       --x509keyfile ${CLIENT_KEY_FILE} --x509cafile=${CA_FILE} \
       --port="${PORT}" localhost </dev/null
 rc=$?

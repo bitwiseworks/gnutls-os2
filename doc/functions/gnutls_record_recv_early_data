@@ -9,7 +9,7 @@
 
 @var{data_size}: the number of requested bytes
 
-This function can be used by a searver to retrieve data sent early
+This function can be used by a server to retrieve data sent early
 in the handshake processes when resuming a session.  This is used
 to implement a zero-roundtrip (0-RTT) mode.  It has the same
 semantics as @code{gnutls_record_recv()} .

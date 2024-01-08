@@ -22,18 +22,19 @@
 
 #include "gnutls_int.h"
 #include <libtasn1.h>
-#include <datum.h>
-#include <global.h>
+#include "datum.h"
+#include "global.h"
 #include "errors.h"
-#include <str.h>
-#include <common.h>
-#include <num.h>
+#include "str.h"
+#include "common.h"
+#include "num.h"
 
 /* This file includes all the required to parse an X.509 Distriguished
  * Name (you need a parser just to read a name in the X.509 protocols!!!)
  */
 
-static int append_elements(ASN1_TYPE asn1_struct, const char *asn1_rdn_name, gnutls_buffer_st *str, int k1, unsigned last)
+static int append_elements(asn1_node asn1_struct, const char *asn1_rdn_name,
+			   gnutls_buffer_st *str, int k1, unsigned last)
 {
 	int k2, result, max_k2;
 	int len;
@@ -49,17 +50,16 @@ static int append_elements(ASN1_TYPE asn1_struct, const char *asn1_rdn_name, gnu
 	/* create a string like "tbsCertList.issuer.rdnSequence.?1"
 	 */
 	if (asn1_rdn_name[0] != 0)
-		snprintf(tmpbuffer1, sizeof(tmpbuffer1), "%s.?%u",
+		snprintf(tmpbuffer1, sizeof(tmpbuffer1), "%s.?%d",
 			 asn1_rdn_name, k1);
 	else
-		snprintf(tmpbuffer1, sizeof(tmpbuffer1), "?%u",
-			 k1);
+		snprintf(tmpbuffer1, sizeof(tmpbuffer1), "?%d", k1);
 
 	len = sizeof(value) - 1;
-	result =
-	    asn1_read_value(asn1_struct, tmpbuffer1, value, &len);
+	result = asn1_read_value(asn1_struct, tmpbuffer1, value, &len);
 
-	if (result != ASN1_VALUE_NOT_FOUND && result != ASN1_SUCCESS) { /* expected */
+	if (result != ASN1_VALUE_NOT_FOUND &&
+	    result != ASN1_SUCCESS) { /* expected */
 		gnutls_assert();
 		result = _gnutls_asn2err(result);
 		goto cleanup;
@@ -74,28 +74,26 @@ static int append_elements(ASN1_TYPE asn1_struct, const char *asn1_rdn_name, gnu
 		goto cleanup;
 	}
 
-	do {		/* Move to the attribute type and values
+	do { /* Move to the attribute type and values
 				 */
 		k2++;
 
 		if (tmpbuffer1[0] != 0)
-			snprintf(tmpbuffer2, sizeof(tmpbuffer2),
-				 "%s.?%u", tmpbuffer1, k2);
+			snprintf(tmpbuffer2, sizeof(tmpbuffer2), "%s.?%d",
+				 tmpbuffer1, k2);
 		else
-			snprintf(tmpbuffer2, sizeof(tmpbuffer2),
-				 "?%u", k2);
+			snprintf(tmpbuffer2, sizeof(tmpbuffer2), "?%d", k2);
 
 		/* Try to read the RelativeDistinguishedName attributes.
 		 */
 
 		len = sizeof(value) - 1;
-		result =
-		    asn1_read_value(asn1_struct, tmpbuffer2, value,
-				    &len);
+		result = asn1_read_value(asn1_struct, tmpbuffer2, value, &len);
 
 		if (result == ASN1_ELEMENT_NOT_FOUND)
 			break;
-		if (result != ASN1_VALUE_NOT_FOUND && result != ASN1_SUCCESS) { /* expected */
+		if (result != ASN1_VALUE_NOT_FOUND &&
+		    result != ASN1_SUCCESS) { /* expected */
 			gnutls_assert();
 			result = _gnutls_asn2err(result);
 			goto cleanup;
@@ -103,15 +101,11 @@ static int append_elements(ASN1_TYPE asn1_struct, const char *asn1_rdn_name, gnu
 
 		/* Read the OID 
 		 */
-		_gnutls_str_cpy(tmpbuffer3, sizeof(tmpbuffer3),
-				tmpbuffer2);
-		_gnutls_str_cat(tmpbuffer3, sizeof(tmpbuffer3),
-				".type");
+		_gnutls_str_cpy(tmpbuffer3, sizeof(tmpbuffer3), tmpbuffer2);
+		_gnutls_str_cat(tmpbuffer3, sizeof(tmpbuffer3), ".type");
 
 		len = sizeof(oid) - 1;
-		result =
-		    asn1_read_value(asn1_struct, tmpbuffer3, oid,
-				    &len);
+		result = asn1_read_value(asn1_struct, tmpbuffer3, oid, &len);
 
 		if (result == ASN1_ELEMENT_NOT_FOUND)
 			break;
@@ -123,52 +117,59 @@ static int append_elements(ASN1_TYPE asn1_struct, const char *asn1_rdn_name, gnu
 
 		/* Read the Value 
 		 */
-		_gnutls_str_cpy(tmpbuffer3, sizeof(tmpbuffer3),
-				tmpbuffer2);
-		_gnutls_str_cat(tmpbuffer3, sizeof(tmpbuffer3),
-				".value");
+		_gnutls_str_cpy(tmpbuffer3, sizeof(tmpbuffer3), tmpbuffer2);
+		_gnutls_str_cat(tmpbuffer3, sizeof(tmpbuffer3), ".value");
 
 		len = 0;
 
-		result =
-		    _gnutls_x509_read_value(asn1_struct,
-					    tmpbuffer3, &tvd);
+		result = _gnutls_x509_read_value(asn1_struct, tmpbuffer3, &tvd);
 		if (result < 0) {
 			gnutls_assert();
 			goto cleanup;
 		}
-#define STR_APPEND(y) if ((result=_gnutls_buffer_append_str( str, y)) < 0) { \
-	gnutls_assert(); \
-	goto cleanup; \
-}
-#define DATA_APPEND(x,y) if ((result=_gnutls_buffer_append_data( str, x,y)) < 0) { \
-	gnutls_assert(); \
-	goto cleanup; \
-}
+#define STR_APPEND(y)                                           \
+	if ((result = _gnutls_buffer_append_str(str, y)) < 0) { \
+		gnutls_assert();                                \
+		goto cleanup;                                   \
+	}
+#define DATA_APPEND(x, y)                                           \
+	if ((result = _gnutls_buffer_append_data(str, x, y)) < 0) { \
+		gnutls_assert();                                    \
+		goto cleanup;                                       \
+	}
 		/*   The encodings of adjoining RelativeDistinguishedNames are separated
 		 *   by a comma character (',' ASCII 44).
 		 */
 
-		ldap_desc =
-		    gnutls_x509_dn_oid_name(oid,
-					    GNUTLS_X509_DN_OID_RETURN_OID);
+		ldap_desc = gnutls_x509_dn_oid_name(
+			oid, GNUTLS_X509_DN_OID_RETURN_OID);
 
 		STR_APPEND(ldap_desc);
 		STR_APPEND("=");
 
+		/* DirectoryString by definition in RFC 5280 cannot be empty.
+		 * If asn_node.value_len = 0 the parser correctly rejects such DirectoryString.
+		 * However, if asn_node.value contains ASN.1 TLV triplet with length = 0,
+		 * such DirectoryString is not rejected by the parser as the node itself is not empty.
+		 * Explicitly reject DirectoryString in such case.
+		 */
+		const char *asn_desc = _gnutls_oid_get_asn_desc(oid);
+		if (asn_desc && !strcmp(asn_desc, "PKIX1.DirectoryString") &&
+		    tvd.data[1] == 0) {
+			gnutls_assert();
+			result = GNUTLS_E_ASN1_VALUE_NOT_VALID;
+			_gnutls_debug_log("Empty DirectoryString\n");
+			goto cleanup;
+		}
+
 		result =
-		    _gnutls_x509_dn_to_string(oid, tvd.data,
-					      tvd.size, &td);
+			_gnutls_x509_dn_to_string(oid, tvd.data, tvd.size, &td);
 		if (result < 0) {
 			gnutls_assert();
-			_gnutls_debug_log
-			    ("Cannot parse OID: '%s' with value '%s'\n",
-			     oid, _gnutls_bin2hex(tvd.data,
-						  tvd.size,
-						  tmpbuffer3,
-						  sizeof
-						  (tmpbuffer3),
-						  NULL));
+			_gnutls_debug_log(
+				"Cannot parse OID: '%s' with value '%s'\n", oid,
+				_gnutls_bin2hex(tvd.data, tvd.size, tmpbuffer3,
+						sizeof(tmpbuffer3), NULL));
 			goto cleanup;
 		}
 
@@ -185,21 +186,18 @@ static int append_elements(ASN1_TYPE asn1_struct, const char *asn1_rdn_name, gnu
 		} else if (!last) {
 			STR_APPEND(",");
 		}
-	}
-	while (1);
+	} while (1);
 
 	result = 0;
 
- cleanup:
+cleanup:
 	_gnutls_free_datum(&td);
 	_gnutls_free_datum(&tvd);
 	return result;
 }
 
-int
-_gnutls_x509_get_dn(ASN1_TYPE asn1_struct,
-		    const char *asn1_rdn_name, gnutls_datum_t * dn,
-		    unsigned flags)
+int _gnutls_x509_get_dn(asn1_node asn1_struct, const char *asn1_rdn_name,
+			gnutls_datum_t *dn, unsigned flags)
 {
 	gnutls_buffer_st out_str;
 	int i, k1, result;
@@ -208,8 +206,10 @@ _gnutls_x509_get_dn(ASN1_TYPE asn1_struct,
 
 	result = asn1_number_of_elements(asn1_struct, asn1_rdn_name, &k1);
 	if (result != ASN1_SUCCESS) {
-		if (result == ASN1_ELEMENT_NOT_FOUND || result == ASN1_VALUE_NOT_FOUND) {
-			result = gnutls_assert_val(GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE);
+		if (result == ASN1_ELEMENT_NOT_FOUND ||
+		    result == ASN1_VALUE_NOT_FOUND) {
+			result = gnutls_assert_val(
+				GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE);
 		} else {
 			gnutls_assert();
 			result = _gnutls_asn2err(result);
@@ -224,8 +224,10 @@ _gnutls_x509_get_dn(ASN1_TYPE asn1_struct,
 	}
 
 	if (flags & GNUTLS_X509_DN_FLAG_COMPAT) {
-		for (i=0;i<k1;i++) {
-			result = append_elements(asn1_struct, asn1_rdn_name, &out_str, i+1, (i==(k1-1))?1:0);
+		for (i = 0; i < k1; i++) {
+			result = append_elements(asn1_struct, asn1_rdn_name,
+						 &out_str, i + 1,
+						 (i == (k1 - 1)) ? 1 : 0);
 			if (result < 0) {
 				gnutls_assert();
 				goto cleanup;
@@ -233,7 +235,8 @@ _gnutls_x509_get_dn(ASN1_TYPE asn1_struct,
 		}
 	} else {
 		while (k1 > 0) {
-			result = append_elements(asn1_struct, asn1_rdn_name, &out_str, k1, k1==1?1:0);
+			result = append_elements(asn1_struct, asn1_rdn_name,
+						 &out_str, k1, k1 == 1 ? 1 : 0);
 			if (result < 0) {
 				gnutls_assert();
 				goto cleanup;
@@ -244,12 +247,10 @@ _gnutls_x509_get_dn(ASN1_TYPE asn1_struct,
 
 	return _gnutls_buffer_to_datum(&out_str, dn, 1);
 
- cleanup:
+cleanup:
 	_gnutls_buffer_clear(&out_str);
 	return result;
-
 }
-
 
 /* Parses an X509 DN in the asn1_struct, and puts the output into
  * the string buf. The output is an LDAP encoded DN.
@@ -257,13 +258,11 @@ _gnutls_x509_get_dn(ASN1_TYPE asn1_struct,
  * asn1_rdn_name must be a string in the form "tbsCertificate.issuer.rdnSequence".
  * That is to point in the rndSequence.
  */
-int
-_gnutls_x509_parse_dn(ASN1_TYPE asn1_struct,
-		      const char *asn1_rdn_name, char *buf,
-		      size_t * buf_size, unsigned flags)
+int _gnutls_x509_parse_dn(asn1_node asn1_struct, const char *asn1_rdn_name,
+			  char *buf, size_t *buf_size, unsigned flags)
 {
 	int ret;
-	gnutls_datum_t dn = {NULL, 0};
+	gnutls_datum_t dn = { NULL, 0 };
 
 	if (buf_size == NULL) {
 		gnutls_assert();
@@ -279,7 +278,7 @@ _gnutls_x509_parse_dn(ASN1_TYPE asn1_struct,
 	if (ret < 0)
 		return gnutls_assert_val(ret);
 
-	if (dn.size >= (unsigned int) *buf_size) {
+	if (dn.size >= (unsigned int)*buf_size) {
 		gnutls_assert();
 		*buf_size = dn.size + 1;
 		ret = GNUTLS_E_SHORT_MEMORY_BUFFER;
@@ -296,7 +295,7 @@ _gnutls_x509_parse_dn(ASN1_TYPE asn1_struct,
 		*buf_size = dn.size + 1;
 
 	ret = 0;
-      cleanup:
+cleanup:
 	_gnutls_free_datum(&dn);
 	return ret;
 }
@@ -313,11 +312,9 @@ _gnutls_x509_parse_dn(ASN1_TYPE asn1_struct,
  * indx specifies which OID to return. Ie 0 means return the first specified
  * OID found, 1 the second etc.
  */
-int
-_gnutls_x509_parse_dn_oid(ASN1_TYPE asn1_struct,
-			  const char *asn1_rdn_name,
-			  const char *given_oid, int indx,
-			  unsigned int raw_flag, gnutls_datum_t * out)
+int _gnutls_x509_parse_dn_oid(asn1_node asn1_struct, const char *asn1_rdn_name,
+			      const char *given_oid, int indx,
+			      unsigned int raw_flag, gnutls_datum_t *out)
 {
 	int k2, k1, result;
 	char tmpbuffer1[MAX_NAME_SIZE];
@@ -331,20 +328,17 @@ _gnutls_x509_parse_dn_oid(ASN1_TYPE asn1_struct,
 
 	k1 = 0;
 	do {
-
 		k1++;
 		/* create a string like "tbsCertList.issuer.rdnSequence.?1"
 		 */
 		if (asn1_rdn_name[0] != 0)
-			snprintf(tmpbuffer1, sizeof(tmpbuffer1), "%s.?%u",
+			snprintf(tmpbuffer1, sizeof(tmpbuffer1), "%s.?%d",
 				 asn1_rdn_name, k1);
 		else
-			snprintf(tmpbuffer1, sizeof(tmpbuffer1), "?%u",
-				 k1);
+			snprintf(tmpbuffer1, sizeof(tmpbuffer1), "?%d", k1);
 
 		len = sizeof(value) - 1;
-		result =
-		    asn1_read_value(asn1_struct, tmpbuffer1, value, &len);
+		result = asn1_read_value(asn1_struct, tmpbuffer1, value, &len);
 
 		if (result == ASN1_ELEMENT_NOT_FOUND) {
 			gnutls_assert();
@@ -359,24 +353,23 @@ _gnutls_x509_parse_dn_oid(ASN1_TYPE asn1_struct,
 
 		k2 = 0;
 
-		do {		/* Move to the attribute type and values
+		do { /* Move to the attribute type and values
 				 */
 			k2++;
 
 			if (tmpbuffer1[0] != 0)
 				snprintf(tmpbuffer2, sizeof(tmpbuffer2),
-					 "%s.?%u", tmpbuffer1, k2);
+					 "%s.?%d", tmpbuffer1, k2);
 			else
-				snprintf(tmpbuffer2, sizeof(tmpbuffer2),
-					 "?%u", k2);
+				snprintf(tmpbuffer2, sizeof(tmpbuffer2), "?%d",
+					 k2);
 
 			/* Try to read the RelativeDistinguishedName attributes.
 			 */
 
 			len = sizeof(value) - 1;
-			result =
-			    asn1_read_value(asn1_struct, tmpbuffer2, value,
-					    &len);
+			result = asn1_read_value(asn1_struct, tmpbuffer2, value,
+						 &len);
 
 			if (result == ASN1_ELEMENT_NOT_FOUND) {
 				break;
@@ -395,9 +388,8 @@ _gnutls_x509_parse_dn_oid(ASN1_TYPE asn1_struct,
 					".type");
 
 			len = sizeof(oid) - 1;
-			result =
-			    asn1_read_value(asn1_struct, tmpbuffer3, oid,
-					    &len);
+			result = asn1_read_value(asn1_struct, tmpbuffer3, oid,
+						 &len);
 
 			if (result == ASN1_ELEMENT_NOT_FOUND)
 				break;
@@ -407,21 +399,18 @@ _gnutls_x509_parse_dn_oid(ASN1_TYPE asn1_struct,
 				goto cleanup;
 			}
 
-			if (strcmp(oid, given_oid) == 0 && indx == i++) {	/* Found the OID */
+			if (strcmp(oid, given_oid) == 0 &&
+			    indx == i++) { /* Found the OID */
 
 				/* Read the Value 
 				 */
-				_gnutls_str_cpy(tmpbuffer3,
-						sizeof(tmpbuffer3),
+				_gnutls_str_cpy(tmpbuffer3, sizeof(tmpbuffer3),
 						tmpbuffer2);
-				_gnutls_str_cat(tmpbuffer3,
-						sizeof(tmpbuffer3),
+				_gnutls_str_cat(tmpbuffer3, sizeof(tmpbuffer3),
 						".value");
 
-				result =
-				    _gnutls_x509_read_value(asn1_struct,
-							    tmpbuffer3,
-							    &td);
+				result = _gnutls_x509_read_value(
+					asn1_struct, tmpbuffer3, &td);
 				if (result < 0) {
 					gnutls_assert();
 					goto cleanup;
@@ -432,14 +421,9 @@ _gnutls_x509_parse_dn_oid(ASN1_TYPE asn1_struct,
 					out->size = td.size;
 					return 0;
 
-				} else {	/* parse data. raw_flag == 0 */
-					result =
-					    _gnutls_x509_dn_to_string(oid,
-								      td.
-								      data,
-								      td.
-								      size,
-								      out);
+				} else { /* parse data. raw_flag == 0 */
+					result = _gnutls_x509_dn_to_string(
+						oid, td.data, td.size, out);
 
 					_gnutls_free_datum(&td);
 					if (result < 0) {
@@ -449,22 +433,19 @@ _gnutls_x509_parse_dn_oid(ASN1_TYPE asn1_struct,
 
 					return 0;
 
-				}	/* raw_flag == 0 */
+				} /* raw_flag == 0 */
 			}
-		}
-		while (1);
+		} while (1);
 
-	}
-	while (1);
+	} while (1);
 
 	gnutls_assert();
 
 	result = GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE;
 
-      cleanup:
+cleanup:
 	return result;
 }
-
 
 /* Parses an X509 DN in the asn1_struct, and returns the requested
  * DN OID.
@@ -475,10 +456,8 @@ _gnutls_x509_parse_dn_oid(ASN1_TYPE asn1_struct,
  * indx specifies which OID to return. Ie 0 means return the first specified
  * OID found, 1 the second etc.
  */
-int
-_gnutls_x509_get_dn_oid(ASN1_TYPE asn1_struct,
-			const char *asn1_rdn_name,
-			int indx, void *_oid, size_t * sizeof_oid)
+int _gnutls_x509_get_dn_oid(asn1_node asn1_struct, const char *asn1_rdn_name,
+			    int indx, void *_oid, size_t *sizeof_oid)
 {
 	int k2, k1, result;
 	char tmpbuffer1[MAX_NAME_SIZE];
@@ -491,20 +470,17 @@ _gnutls_x509_get_dn_oid(ASN1_TYPE asn1_struct,
 
 	k1 = 0;
 	do {
-
 		k1++;
 		/* create a string like "tbsCertList.issuer.rdnSequence.?1"
 		 */
 		if (asn1_rdn_name[0] != 0)
-			snprintf(tmpbuffer1, sizeof(tmpbuffer1), "%s.?%u",
+			snprintf(tmpbuffer1, sizeof(tmpbuffer1), "%s.?%d",
 				 asn1_rdn_name, k1);
 		else
-			snprintf(tmpbuffer1, sizeof(tmpbuffer1), "?%u",
-				 k1);
+			snprintf(tmpbuffer1, sizeof(tmpbuffer1), "?%d", k1);
 
 		len = sizeof(value) - 1;
-		result =
-		    asn1_read_value(asn1_struct, tmpbuffer1, value, &len);
+		result = asn1_read_value(asn1_struct, tmpbuffer1, value, &len);
 
 		if (result == ASN1_ELEMENT_NOT_FOUND) {
 			gnutls_assert();
@@ -519,24 +495,23 @@ _gnutls_x509_get_dn_oid(ASN1_TYPE asn1_struct,
 
 		k2 = 0;
 
-		do {		/* Move to the attribute type and values
+		do { /* Move to the attribute type and values
 				 */
 			k2++;
 
 			if (tmpbuffer1[0] != 0)
 				snprintf(tmpbuffer2, sizeof(tmpbuffer2),
-					 "%s.?%u", tmpbuffer1, k2);
+					 "%s.?%d", tmpbuffer1, k2);
 			else
-				snprintf(tmpbuffer2, sizeof(tmpbuffer2),
-					 "?%u", k2);
+				snprintf(tmpbuffer2, sizeof(tmpbuffer2), "?%d",
+					 k2);
 
 			/* Try to read the RelativeDistinguishedName attributes.
 			 */
 
 			len = sizeof(value) - 1;
-			result =
-			    asn1_read_value(asn1_struct, tmpbuffer2, value,
-					    &len);
+			result = asn1_read_value(asn1_struct, tmpbuffer2, value,
+						 &len);
 
 			if (result == ASN1_ELEMENT_NOT_FOUND) {
 				break;
@@ -555,9 +530,8 @@ _gnutls_x509_get_dn_oid(ASN1_TYPE asn1_struct,
 					".type");
 
 			len = sizeof(oid) - 1;
-			result =
-			    asn1_read_value(asn1_struct, tmpbuffer3, oid,
-					    &len);
+			result = asn1_read_value(asn1_struct, tmpbuffer3, oid,
+						 &len);
 
 			if (result == ASN1_ELEMENT_NOT_FOUND)
 				break;
@@ -567,15 +541,14 @@ _gnutls_x509_get_dn_oid(ASN1_TYPE asn1_struct,
 				goto cleanup;
 			}
 
-			if (indx == i++) {	/* Found the OID */
+			if (indx == i++) { /* Found the OID */
 
 				len = strlen(oid) + 1;
 
-				if (*sizeof_oid < (unsigned) len) {
+				if (*sizeof_oid < (unsigned)len) {
 					*sizeof_oid = len;
 					gnutls_assert();
-					return
-					    GNUTLS_E_SHORT_MEMORY_BUFFER;
+					return GNUTLS_E_SHORT_MEMORY_BUFFER;
 				}
 
 				memcpy(_oid, oid, len);
@@ -583,17 +556,15 @@ _gnutls_x509_get_dn_oid(ASN1_TYPE asn1_struct,
 
 				return 0;
 			}
-		}
-		while (1);
+		} while (1);
 
-	}
-	while (1);
+	} while (1);
 
 	gnutls_assert();
 
 	result = GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE;
 
-      cleanup:
+cleanup:
 	return result;
 }
 
@@ -601,10 +572,10 @@ _gnutls_x509_get_dn_oid(ASN1_TYPE asn1_struct,
  * 'multi' must be (0) if writing an AttributeTypeAndValue, and 1 if Attribute.
  * In all cases only one value is written.
  */
-static int
-_gnutls_x509_write_attribute(const char *given_oid,
-			     ASN1_TYPE asn1_struct, const char *where,
-			     const void *_data, int sizeof_data)
+static int _gnutls_x509_write_attribute(const char *given_oid,
+					asn1_node asn1_struct,
+					const char *where, const void *_data,
+					int sizeof_data)
 {
 	char tmp[128];
 	int result;
@@ -635,7 +606,6 @@ _gnutls_x509_write_attribute(const char *given_oid,
 	return 0;
 }
 
-
 /* Decodes an X.509 Attribute (if multi==1) or an AttributeTypeAndValue
  * otherwise.
  *
@@ -644,12 +614,10 @@ _gnutls_x509_write_attribute(const char *given_oid,
  *
  * The output is allocated and stored in value.
  */
-int
-_gnutls_x509_decode_and_read_attribute(ASN1_TYPE asn1_struct,
-				       const char *where, char *oid,
-				       int oid_size,
-				       gnutls_datum_t * value, int multi,
-				       int octet_string)
+int _gnutls_x509_decode_and_read_attribute(asn1_node asn1_struct,
+					   const char *where, char *oid,
+					   int oid_size, gnutls_datum_t *value,
+					   int multi, int octet_string)
 {
 	char tmpbuffer[128];
 	int len, result;
@@ -675,22 +643,20 @@ _gnutls_x509_decode_and_read_attribute(ASN1_TYPE asn1_struct,
 	_gnutls_str_cat(tmpbuffer, sizeof(tmpbuffer), ".value");
 
 	if (multi)
-		_gnutls_str_cat(tmpbuffer, sizeof(tmpbuffer), "s.?1");	/* .values.?1 */
+		_gnutls_str_cat(tmpbuffer, sizeof(tmpbuffer),
+				"s.?1"); /* .values.?1 */
 
 	if (octet_string)
-		result =
-		    _gnutls_x509_read_string(asn1_struct, tmpbuffer, value,
-					     ASN1_ETYPE_OCTET_STRING, 0);
+		result = _gnutls_x509_read_string(asn1_struct, tmpbuffer, value,
+						  ASN1_ETYPE_OCTET_STRING, 0);
 	else
-		result =
-		    _gnutls_x509_read_value(asn1_struct, tmpbuffer, value);
+		result = _gnutls_x509_read_value(asn1_struct, tmpbuffer, value);
 	if (result < 0) {
 		gnutls_assert();
 		return result;
 	}
 
 	return 0;
-
 }
 
 /* Sets an X509 DN in the asn1_struct, and puts the given OID in the DN.
@@ -700,10 +666,9 @@ _gnutls_x509_decode_and_read_attribute(ASN1_TYPE asn1_struct,
  * That is to point before the rndSequence.
  *
  */
-int
-_gnutls_x509_set_dn_oid(ASN1_TYPE asn1_struct,
-			const char *asn1_name, const char *given_oid,
-			int raw_flag, const char *name, int sizeof_name)
+int _gnutls_x509_set_dn_oid(asn1_node asn1_struct, const char *asn1_name,
+			    const char *given_oid, int raw_flag,
+			    const char *name, int sizeof_name)
 {
 	int result;
 	char tmp[MAX_NAME_SIZE], asn1_rdn_name[MAX_NAME_SIZE];
@@ -715,19 +680,20 @@ _gnutls_x509_set_dn_oid(ASN1_TYPE asn1_struct,
 
 	/* create the rdnSequence
 	 */
-	result =
-	    asn1_write_value(asn1_struct, asn1_name, "rdnSequence", 1);
+	result = asn1_write_value(asn1_struct, asn1_name, "rdnSequence", 1);
 	if (result != ASN1_SUCCESS) {
 		gnutls_assert();
 		return _gnutls_asn2err(result);
 	}
 
 	if (asn1_name[0] != 0) {
-		_gnutls_str_cpy(asn1_rdn_name, sizeof(asn1_rdn_name), asn1_name);
+		_gnutls_str_cpy(asn1_rdn_name, sizeof(asn1_rdn_name),
+				asn1_name);
 		_gnutls_str_cat(asn1_rdn_name, sizeof(asn1_rdn_name),
-			".rdnSequence");
+				".rdnSequence");
 	} else {
-		_gnutls_str_cpy(asn1_rdn_name, sizeof(asn1_rdn_name), "rdnSequence");
+		_gnutls_str_cpy(asn1_rdn_name, sizeof(asn1_rdn_name),
+				"rdnSequence");
 	}
 
 	/* create a new element 
@@ -749,23 +715,17 @@ _gnutls_x509_set_dn_oid(ASN1_TYPE asn1_struct,
 		return _gnutls_asn2err(result);
 	}
 
-
 	/* Encode and write the data
 	 */
 	_gnutls_str_cpy(tmp, sizeof(tmp), asn1_rdn_name);
 	_gnutls_str_cat(tmp, sizeof(tmp), ".?LAST.?LAST");
 
 	if (!raw_flag) {
-		result =
-		    _gnutls_x509_encode_and_write_attribute(given_oid,
-							    asn1_struct,
-							    tmp, name,
-							    sizeof_name,
-							    0);
+		result = _gnutls_x509_encode_and_write_attribute(
+			given_oid, asn1_struct, tmp, name, sizeof_name, 0);
 	} else {
-		result =
-		    _gnutls_x509_write_attribute(given_oid, asn1_struct,
-						 tmp, name, sizeof_name);
+		result = _gnutls_x509_write_attribute(given_oid, asn1_struct,
+						      tmp, name, sizeof_name);
 	}
 
 	if (result < 0) {
@@ -775,7 +735,6 @@ _gnutls_x509_set_dn_oid(ASN1_TYPE asn1_struct,
 
 	return 0;
 }
-
 
 /**
  * gnutls_x509_rdn_get:
@@ -795,9 +754,7 @@ _gnutls_x509_set_dn_oid(ASN1_TYPE asn1_struct,
  * updated if the provided buffer is not long enough, otherwise a
  * negative error value.
  **/
-int
-gnutls_x509_rdn_get(const gnutls_datum_t * idn,
-		    char *buf, size_t * buf_size)
+int gnutls_x509_rdn_get(const gnutls_datum_t *idn, char *buf, size_t *buf_size)
 {
 	int ret;
 	gnutls_datum_t out;
@@ -806,7 +763,7 @@ gnutls_x509_rdn_get(const gnutls_datum_t * idn,
 	if (ret < 0)
 		return gnutls_assert_val(ret);
 
-	ret = _gnutls_copy_string(&out, (void*)buf, buf_size);
+	ret = _gnutls_copy_string(&out, (void *)buf, buf_size);
 	gnutls_free(out.data);
 	if (ret < 0) {
 		gnutls_assert();
@@ -834,9 +791,8 @@ gnutls_x509_rdn_get(const gnutls_datum_t * idn,
  * updated if the provided buffer is not long enough, otherwise a
  * negative error value.
  **/
-int
-gnutls_x509_rdn_get2(const gnutls_datum_t * idn,
-		     gnutls_datum_t *str, unsigned flags)
+int gnutls_x509_rdn_get2(const gnutls_datum_t *idn, gnutls_datum_t *str,
+			 unsigned flags)
 {
 	int ret;
 	gnutls_x509_dn_t dn;
@@ -858,7 +814,7 @@ gnutls_x509_rdn_get2(const gnutls_datum_t * idn,
 	}
 
 	ret = 0;
- cleanup:
+cleanup:
 	gnutls_x509_dn_deinit(dn);
 	return ret;
 }
@@ -882,22 +838,20 @@ gnutls_x509_rdn_get2(const gnutls_datum_t * idn,
  * updated if the provided buffer is not long enough, otherwise a
  * negative error value.
  **/
-int
-gnutls_x509_rdn_get_by_oid(const gnutls_datum_t * idn, const char *oid,
-			   unsigned indx, unsigned int raw_flag,
-			   void *buf, size_t * buf_size)
+int gnutls_x509_rdn_get_by_oid(const gnutls_datum_t *idn, const char *oid,
+			       unsigned indx, unsigned int raw_flag, void *buf,
+			       size_t *buf_size)
 {
 	int result;
-	ASN1_TYPE dn = ASN1_TYPE_EMPTY;
+	asn1_node dn = NULL;
 	gnutls_datum_t td;
 
 	if (buf_size == 0) {
 		return GNUTLS_E_INVALID_REQUEST;
 	}
 
-	if ((result =
-	     asn1_create_element(_gnutls_get_pkix(),
-				 "PKIX1.Name", &dn)) != ASN1_SUCCESS) {
+	if ((result = asn1_create_element(_gnutls_get_pkix(), "PKIX1.Name",
+					  &dn)) != ASN1_SUCCESS) {
 		gnutls_assert();
 		return _gnutls_asn2err(result);
 	}
@@ -910,9 +864,8 @@ gnutls_x509_rdn_get_by_oid(const gnutls_datum_t * idn, const char *oid,
 		return _gnutls_asn2err(result);
 	}
 
-	result =
-	    _gnutls_x509_parse_dn_oid(dn, "rdnSequence", oid, indx,
-				      raw_flag, &td);
+	result = _gnutls_x509_parse_dn_oid(dn, "rdnSequence", oid, indx,
+					   raw_flag, &td);
 
 	asn1_delete_structure(&dn);
 	if (result < 0)
@@ -938,20 +891,18 @@ gnutls_x509_rdn_get_by_oid(const gnutls_datum_t * idn, const char *oid,
  *
  * Since: 2.4.0
  **/
-int
-gnutls_x509_rdn_get_oid(const gnutls_datum_t * idn,
-			unsigned indx, void *buf, size_t * buf_size)
+int gnutls_x509_rdn_get_oid(const gnutls_datum_t *idn, unsigned indx, void *buf,
+			    size_t *buf_size)
 {
 	int result;
-	ASN1_TYPE dn = ASN1_TYPE_EMPTY;
+	asn1_node dn = NULL;
 
 	if (buf_size == 0) {
 		return GNUTLS_E_INVALID_REQUEST;
 	}
 
-	if ((result =
-	     asn1_create_element(_gnutls_get_pkix(),
-				 "PKIX1.Name", &dn)) != ASN1_SUCCESS) {
+	if ((result = asn1_create_element(_gnutls_get_pkix(), "PKIX1.Name",
+					  &dn)) != ASN1_SUCCESS) {
 		gnutls_assert();
 		return _gnutls_asn2err(result);
 	}
@@ -965,8 +916,7 @@ gnutls_x509_rdn_get_oid(const gnutls_datum_t * idn,
 	}
 
 	result =
-	    _gnutls_x509_get_dn_oid(dn, "rdnSequence", indx, buf,
-				    buf_size);
+		_gnutls_x509_get_dn_oid(dn, "rdnSequence", indx, buf, buf_size);
 
 	asn1_delete_structure(&dn);
 	return result;
@@ -978,17 +928,59 @@ gnutls_x509_rdn_get_oid(const gnutls_datum_t * idn,
  * Returns 1 if the DN's match and (0) if they don't match. Otherwise
  * a negative error code is returned to indicate error.
  */
-int
-_gnutls_x509_compare_raw_dn(const gnutls_datum_t * dn1,
-			    const gnutls_datum_t * dn2)
+int _gnutls_x509_compare_raw_dn(const gnutls_datum_t *dn1,
+				const gnutls_datum_t *dn2)
 {
+	int ret;
+	gnutls_datum_t str1, str2;
 
-	if (dn1->size != dn2->size) {
-		return 0;
+	/* Simple case of completely identical? */
+
+	if (dn1->size == dn2->size) {
+		if (memcmp(dn1->data, dn2->data, dn2->size) == 0) {
+			return 1;
+		}
 	}
-	if (memcmp(dn1->data, dn2->data, dn2->size) != 0) {
+
+	/* RFC5280 (https://tools.ietf.org/html/rfc5280#section-7.1)
+	 * requires that the LDAP StringPrep profile and caseIgnoreMatch
+	 * must be used for this comparison. We do not use that but
+	 * instead we do a simpler comparison that ignores the tags used
+	 * such as `UTF8String` and `PrintableString`. */
+
+	if ((dn1->size == 0) || (dn2->size == 0)) {
 		gnutls_assert();
 		return 0;
 	}
-	return 1;		/* they match */
+
+	ret = gnutls_x509_rdn_get2(dn1, &str1, 0);
+	if (ret < 0) {
+		gnutls_assert();
+		return 0;
+	}
+
+	ret = gnutls_x509_rdn_get2(dn2, &str2, 0);
+	if (ret < 0) {
+		gnutls_assert();
+		_gnutls_free_datum(&str1);
+		return 0;
+	}
+
+	if (str1.size != str2.size) {
+		ret = 0;
+		goto cleanup;
+	}
+	if (memcmp(str1.data, str2.data, str2.size) != 0) {
+		gnutls_assert();
+		ret = 0;
+		goto cleanup;
+	}
+
+	ret = 1; /* they match */
+
+cleanup:
+	_gnutls_free_datum(&str1);
+	_gnutls_free_datum(&str2);
+
+	return ret;
 }

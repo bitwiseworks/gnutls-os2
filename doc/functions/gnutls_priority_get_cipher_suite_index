@@ -3,7 +3,7 @@
 
 
 @deftypefun {int} {gnutls_priority_get_cipher_suite_index} (gnutls_priority_t @var{pcache}, unsigned int @var{idx}, unsigned int * @var{sidx})
-@var{pcache}: is a @code{gnutls_prioritity_t}  type.
+@var{pcache}: is a @code{gnutls_priority_t}  type.
 
 @var{idx}: is an index number.
 

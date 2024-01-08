@@ -20,9 +20,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>
 #
 
-srcdir="${srcdir:-.}"
-SERV="${SERV:-../src/gnutls-serv${EXEEXT}}"
-DCLI="${DCLI:-../src/gnutls-cli-debug${EXEEXT}}"
+: ${srcdir=.}
+: ${SERV=../src/gnutls-serv${EXEEXT}}
+: ${DCLI=../src/gnutls-cli-debug${EXEEXT}}
 OUTFILE=cli-debug.$$.tmp
 TMPFILE=config.$$.tmp
 unset RETCODE
@@ -48,8 +48,6 @@ SERV="${SERV} -q"
 
 . "${srcdir}/scripts/common.sh"
 
-check_for_datefudge
-
 
 KEY1=${srcdir}/../doc/credentials/x509/key-rsa.pem
 CERT1=${srcdir}/../doc/credentials/x509/cert-rsa.pem
@@ -66,13 +64,13 @@ TMPFILE=outcert.$$.tmp
 echo "Checking output of gnutls-cli-debug for TLS1.1 and TLS1.2 server"
 
 eval "${GETPORT}"
-launch_server $$ --echo --priority "NORMAL:-VERS-ALL:+VERS-TLS1.2:+VERS-TLS1.1" --x509keyfile ${KEY1} --x509certfile ${CERT1} \
+launch_server --echo --priority "NORMAL:-VERS-ALL:+VERS-TLS1.2:+VERS-TLS1.1" --x509keyfile ${KEY1} --x509certfile ${CERT1} \
 	--x509keyfile ${KEY2} --x509certfile ${CERT2} --x509keyfile ${KEY3} --x509certfile ${CERT3} >/dev/null 2>&1
 PID=$!
 wait_server ${PID}
 
-timeout 1800 datefudge "2017-08-9" \
-"${DCLI}" -p "${PORT}" localhost >$OUTFILE 2>&1 || fail ${PID} "gnutls-cli-debug run should have succeeded!"
+timeout 1800 \
+"${DCLI}" --attime "2017-08-9" -p "${PORT}" localhost >$OUTFILE 2>&1 || fail ${PID} "gnutls-cli-debug run should have succeeded!"
 
 kill ${PID}
 wait
@@ -113,13 +111,13 @@ echo ""
 echo "Checking output of gnutls-cli-debug for TLS1.3 and TLS1.2 server"
 
 eval "${GETPORT}"
-launch_server $$ --echo --priority "NORMAL:-VERS-ALL:+VERS-TLS1.3:+VERS-TLS1.2" --x509keyfile ${KEY1} --x509certfile ${CERT1} \
+launch_server --echo --priority "NORMAL:-VERS-ALL:+VERS-TLS1.3:+VERS-TLS1.2" --x509keyfile ${KEY1} --x509certfile ${CERT1} \
 	--x509keyfile ${KEY2} --x509certfile ${CERT2} --x509keyfile ${KEY3} --x509certfile ${CERT3} >/dev/null 2>&1
 PID=$!
 wait_server ${PID}
 
-timeout 1800 datefudge "2017-08-9" \
-"${DCLI}" -p "${PORT}" localhost >$OUTFILE 2>&1 || fail ${PID} "gnutls-cli-debug run should have succeeded!"
+timeout 1800 \
+"${DCLI}" --attime "2017-08-9" -p "${PORT}" localhost >$OUTFILE 2>&1 || fail ${PID} "gnutls-cli-debug run should have succeeded!"
 
 kill ${PID}
 wait
@@ -155,13 +153,13 @@ echo ""
 echo "Checking output of gnutls-cli-debug for small records and no RSA"
 
 eval "${GETPORT}"
-launch_server $$ --echo --priority "NORMAL:-VERS-ALL:+VERS-TLS1.3:+VERS-TLS1.2:-RSA:%ALLOW_SMALL_RECORDS" --x509keyfile ${KEY1} --x509certfile ${CERT1} \
+launch_server --echo --priority "NORMAL:-VERS-ALL:+VERS-TLS1.3:+VERS-TLS1.2:-RSA:%ALLOW_SMALL_RECORDS" --x509keyfile ${KEY1} --x509certfile ${CERT1} \
 	--x509keyfile ${KEY2} --x509certfile ${CERT2} --x509keyfile ${KEY3} --x509certfile ${CERT3} --recordsize=64 >/dev/null 2>&1
 PID=$!
 wait_server ${PID}
 
-timeout 1800 datefudge "2017-08-9" \
-"${DCLI}" -p "${PORT}" localhost >$OUTFILE 2>&1 || fail ${PID} "gnutls-cli-debug run should have succeeded!"
+timeout 1800 \
+"${DCLI}" --attime "2017-08-9" -p "${PORT}" localhost >$OUTFILE 2>&1 || fail ${PID} "gnutls-cli-debug run should have succeeded!"
 
 kill ${PID}
 wait
@@ -173,7 +171,7 @@ check_text "for RSA key exchange support... no"
 echo ""
 echo "Checking output of gnutls-cli-debug when algorithms are disabled"
 eval "${GETPORT}"
-launch_server $$ --echo --priority "NORMAL:-VERS-ALL:+VERS-TLS1.3:+VERS-TLS1.2" --x509keyfile ${KEY1} --x509certfile ${CERT1} \
+launch_server --echo --priority "NORMAL:-VERS-ALL:+VERS-TLS1.3:+VERS-TLS1.2" --x509keyfile ${KEY1} --x509certfile ${CERT1} \
 	--x509keyfile ${KEY2} --x509certfile ${CERT2} --x509keyfile ${KEY3} --x509certfile ${CERT3} >/dev/null 2>&1
 PID=$!
 wait_server ${PID}
@@ -184,12 +182,10 @@ cat <<_EOF_ > ${TMPFILE}
 tls-disabled-cipher = CAMELLIA-128-CBC
 tls-disabled-cipher = CAMELLIA-256-CBC
 _EOF_
-export GNUTLS_SYSTEM_PRIORITY_FILE="${TMPFILE}"
 
-timeout 1800 datefudge "2017-08-9" \
-"${DCLI}" -p "${PORT}" localhost >$OUTFILE 2>&1 || fail ${PID} "gnutls-cli-debug run should have succeeded!"
-
-unset GNUTLS_SYSTEM_PRIORITY_FILE
+GNUTLS_SYSTEM_PRIORITY_FILE="${TMPFILE}" \
+timeout 1800 \
+"${DCLI}" --attime "2017-08-9" -p "${PORT}" localhost >$OUTFILE 2>&1 || fail ${PID} "gnutls-cli-debug run should have succeeded!"
 
 kill ${PID}
 wait
@@ -207,12 +203,12 @@ if test "${ENABLE_GOST}" = "1" && test "${GNUTLS_FORCE_FIPS_MODE}" != 1 ; then
 	echo "Checking output of gnutls-cli-debug for GOST-enabled server"
 
 	eval "${GETPORT}"
-	launch_server $$ --echo --priority "NORMAL" --x509keyfile ${KEY4} --x509certfile ${CERT4} >/dev/null 2>&1
+	launch_server --echo --priority "NORMAL:+GOST" --x509keyfile ${KEY4} --x509certfile ${CERT4} >/dev/null 2>&1
 	PID=$!
 	wait_server ${PID}
 
-	timeout 1800 datefudge "2017-08-9" \
-	"${DCLI}" -p "${PORT}" localhost >$OUTFILE 2>&1 || fail ${PID} "gnutls-cli-debug run should have succeeded!"
+	timeout 1800 \
+	"${DCLI}" --attime "2017-08-9" -p "${PORT}" localhost >$OUTFILE 2>&1 || fail ${PID} "gnutls-cli-debug run should have succeeded!"
 
 	kill ${PID}
 	wait

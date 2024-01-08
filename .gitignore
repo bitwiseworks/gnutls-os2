@@ -60,7 +60,7 @@ m4/visibility.m4
 po/Makevars.template
 src/Makefile.in
 src/gl/Makefile.in
-src/libopts/Makefile.in
+src/gl/tests/Makefile.in
 tests/Makefile.in
 tests/cert-tests/Makefile.in
 tests/slow/Makefile.in

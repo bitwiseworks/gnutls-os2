@@ -83,6 +83,19 @@ should not result to an alert.
 an error code is returned.
 @end deftypefun
 
+@subheading gnutls_alert_set_read_function
+@anchor{gnutls_alert_set_read_function}
+@deftypefun {void} {gnutls_alert_set_read_function} (gnutls_session_t @var{session}, gnutls_alert_read_func @var{func})
+@var{session}: is @code{gnutls_session_t}  type
+
+@var{func}: is the function to be called
+
+This function will set a callback to be called when an alert
+message is being sent.
+
+@strong{Since:} 3.7.0
+@end deftypefun
+
 @subheading gnutls_alpn_get_selected_protocol
 @anchor{gnutls_alpn_get_selected_protocol}
 @deftypefun {int} {gnutls_alpn_get_selected_protocol} (gnutls_session_t @var{session}, gnutls_datum_t * @var{protocol})
@@ -128,7 +141,7 @@ Since 3.2.0
 
 @subheading gnutls_anon_allocate_client_credentials
 @anchor{gnutls_anon_allocate_client_credentials}
-@deftypefun {int} {gnutls_anon_allocate_client_credentials} (gnutls_anon_client_credentials_t *      @var{sc})
+@deftypefun {int} {gnutls_anon_allocate_client_credentials} (gnutls_anon_client_credentials_t * @var{sc})
 @var{sc}: is a pointer to a @code{gnutls_anon_client_credentials_t}  type.
 
 Allocate a gnutls_anon_client_credentials_t structure.
@@ -138,7 +151,7 @@ Allocate a gnutls_anon_client_credentials_t structure.
 
 @subheading gnutls_anon_allocate_server_credentials
 @anchor{gnutls_anon_allocate_server_credentials}
-@deftypefun {int} {gnutls_anon_allocate_server_credentials} (gnutls_anon_server_credentials_t *      @var{sc})
+@deftypefun {int} {gnutls_anon_allocate_server_credentials} (gnutls_anon_server_credentials_t * @var{sc})
 @var{sc}: is a pointer to a @code{gnutls_anon_server_credentials_t}  type.
 
 Allocate a gnutls_anon_server_credentials_t structure.
@@ -218,7 +231,7 @@ negative error value.
 
 @subheading gnutls_anon_set_server_params_function
 @anchor{gnutls_anon_set_server_params_function}
-@deftypefun {void} {gnutls_anon_set_server_params_function} (gnutls_anon_server_credentials_t            @var{res}, gnutls_params_function * @var{func})
+@deftypefun {void} {gnutls_anon_set_server_params_function} (gnutls_anon_server_credentials_t @var{res}, gnutls_params_function * @var{func})
 @var{res}: is a gnutls_certificate_credentials_t type
 
 @var{func}: is the function to be called
@@ -479,7 +492,7 @@ This function will return the peer's certificate activation time.
 
 @subheading gnutls_certificate_allocate_credentials
 @anchor{gnutls_certificate_allocate_credentials}
-@deftypefun {int} {gnutls_certificate_allocate_credentials} (gnutls_certificate_credentials_t *      @var{res})
+@deftypefun {int} {gnutls_certificate_allocate_credentials} (gnutls_certificate_credentials_t * @var{res})
 @var{res}: is a pointer to a @code{gnutls_certificate_credentials_t}  type.
 
 Allocate a gnutls_certificate_credentials_t structure.
@@ -668,7 +681,7 @@ was used.
 
 @subheading gnutls_certificate_get_peers
 @anchor{gnutls_certificate_get_peers}
-@deftypefun {const gnutls_datum_t *} {gnutls_certificate_get_peers} (gnutls_session_t          @var{session}, unsigned int * @var{list_size})
+@deftypefun {const gnutls_datum_t *} {gnutls_certificate_get_peers} (gnutls_session_t @var{session}, unsigned int * @var{list_size})
 @var{session}: is a gnutls session
 
 @var{list_size}: is the length of the certificate list (may be @code{NULL} )
@@ -1047,7 +1060,7 @@ otherwise a negative error code.
 
 @subheading gnutls_certificate_set_params_function
 @anchor{gnutls_certificate_set_params_function}
-@deftypefun {void} {gnutls_certificate_set_params_function} (gnutls_certificate_credentials_t            @var{res}, gnutls_params_function * @var{func})
+@deftypefun {void} {gnutls_certificate_set_params_function} (gnutls_certificate_credentials_t @var{res}, gnutls_params_function * @var{func})
 @var{res}: is a gnutls_certificate_credentials_t type
 
 @var{func}: is the function to be called
@@ -1063,7 +1076,7 @@ following RFC7919.
 
 @subheading gnutls_certificate_set_pin_function
 @anchor{gnutls_certificate_set_pin_function}
-@deftypefun {void} {gnutls_certificate_set_pin_function} (gnutls_certificate_credentials_t       @var{cred}, gnutls_pin_callback_t @var{fn}, void * @var{userdata})
+@deftypefun {void} {gnutls_certificate_set_pin_function} (gnutls_certificate_credentials_t @var{cred}, gnutls_pin_callback_t @var{fn}, void * @var{userdata})
 @var{cred}: is a @code{gnutls_certificate_credentials_t}  type.
 
 @var{fn}: A PIN callback
@@ -1082,7 +1095,7 @@ to have effect.
 
 @subheading gnutls_certificate_set_rawpk_key_file
 @anchor{gnutls_certificate_set_rawpk_key_file}
-@deftypefun {int} {gnutls_certificate_set_rawpk_key_file} (gnutls_certificate_credentials_t @var{cred}, const char* @var{rawpkfile}, const char* @var{privkeyfile}, gnutls_x509_crt_fmt_t @var{format}, const char * @var{pass}, unsigned int @var{key_usage}, const char ** @var{names}, unsigned int @var{names_length}, unsigned int @var{privkey_flags}, unsigned int @var{pkcs11_flags})
+@deftypefun {int} {gnutls_certificate_set_rawpk_key_file} (gnutls_certificate_credentials_t @var{cred}, const char * @var{rawpkfile}, const char * @var{privkeyfile}, gnutls_x509_crt_fmt_t @var{format}, const char * @var{pass}, unsigned int @var{key_usage}, const char ** @var{names}, unsigned int @var{names_length}, unsigned int @var{privkey_flags}, unsigned int @var{pkcs11_flags})
 @var{cred}: is a @code{gnutls_certificate_credentials_t}  type.
 
 @var{rawpkfile}: contains a raw public key in
@@ -1147,7 +1160,7 @@ in other erroneous cases a different negative error code is returned.
 
 @subheading gnutls_certificate_set_rawpk_key_mem
 @anchor{gnutls_certificate_set_rawpk_key_mem}
-@deftypefun {int} {gnutls_certificate_set_rawpk_key_mem} (gnutls_certificate_credentials_t @var{cred}, const gnutls_datum_t* @var{spki}, const gnutls_datum_t* @var{pkey}, gnutls_x509_crt_fmt_t @var{format}, const char* @var{pass}, unsigned int @var{key_usage}, const char ** @var{names}, unsigned int @var{names_length}, unsigned int @var{flags})
+@deftypefun {int} {gnutls_certificate_set_rawpk_key_mem} (gnutls_certificate_credentials_t @var{cred}, const gnutls_datum_t * @var{spki}, const gnutls_datum_t * @var{pkey}, gnutls_x509_crt_fmt_t @var{format}, const char * @var{pass}, unsigned int @var{key_usage}, const char ** @var{names}, unsigned int @var{names_length}, unsigned int @var{flags})
 @var{cred}: is a @code{gnutls_certificate_credentials_t}  type.
 
 @var{spki}: contains a raw public key in
@@ -1253,7 +1266,7 @@ takes predence.
 
 @subheading gnutls_certificate_set_verify_flags
 @anchor{gnutls_certificate_set_verify_flags}
-@deftypefun {void} {gnutls_certificate_set_verify_flags} (gnutls_certificate_credentials_t         @var{res}, unsigned int @var{flags})
+@deftypefun {void} {gnutls_certificate_set_verify_flags} (gnutls_certificate_credentials_t @var{res}, unsigned int @var{flags})
 @var{res}: is a gnutls_certificate_credentials_t type
 
 @var{flags}: are the flags
@@ -1638,7 +1651,7 @@ it returns an index (greater or equal to zero). That index can be used to other 
 
 @subheading gnutls_certificate_set_x509_system_trust
 @anchor{gnutls_certificate_set_x509_system_trust}
-@deftypefun {int} {gnutls_certificate_set_x509_system_trust} (gnutls_certificate_credentials_t       @var{cred})
+@deftypefun {int} {gnutls_certificate_set_x509_system_trust} (gnutls_certificate_credentials_t @var{cred})
 @var{cred}: is a @code{gnutls_certificate_credentials_t}  type.
 
 This function adds the system's default trusted CAs in order to
@@ -1699,7 +1712,7 @@ in a directory.
 
 @subheading gnutls_certificate_set_x509_trust_file
 @anchor{gnutls_certificate_set_x509_trust_file}
-@deftypefun {int} {gnutls_certificate_set_x509_trust_file} (gnutls_certificate_credentials_t            @var{cred}, const char * @var{cafile}, gnutls_x509_crt_fmt_t @var{type})
+@deftypefun {int} {gnutls_certificate_set_x509_trust_file} (gnutls_certificate_credentials_t @var{cred}, const char * @var{cafile}, gnutls_x509_crt_fmt_t @var{type})
 @var{cred}: is a @code{gnutls_certificate_credentials_t}  type.
 
 @var{cafile}: is a file containing the list of trusted CAs (DER or PEM list)
@@ -1809,7 +1822,7 @@ string certificate type, or @code{GNUTLS_CRT_UNKNOWN}  on error.
 
 @subheading gnutls_certificate_type_get_name
 @anchor{gnutls_certificate_type_get_name}
-@deftypefun {const char *} {gnutls_certificate_type_get_name} (gnutls_certificate_type_t           @var{type})
+@deftypefun {const char *} {gnutls_certificate_type_get_name} (gnutls_certificate_type_t @var{type})
 @var{type}: is a certificate type
 
 Convert a @code{gnutls_certificate_type_t}  type to a string.
@@ -1830,7 +1843,7 @@ integers indicating the available certificate types.
 
 @subheading gnutls_certificate_verification_status_print
 @anchor{gnutls_certificate_verification_status_print}
-@deftypefun {int} {gnutls_certificate_verification_status_print} (unsigned int @var{status}, gnutls_certificate_type_t           @var{type}, gnutls_datum_t * @var{out}, unsigned int @var{flags})
+@deftypefun {int} {gnutls_certificate_verification_status_print} (unsigned int @var{status}, gnutls_certificate_type_t @var{type}, gnutls_datum_t * @var{out}, unsigned int @var{flags})
 @var{status}: The status flags to be printed
 
 @var{type}: The certificate type
@@ -2055,7 +2068,7 @@ integers indicating the available ciphers.
 
 @subheading gnutls_cipher_suite_get_name
 @anchor{gnutls_cipher_suite_get_name}
-@deftypefun {const char *} {gnutls_cipher_suite_get_name} (gnutls_kx_algorithm_t       @var{kx_algorithm}, gnutls_cipher_algorithm_t       @var{cipher_algorithm}, gnutls_mac_algorithm_t       @var{mac_algorithm})
+@deftypefun {const char *} {gnutls_cipher_suite_get_name} (gnutls_kx_algorithm_t @var{kx_algorithm}, gnutls_cipher_algorithm_t @var{cipher_algorithm}, gnutls_mac_algorithm_t @var{mac_algorithm})
 @var{kx_algorithm}: is a Key exchange algorithm
 
 @var{cipher_algorithm}: is a cipher algorithm
@@ -2096,6 +2109,78 @@ idx=1 and so on until the function returns NULL.
 @strong{Returns:} the name of  @code{idx} cipher suite, and set the information
 about the cipher suite in the output variables.  If  @code{idx} is out of
 bounds, @code{NULL}  is returned.
+@end deftypefun
+
+@subheading gnutls_ciphersuite_get
+@anchor{gnutls_ciphersuite_get}
+@deftypefun {const char *} {gnutls_ciphersuite_get} (gnutls_session_t @var{session})
+@var{session}: is a @code{gnutls_session_t}  type.
+
+Get the canonical name of negotiated TLS ciphersuite.  The names
+returned by this function match the IANA registry, with one
+exception:
+
+TLS_DHE_DSS_RC4_128_SHA @{ 0x00, 0x66 @}
+
+which is reserved for compatibility.
+
+To get a detailed description of the current ciphersuite, it is
+recommended to use @code{gnutls_session_get_desc()} .
+
+@strong{Returns:} a string that contains the canonical name of a TLS ciphersuite,
+or @code{NULL}  if the handshake is not completed.
+
+@strong{Since:} 3.7.4
+@end deftypefun
+
+@subheading gnutls_compress_certificate_get_selected_method
+@anchor{gnutls_compress_certificate_get_selected_method}
+@deftypefun {gnutls_compression_method_t} {gnutls_compress_certificate_get_selected_method} (gnutls_session_t @var{session})
+@var{session}: is a @code{gnutls_session_t}  type.
+
+This function returns the certificate compression method that has been
+selected to compress the certificate before sending it to the peer.
+The selection is done based on the local list of supported compression
+methods and the peer's requested compression methods.
+
+@strong{Returns:} selected certificate compression method.
+
+Since 3.7.4
+@end deftypefun
+
+@subheading gnutls_compress_certificate_set_methods
+@anchor{gnutls_compress_certificate_set_methods}
+@deftypefun {int} {gnutls_compress_certificate_set_methods} (gnutls_session_t @var{session}, const gnutls_compression_method_t * @var{methods}, size_t @var{methods_len})
+@var{session}: is a @code{gnutls_session_t}  type.
+
+@var{methods}: is a list of supported compression methods.
+
+@var{methods_len}: number of compression methods in  @code{methods} 
+
+This function sets the supported compression methods for certificate compression
+for the given session. The list of supported compression methods will be used
+for a) requesting the compression of peer's certificate and b) selecting the
+method to compress the local certificate before sending it to the peer.
+The order of compression methods inside the list does matter as the method
+that appears earlier in the list will be preferred before the later ones.
+Note that even if you set the list of supported compression methods, the
+compression might not be used if the peer does not support any of your chosen
+compression methods.
+
+The list of supported compression methods must meet the following criteria:
+Argument  @code{methods} must be an array of valid compression methods of type
+@code{gnutls_compression_method_t} . Argument  @code{methods_len} must contain the number of
+compression methods stored in the  @code{methods} array and must be within range <1, 127>.
+The length constraints are defined by @code{MIN_COMPRESS_CERTIFICATE_METHODS} 
+and @code{MAX_COMPRESS_CERTIFICATE_METHODS}  macros located in the header file
+compress_certificate.h.
+
+If either  @code{methods} or  @code{methods_len} is equal to 0, current list of supported
+compression methods will be unset.
+
+@strong{Returns:} @code{GNUTLS_E_SUCCESS}  on success, otherwise a negative error code.
+
+Since 3.7.4
 @end deftypefun
 
 @subheading gnutls_credentials_clear
@@ -2693,6 +2778,48 @@ This function is not thread safe.
 integers indicating the available digests.
 @end deftypefun
 
+@subheading gnutls_digest_set_secure
+@anchor{gnutls_digest_set_secure}
+@deftypefun {int} {gnutls_digest_set_secure} (gnutls_digest_algorithm_t @var{dig}, unsigned int @var{secure})
+@var{dig}: is a digest algorithm
+
+@var{secure}: whether to mark the digest algorithm secure
+
+Modify the previous system wide setting that marked  @code{dig} as secure
+or insecure. This only has effect when the algorithm is enabled
+through the allowlisting mode in the configuration file, or when
+the setting is modified with a prior call to this function.
+
+@strong{Since:} 3.7.3
+@end deftypefun
+
+@subheading gnutls_early_cipher_get
+@anchor{gnutls_early_cipher_get}
+@deftypefun {gnutls_cipher_algorithm_t} {gnutls_early_cipher_get} (gnutls_session_t @var{session})
+@var{session}: is a @code{gnutls_session_t}  type.
+
+Get the cipher algorithm used for encrypting early data.
+
+@strong{Returns:} the cipher used for early data, a
+@code{gnutls_cipher_algorithm_t}  type.
+
+@strong{Since:} 3.7.2
+@end deftypefun
+
+@subheading gnutls_early_prf_hash_get
+@anchor{gnutls_early_prf_hash_get}
+@deftypefun {gnutls_digest_algorithm_t} {gnutls_early_prf_hash_get} (const gnutls_session_t @var{session})
+@var{session}: is a @code{gnutls_session_t}  type.
+
+Get the hash algorithm used as a PRF to derive keys for encrypting
+early data in TLS 1.3.
+
+@strong{Returns:} the hash algorithm used for early data, a
+@code{gnutls_digest_algorithm_t}  value.
+
+@strong{Since:} 3.7.2
+@end deftypefun
+
 @subheading gnutls_ecc_curve_get
 @anchor{gnutls_ecc_curve_get}
 @deftypefun {gnutls_ecc_curve_t} {gnutls_ecc_curve_get} (gnutls_session_t @var{session})
@@ -2780,6 +2907,32 @@ This function is not thread safe.
 integers indicating the available curves.
 @end deftypefun
 
+@subheading gnutls_ecc_curve_set_enabled
+@anchor{gnutls_ecc_curve_set_enabled}
+@deftypefun {int} {gnutls_ecc_curve_set_enabled} (gnutls_ecc_curve_t @var{curve}, unsigned int @var{enabled})
+@var{curve}: is an ECC curve
+
+@var{enabled}: whether to enable the curve
+
+Modify the previous system wide setting that marked  @code{curve} as
+enabled or disabled.  Calling this function is allowed
+only if allowlisting mode is set in the configuration file,
+and only if the system-wide TLS priority string
+has not been initialized yet.
+The intended usage is to provide applications with a way
+to expressly deviate from the distribution or site defaults
+inherited from the configuration file.
+The modification is composable with further modifications
+performed through the priority string mechanism.
+
+This function is not thread-safe and is intended to be called
+in the main thread at the beginning of the process execution.
+
+@strong{Returns:} 0 on success or negative error code otherwise.
+
+@strong{Since:} 3.7.3
+@end deftypefun
+
 @subheading gnutls_error_is_fatal
 @anchor{gnutls_error_is_fatal}
 @deftypefun {int} {gnutls_error_is_fatal} (int @var{error})
@@ -2835,7 +2988,7 @@ internal error (@code{GNUTLS_A_INTERNAL_ERROR} ) is returned.
 This function will return the set size in bytes of the overhead
 due to TLS (or DTLS) per record.
 
-Note that this function may provide inacurate values when TLS
+Note that this function may provide inaccurate values when TLS
 extensions that modify the record format are negotiated. In these
 cases a more accurate value can be obtained using @code{gnutls_record_overhead_size()}  
 after a completed handshake.
@@ -2880,6 +3033,21 @@ This function retrieves any data previously stored with @code{gnutls_ext_set_dat
 @anchor{gnutls_ext_get_name}
 @deftypefun {const char *} {gnutls_ext_get_name} (unsigned int @var{ext})
 @var{ext}: is a TLS extension numeric ID
+
+Convert a TLS extension numeric ID to a printable string.
+
+@strong{Returns:} a pointer to a string that contains the name of the
+specified cipher, or @code{NULL} .
+@end deftypefun
+
+@subheading gnutls_ext_get_name2
+@anchor{gnutls_ext_get_name2}
+@deftypefun {const char *} {gnutls_ext_get_name2} (gnutls_session_t @var{session}, unsigned int @var{tls_id}, gnutls_ext_parse_type_t @var{parse_point})
+@var{session}: a @code{gnutls_session_t}  opaque pointer
+
+@var{tls_id}: is a TLS extension numeric ID
+
+@var{parse_point}: the parse type of the extension
 
 Convert a TLS extension numeric ID to a printable string.
 
@@ -2993,6 +3161,40 @@ function.
 an error code is returned.
 @end deftypefun
 
+@subheading gnutls_fips140_context_deinit
+@anchor{gnutls_fips140_context_deinit}
+@deftypefun {void} {gnutls_fips140_context_deinit} (gnutls_fips140_context_t @var{context})
+@var{context}: a @code{gnutls_fips140_context_t} 
+
+Uninitialize and release the FIPS context  @code{context} .
+
+@strong{Since:} 3.7.3
+@end deftypefun
+
+@subheading gnutls_fips140_context_init
+@anchor{gnutls_fips140_context_init}
+@deftypefun {int} {gnutls_fips140_context_init} (gnutls_fips140_context_t * @var{context})
+@var{context}: location to store  @code{gnutls_fips140_context_t} 
+
+Create and initialize the FIPS context object.
+
+@strong{Returns:} 0 upon success, a negative error code otherwise
+
+@strong{Since:} 3.7.3
+@end deftypefun
+
+@subheading gnutls_fips140_get_operation_state
+@anchor{gnutls_fips140_get_operation_state}
+@deftypefun {gnutls_fips140_operation_state_t} {gnutls_fips140_get_operation_state} (gnutls_fips140_context_t @var{context})
+@var{context}: a @code{gnutls_fips140_context_t} 
+
+Get the previous operation state of  @code{context} in terms of FIPS.
+
+@strong{Returns:} a @code{gnutls_fips140_operation_state_t} 
+
+@strong{Since:} 3.7.3
+@end deftypefun
+
 @subheading gnutls_fips140_mode_enabled
 @anchor{gnutls_fips140_mode_enabled}
 @deftypefun {unsigned} {gnutls_fips140_mode_enabled} ( @var{void})
@@ -3008,6 +3210,66 @@ the global value is returned.
 @strong{Returns:} return non-zero if true or zero if false.
 
 @strong{Since:} 3.3.0
+@end deftypefun
+
+@subheading gnutls_fips140_pop_context
+@anchor{gnutls_fips140_pop_context}
+@deftypefun {int} {gnutls_fips140_pop_context} ( @var{void})
+
+Dissociate the FIPS context currently
+active on the current thread, reverting to the previously active
+context. If a cryptographic operation is ongoing in the current
+thread, e.g., @code{gnutls_aead_cipher_init()}  is called but
+@code{gnutls_aead_cipher_deinit()}  is not yet called, it returns an error
+@code{GNUTLS_E_INVALID_REQUEST} .
+
+This function is no-op if FIPS140 is not compiled in nor enabled
+at run-time.
+
+@strong{Returns:} 0 upon success, a negative error code otherwise
+
+@strong{Since:} 3.7.3
+@end deftypefun
+
+@subheading gnutls_fips140_push_context
+@anchor{gnutls_fips140_push_context}
+@deftypefun {int} {gnutls_fips140_push_context} (gnutls_fips140_context_t @var{context})
+@var{context}: a @code{gnutls_fips140_context_t} 
+
+Associate the FIPS  @code{context} to the current thread, diverting the
+currently active context. If a cryptographic operation is ongoing
+in the current thread, e.g., @code{gnutls_aead_cipher_init()}  is called
+but @code{gnutls_aead_cipher_deinit()}  is not yet called, it returns an
+error @code{GNUTLS_E_INVALID_REQUEST} .
+
+The operation state of  @code{context} will be reset to
+@code{GNUTLS_FIPS140_OP_INITIAL} .
+
+This function is no-op if FIPS140 is not compiled in nor enabled
+at run-time.
+
+@strong{Returns:} 0 upon success, a negative error code otherwise
+
+@strong{Since:} 3.7.3
+@end deftypefun
+
+@subheading gnutls_fips140_run_self_tests
+@anchor{gnutls_fips140_run_self_tests}
+@deftypefun {int} {gnutls_fips140_run_self_tests} ( @var{void})
+
+Manually perform the second round of the FIPS140 self-tests,
+including:
+
+- Known answer tests (KAT) for the selected set of symmetric
+cipher, MAC, public key, KDF, and DRBG
+- Library integrity checks
+
+Upon failure with FIPS140 mode enabled, it makes the library
+unusable.  This function is not thread-safe.
+
+@strong{Returns:} 0 upon success, a negative error code otherwise
+
+@strong{Since:} 3.7.7
 @end deftypefun
 
 @subheading gnutls_fips140_set_mode
@@ -3035,15 +3297,42 @@ switches to @code{GNUTLS_FIPS140_STRICT}  mode.
 @strong{Since:} 3.6.2
 @end deftypefun
 
+@subheading gnutls_get_library_config
+@anchor{gnutls_get_library_config}
+@deftypefun {const gnutls_library_config_st *} {gnutls_get_library_config} ( @var{void})
+
+Returns the library configuration as key value pairs.
+Currently defined keys are:
+
+- fips-module-name: the name of the FIPS140 module
+
+- fips-module-version: the version of the FIPS140 module
+
+- libgnutls-soname: the SONAME of the library itself
+
+- libnettle-soname: the library SONAME of linked libnettle
+
+- libhogweed-soname: the library SONAME of linked libhogweed
+
+- libgmp-soname: the library SONAME of linked libgmp
+
+- hardware-features: enabled hardware support features
+
+- tls-features: enabled TLS protocol features
+
+@strong{Returns:} a NUL-terminated @code{gnutls_library_config_st}  array
+
+@strong{Since:} 3.7.3
+@end deftypefun
+
 @subheading gnutls_get_system_config_file
 @anchor{gnutls_get_system_config_file}
 @deftypefun {const char *} {gnutls_get_system_config_file} ( @var{void})
 
 Returns the filename of the system wide configuration
-file loaded by the library. The returned pointer is valid
-until the library is unloaded.
+file to be loaded by the library.
 
-@strong{Returns:} a constant pointer to the config file loaded, or @code{NULL}  if none
+@strong{Returns:} a constant pointer to the config file path
 
 @strong{Since:} 3.6.9
 @end deftypefun
@@ -3066,7 +3355,7 @@ called. GnuTLS will automatically deinitialize on library destructor. See
 
 Since GnuTLS 3.3.0 this function is no longer necessary to be explicitly
 called. To disable the implicit call (in a library constructor) of this
-function set the environment variable @code{GNUTLS_NO_EXPLICIT_INIT}  to 1.
+function set the environment variable @code{GNUTLS_NO_IMPLICIT_INIT}  to 1.
 
 This function performs any required precalculations, detects
 the supported CPU capabilities and initializes the underlying
@@ -3150,11 +3439,10 @@ Do not call this function from a library, or preferably from any application
 unless really needed to. GnuTLS will use the appropriate locks for the running
 system.
 
-Note that since the move to implicit initialization of GnuTLS on library
-load, calling this function will deinitialize the library, and re-initialize
-it after the new locking functions are set.
+This function must be called prior to any other GnuTLS function; otherwise
+the behavior is undefined.
 
-This function must be called prior to any other gnutls function.
+@strong{Deprecated:} This function is discouraged on GnuTLS 3.7.3 or later.
 
 @strong{Since:} 2.12.0
 @end deftypefun
@@ -3292,7 +3580,7 @@ up keys for session tickets.
 
 @subheading gnutls_handshake_description_get_name
 @anchor{gnutls_handshake_description_get_name}
-@deftypefun {const char     *} {gnutls_handshake_description_get_name} (gnutls_handshake_description_t         @var{type})
+@deftypefun {const char *} {gnutls_handshake_description_get_name} (gnutls_handshake_description_t @var{type})
 @var{type}: is a handshake message description
 
 Convert a @code{gnutls_handshake_description_t}  value to a string.
@@ -3450,6 +3738,32 @@ This function should not be used when resuming a session.
 Since 3.1.9
 @end deftypefun
 
+@subheading gnutls_handshake_set_read_function
+@anchor{gnutls_handshake_set_read_function}
+@deftypefun {void} {gnutls_handshake_set_read_function} (gnutls_session_t @var{session}, gnutls_handshake_read_func @var{func})
+@var{session}: is @code{gnutls_session_t}  type
+
+@var{func}: is the function to be called
+
+This function will set a callback to be called when a handshake
+message is being sent.
+
+@strong{Since:} 3.7.0
+@end deftypefun
+
+@subheading gnutls_handshake_set_secret_function
+@anchor{gnutls_handshake_set_secret_function}
+@deftypefun {void} {gnutls_handshake_set_secret_function} (gnutls_session_t @var{session}, gnutls_handshake_secret_func @var{func})
+@var{session}: is a @code{gnutls_session_t}  type.
+
+@var{func}: the secret func
+
+This function will set a callback to be called when a new traffic
+secret is installed.
+
+@strong{Since:} 3.7.0
+@end deftypefun
+
 @subheading gnutls_handshake_set_timeout
 @anchor{gnutls_handshake_set_timeout}
 @deftypefun {void} {gnutls_handshake_set_timeout} (gnutls_session_t @var{session}, unsigned int @var{ms})
@@ -3467,6 +3781,25 @@ This function requires to set a pull timeout callback. See
 @code{gnutls_transport_set_pull_timeout_function()} .
 
 @strong{Since:} 3.1.0
+@end deftypefun
+
+@subheading gnutls_handshake_write
+@anchor{gnutls_handshake_write}
+@deftypefun {int} {gnutls_handshake_write} (gnutls_session_t @var{session}, gnutls_record_encryption_level_t @var{level}, const void * @var{data}, size_t @var{data_size})
+@var{session}: is a @code{gnutls_session_t}  type.
+
+@var{level}: the current encryption level for reading a handshake message
+
+@var{data}: the (const) handshake data to be processed
+
+@var{data_size}: the size of data
+
+This function processes a handshake message in the encryption level
+specified with  @code{level} . Prior to calling this function, a handshake
+read callback must be set on  @code{session} . Use
+@code{gnutls_handshake_set_read_function()}  to do this.
+
+@strong{Since:} 3.7.0
 @end deftypefun
 
 @subheading gnutls_heartbeat_allowed
@@ -3725,16 +4058,25 @@ empty string is provided as input.
 
 @var{flags}: indicate if this session is to be used for server or client.
 
-This function initializes the provided session. Every
-session must be initialized before use, and must be deinitialized
-after used by calling @code{gnutls_deinit()} .
+This function initializes the provided session. Every session must
+be initialized before use, and after successful initialization and
+use must be deinitialized by calling @code{gnutls_deinit()} .
 
  @code{flags} can be any combination of flags from @code{gnutls_init_flags_t} .
 
 Note that since version 3.1.2 this function enables some common
 TLS extensions such as session tickets and OCSP certificate status
-request in client side by default. To prevent that use the @code{GNUTLS_NO_EXTENSIONS} 
+request in client side by default. To prevent that use the @code{GNUTLS_NO_DEFAULT_EXTENSIONS} 
 flag.
+
+Note that it is never mandatory to use @code{gnutls_deinit()}  after this
+function fails.  Since gnutls 3.8.0, it is safe to unconditionally
+use @code{gnutls_deinit()}  even after failure regardless of whether the
+memory was initialized prior to @code{gnutls_init()} ; however, clients
+wanting to be portable to older versions of the library should
+either skip deinitialization on failure, or pre-initialize the
+memory passed in to @code{gnutls_init()}  to all zeroes via @code{memset()}  or
+similar.
 
 @strong{Returns:} @code{GNUTLS_E_SUCCESS}  on success, or an error code.
 @end deftypefun
@@ -3816,6 +4158,10 @@ indicating the available key exchange algorithms.
 This function will load a file into a datum. The data are
 zero terminated but the terminating null is not included in length.
 The returned data are allocated using @code{gnutls_malloc()} .
+
+Note that this function is not designed for reading sensitive materials,
+such as private keys, on practical applications. When the reading fails
+in the middle, the partially loaded content might remain on memory.
 
 @strong{Returns:} On success, @code{GNUTLS_E_SUCCESS}  (0) is returned, otherwise
 an error code is returned.
@@ -4416,6 +4762,22 @@ must be non-null.
 @strong{Since:} 3.6.8
 @end deftypefun
 
+@subheading gnutls_prf_hash_get
+@anchor{gnutls_prf_hash_get}
+@deftypefun {gnutls_digest_algorithm_t} {gnutls_prf_hash_get} (const gnutls_session_t @var{session})
+@var{session}: is a @code{gnutls_session_t}  type.
+
+Get the currently used hash algorithm. In TLS 1.3, the hash
+algorithm is used for both the key derivation function and
+handshake message authentication code. In TLS 1.2, it matches the
+hash algorithm used for PRF.
+
+@strong{Returns:} the currently used hash algorithm, a
+@code{gnutls_digest_algorithm_t}  value.
+
+@strong{Since:} 3.6.13
+@end deftypefun
+
 @subheading gnutls_prf_raw
 @anchor{gnutls_prf_raw}
 @deftypefun {int} {gnutls_prf_raw} (gnutls_session_t @var{session}, size_t @var{label_size}, const char * @var{label}, size_t @var{seed_size}, const char * @var{seed}, size_t @var{outsize}, char * @var{out})
@@ -4506,7 +4868,7 @@ must be non-null.
 @subheading gnutls_priority_certificate_type_list
 @anchor{gnutls_priority_certificate_type_list}
 @deftypefun {int} {gnutls_priority_certificate_type_list} (gnutls_priority_t @var{pcache}, const unsigned int ** @var{list})
-@var{pcache}: is a @code{gnutls_prioritity_t}  type.
+@var{pcache}: is a @code{gnutls_priority_t}  type.
 
 @var{list}: will point to an integer list
 
@@ -4527,7 +4889,7 @@ set to:
 @subheading gnutls_priority_certificate_type_list2
 @anchor{gnutls_priority_certificate_type_list2}
 @deftypefun {int} {gnutls_priority_certificate_type_list2} (gnutls_priority_t @var{pcache}, const unsigned int ** @var{list}, gnutls_ctype_target_t @var{target})
-@var{pcache}: is a @code{gnutls_prioritity_t}  type.
+@var{pcache}: is a @code{gnutls_priority_t}  type.
 
 @var{list}: will point to an integer list.
 
@@ -4545,7 +4907,7 @@ in the priority structure.
 @subheading gnutls_priority_cipher_list
 @anchor{gnutls_priority_cipher_list}
 @deftypefun {int} {gnutls_priority_cipher_list} (gnutls_priority_t @var{pcache}, const unsigned int ** @var{list})
-@var{pcache}: is a @code{gnutls_prioritity_t}  type.
+@var{pcache}: is a @code{gnutls_priority_t}  type.
 
 @var{list}: will point to an integer list
 
@@ -4560,7 +4922,7 @@ structure.
 @subheading gnutls_priority_deinit
 @anchor{gnutls_priority_deinit}
 @deftypefun {void} {gnutls_priority_deinit} (gnutls_priority_t @var{priority_cache})
-@var{priority_cache}: is a @code{gnutls_prioritity_t}  type.
+@var{priority_cache}: is a @code{gnutls_priority_t}  type.
 
 Deinitializes the priority cache.
 @end deftypefun
@@ -4568,7 +4930,7 @@ Deinitializes the priority cache.
 @subheading gnutls_priority_ecc_curve_list
 @anchor{gnutls_priority_ecc_curve_list}
 @deftypefun {int} {gnutls_priority_ecc_curve_list} (gnutls_priority_t @var{pcache}, const unsigned int ** @var{list})
-@var{pcache}: is a @code{gnutls_prioritity_t}  type.
+@var{pcache}: is a @code{gnutls_priority_t}  type.
 
 @var{list}: will point to an integer list
 
@@ -4586,7 +4948,7 @@ structure.
 @subheading gnutls_priority_get_cipher_suite_index
 @anchor{gnutls_priority_get_cipher_suite_index}
 @deftypefun {int} {gnutls_priority_get_cipher_suite_index} (gnutls_priority_t @var{pcache}, unsigned int @var{idx}, unsigned int * @var{sidx})
-@var{pcache}: is a @code{gnutls_prioritity_t}  type.
+@var{pcache}: is a @code{gnutls_priority_t}  type.
 
 @var{idx}: is an index number.
 
@@ -4608,7 +4970,7 @@ Once the last available index is crossed then
 @subheading gnutls_priority_group_list
 @anchor{gnutls_priority_group_list}
 @deftypefun {int} {gnutls_priority_group_list} (gnutls_priority_t @var{pcache}, const unsigned int ** @var{list})
-@var{pcache}: is a @code{gnutls_prioritity_t}  type.
+@var{pcache}: is a @code{gnutls_priority_t}  type.
 
 @var{list}: will point to an integer list
 
@@ -4623,7 +4985,7 @@ structure.
 @subheading gnutls_priority_init
 @anchor{gnutls_priority_init}
 @deftypefun {int} {gnutls_priority_init} (gnutls_priority_t * @var{priority_cache}, const char * @var{priorities}, const char ** @var{err_pos})
-@var{priority_cache}: is a @code{gnutls_prioritity_t}  type.
+@var{priority_cache}: is a @code{gnutls_priority_t}  type.
 
 @var{priorities}: is a string describing priorities (may be @code{NULL} )
 
@@ -4647,7 +5009,7 @@ used (this is available since GnuTLS 3.3.0).
 @subheading gnutls_priority_init2
 @anchor{gnutls_priority_init2}
 @deftypefun {int} {gnutls_priority_init2} (gnutls_priority_t * @var{priority_cache}, const char * @var{priorities}, const char ** @var{err_pos}, unsigned @var{flags})
-@var{priority_cache}: is a @code{gnutls_prioritity_t}  type.
+@var{priority_cache}: is a @code{gnutls_priority_t}  type.
 
 @var{priorities}: is a string describing priorities (may be @code{NULL} )
 
@@ -4751,7 +5113,7 @@ used (this is available since GnuTLS 3.3.0).
 @subheading gnutls_priority_kx_list
 @anchor{gnutls_priority_kx_list}
 @deftypefun {int} {gnutls_priority_kx_list} (gnutls_priority_t @var{pcache}, const unsigned int ** @var{list})
-@var{pcache}: is a @code{gnutls_prioritity_t}  type.
+@var{pcache}: is a @code{gnutls_priority_t}  type.
 
 @var{list}: will point to an integer list
 
@@ -4766,7 +5128,7 @@ structure.
 @subheading gnutls_priority_mac_list
 @anchor{gnutls_priority_mac_list}
 @deftypefun {int} {gnutls_priority_mac_list} (gnutls_priority_t @var{pcache}, const unsigned int ** @var{list})
-@var{pcache}: is a @code{gnutls_prioritity_t}  type.
+@var{pcache}: is a @code{gnutls_priority_t}  type.
 
 @var{list}: will point to an integer list
 
@@ -4781,7 +5143,7 @@ structure.
 @subheading gnutls_priority_protocol_list
 @anchor{gnutls_priority_protocol_list}
 @deftypefun {int} {gnutls_priority_protocol_list} (gnutls_priority_t @var{pcache}, const unsigned int ** @var{list})
-@var{pcache}: is a @code{gnutls_prioritity_t}  type.
+@var{pcache}: is a @code{gnutls_priority_t}  type.
 
 @var{list}: will point to an integer list
 
@@ -4833,7 +5195,7 @@ or @code{gnutls_set_default_priority_append()}  instead of this function.
 @subheading gnutls_priority_sign_list
 @anchor{gnutls_priority_sign_list}
 @deftypefun {int} {gnutls_priority_sign_list} (gnutls_priority_t @var{pcache}, const unsigned int ** @var{list})
-@var{pcache}: is a @code{gnutls_prioritity_t}  type.
+@var{pcache}: is a @code{gnutls_priority_t}  type.
 
 @var{list}: will point to an integer list
 
@@ -4906,9 +5268,35 @@ This function is not thread safe.
 indicating the available protocols.
 @end deftypefun
 
+@subheading gnutls_protocol_set_enabled
+@anchor{gnutls_protocol_set_enabled}
+@deftypefun {int} {gnutls_protocol_set_enabled} (gnutls_protocol_t @var{version}, unsigned int @var{enabled})
+@var{version}: is a (gnutls) version number
+
+@var{enabled}: whether to enable the protocol
+
+Control the previous system-wide setting that marked  @code{version} as
+enabled or disabled.  Calling this function is allowed
+only if allowlisting mode is set in the configuration file,
+and only if the system-wide TLS priority string
+has not been initialized yet.
+The intended usage is to provide applications with a way
+to expressly deviate from the distribution or site defaults
+inherited from the configuration file.
+The modification is composable with further modifications
+performed through the priority string mechanism.
+
+This function is not thread-safe and is intended to be called
+in the main thread at the beginning of the process execution.
+
+@strong{Returns:} 0 on success or negative error code otherwise.
+
+@strong{Since:} 3.7.3
+@end deftypefun
+
 @subheading gnutls_psk_allocate_client_credentials
 @anchor{gnutls_psk_allocate_client_credentials}
-@deftypefun {int} {gnutls_psk_allocate_client_credentials} (gnutls_psk_client_credentials_t *            @var{sc})
+@deftypefun {int} {gnutls_psk_allocate_client_credentials} (gnutls_psk_client_credentials_t * @var{sc})
 @var{sc}: is a pointer to a @code{gnutls_psk_server_credentials_t}  type.
 
 Allocate a gnutls_psk_client_credentials_t structure.
@@ -4919,7 +5307,7 @@ an error code is returned.
 
 @subheading gnutls_psk_allocate_server_credentials
 @anchor{gnutls_psk_allocate_server_credentials}
-@deftypefun {int} {gnutls_psk_allocate_server_credentials} (gnutls_psk_server_credentials_t *            @var{sc})
+@deftypefun {int} {gnutls_psk_allocate_server_credentials} (gnutls_psk_server_credentials_t * @var{sc})
 @var{sc}: is a pointer to a @code{gnutls_psk_server_credentials_t}  type.
 
 Allocate a gnutls_psk_server_credentials_t structure.
@@ -4943,6 +5331,31 @@ if TLS 1.3 has been negotiated.
 @strong{Returns:} the identity hint of the peer, or @code{NULL}  in case of an error or if TLS 1.3 is being used.
 
 @strong{Since:} 2.4.0
+@end deftypefun
+
+@subheading gnutls_psk_format_imported_identity
+@anchor{gnutls_psk_format_imported_identity}
+@deftypefun {int} {gnutls_psk_format_imported_identity} (const gnutls_datum_t * @var{identity}, const gnutls_datum_t * @var{context}, gnutls_protocol_t @var{version}, gnutls_digest_algorithm_t @var{hash}, gnutls_datum_t * @var{imported_identity})
+@var{identity}: external identity
+
+@var{context}: optional contextual information
+
+@var{version}: protocol version to which the PSK is imported
+
+@var{hash}: hash algorithm used for KDF
+
+@var{imported_identity}: where the imported identity is stored
+
+This formats an external PSK identity  @code{identity} into an imported
+form, described in RFC 9258 as ImportedIdentity.
+
+Upon success, the data field of  @code{imported_identity} is allocated
+using @code{gnutls_malloc()}  and the caller must free the memory after
+use.
+
+@strong{Returns:} @code{GNUTLS_E_SUCCESS}  (0) on success, otherwise a negative error code.
+
+@strong{Since:} 3.8.1
 @end deftypefun
 
 @subheading gnutls_psk_free_client_credentials
@@ -4969,7 +5382,33 @@ Free a gnutls_psk_server_credentials_t structure.
 This should only be called in case of PSK authentication and in
 case of a server.
 
-@strong{Returns:} the username of the peer, or @code{NULL}  in case of an error.
+The returned pointer should be considered constant (do not free) and valid 
+for the lifetime of the session.
+
+This function will return @code{NULL}  if the username has embedded NULL bytes.
+In that case, @code{gnutls_psk_server_get_username2()}  should be used to retrieve the username.
+
+@strong{Returns:} the username of the peer, or @code{NULL}  in case of an error,
+or if the username has embedded NULLs.
+@end deftypefun
+
+@subheading gnutls_psk_server_get_username2
+@anchor{gnutls_psk_server_get_username2}
+@deftypefun {int} {gnutls_psk_server_get_username2} (gnutls_session_t @var{session}, gnutls_datum_t * @var{username})
+@var{session}: is a gnutls session
+
+@var{username}: a datum that will be filled in by this function
+
+Return a pointer to the username of the peer in the supplied datum. Does not
+need to be null-terminated.
+
+This should only be called in case of PSK authentication and in
+case of a server.
+
+The returned pointer should be considered constant (do not free) and valid 
+for the lifetime of the session.
+
+@strong{Returns:} @code{GNUTLS_E_SUCCESS} , or a negative value in case of an error.
 @end deftypefun
 
 @subheading gnutls_psk_set_client_credentials
@@ -4995,9 +5434,28 @@ in raw byte format or in Hex format (without the 0x prefix).
 an error code is returned.
 @end deftypefun
 
+@subheading gnutls_psk_set_client_credentials2
+@anchor{gnutls_psk_set_client_credentials2}
+@deftypefun {int} {gnutls_psk_set_client_credentials2} (gnutls_psk_client_credentials_t @var{res}, const gnutls_datum_t * @var{username}, const gnutls_datum_t * @var{key}, gnutls_psk_key_flags @var{flags})
+@var{res}: is a @code{gnutls_psk_client_credentials_t}  type.
+
+@var{username}: is the userid
+
+@var{key}: is the user's key
+
+@var{flags}: indicate the format of the key, either
+@code{GNUTLS_PSK_KEY_RAW}  or @code{GNUTLS_PSK_KEY_HEX} .
+
+This function is identical to @code{gnutls_psk_set_client_credentials()} ,
+except that it allows a non-null-terminated username to be introduced.
+
+@strong{Returns:} On success, @code{GNUTLS_E_SUCCESS}  (0) is returned, otherwise
+an error code is returned.
+@end deftypefun
+
 @subheading gnutls_psk_set_client_credentials_function
 @anchor{gnutls_psk_set_client_credentials_function}
-@deftypefun {void} {gnutls_psk_set_client_credentials_function} (gnutls_psk_client_credentials_t         @var{cred}, gnutls_psk_client_credentials_function         * @var{func})
+@deftypefun {void} {gnutls_psk_set_client_credentials_function} (gnutls_psk_client_credentials_t @var{cred}, gnutls_psk_client_credentials_function * @var{func})
 @var{cred}: is a @code{gnutls_psk_server_credentials_t}  type.
 
 @var{func}: is the callback function
@@ -5012,6 +5470,63 @@ The  @code{username} and  @code{key} ->data must be allocated using @code{gnutls
 The  @code{username} should be an ASCII string or UTF-8
 string. In case of a UTF-8 string it is recommended to be following
 the PRECIS framework for usernames (rfc8265).
+
+The callback function will be called once per handshake.
+
+The callback function should return 0 on success.
+-1 indicates an error.
+@end deftypefun
+
+@subheading gnutls_psk_set_client_credentials_function2
+@anchor{gnutls_psk_set_client_credentials_function2}
+@deftypefun {void} {gnutls_psk_set_client_credentials_function2} (gnutls_psk_client_credentials_t @var{cred}, gnutls_psk_client_credentials_function2 * @var{func})
+@var{cred}: is a @code{gnutls_psk_server_credentials_t}  type.
+
+@var{func}: is the callback function
+
+This function can be used to set a callback to retrieve the username and
+password for client PSK authentication.
+The callback's function form is:
+int (*callback)(gnutls_session_t, gnutls_datum_t* username,
+gnutls_datum_t* key);
+
+This callback function has the same semantics as that of @code{gnutls_psk_set_client_credentials_function()} ,
+but it allows non-string usernames to be used.
+
+The  @code{username} and  @code{key} ->data must be allocated using @code{gnutls_malloc()} .
+The  @code{username} should be an ASCII string or UTF-8
+string. In case of a UTF-8 string it is recommended to be following
+the PRECIS framework for usernames (rfc8265).
+
+The callback function will be called once per handshake.
+
+The callback function should return 0 on success.
+-1 indicates an error.
+@end deftypefun
+
+@subheading gnutls_psk_set_client_credentials_function3
+@anchor{gnutls_psk_set_client_credentials_function3}
+@deftypefun {void} {gnutls_psk_set_client_credentials_function3} (gnutls_psk_client_credentials_t @var{cred}, gnutls_psk_client_credentials_function3 * @var{func})
+@var{cred}: is a @code{gnutls_psk_server_credentials_t}  type.
+
+@var{func}: is the callback function
+
+This function can be used to set a callback to retrieve the username and
+password for client PSK authentication.
+The callback's function form is:
+int (*callback)(gnutls_session_t, gnutls_datum_t* username,
+gnutls_datum_t* key, gnutls_datum_t* context, gnutls_psk_key_flags *flags);
+
+This callback function has the same semantics as that of
+@code{gnutls_psk_set_client_credentials_function2()} , but it returns flags
+associated with the key.  The callback may import external PSK
+using the method described in RFC 9258 by using
+@code{gnutls_psk_format_imported_identity()} .
+
+The data field of  @code{username} ,  @code{key} , and  @code{context} must be allocated
+using @code{gnutls_malloc()} .  The  @code{username} should be an ASCII string or
+UTF-8 string. In case of a UTF-8 string it is recommended to be
+following the PRECIS framework for usernames (rfc8265).
 
 The callback function will be called once per handshake.
 
@@ -5037,7 +5552,7 @@ following RFC7919.
 
 @subheading gnutls_psk_set_server_credentials_file
 @anchor{gnutls_psk_set_server_credentials_file}
-@deftypefun {int} {gnutls_psk_set_server_credentials_file} (gnutls_psk_server_credentials_t            @var{res}, const char * @var{password_file})
+@deftypefun {int} {gnutls_psk_set_server_credentials_file} (gnutls_psk_server_credentials_t @var{res}, const char * @var{password_file})
 @var{res}: is a @code{gnutls_psk_server_credentials_t}  type.
 
 @var{password_file}: is the PSK password file (passwd.psk)
@@ -5046,13 +5561,18 @@ This function sets the password file, in a
 @code{gnutls_psk_server_credentials_t}  type.  This password file
 holds usernames and keys and will be used for PSK authentication.
 
+Each entry in the file consists of a username, followed by a colon
+(':') and a hex-encoded key.  If the username contains a colon or
+any other special character, it can be hex-encoded preceded by a
+'#'.
+
 @strong{Returns:} On success, @code{GNUTLS_E_SUCCESS}  (0) is returned, otherwise
 an error code is returned.
 @end deftypefun
 
 @subheading gnutls_psk_set_server_credentials_function
 @anchor{gnutls_psk_set_server_credentials_function}
-@deftypefun {void} {gnutls_psk_set_server_credentials_function} (gnutls_psk_server_credentials_t         @var{cred}, gnutls_psk_server_credentials_function         * @var{func})
+@deftypefun {void} {gnutls_psk_set_server_credentials_function} (gnutls_psk_server_credentials_t @var{cred}, gnutls_psk_server_credentials_function * @var{func})
 @var{cred}: is a @code{gnutls_psk_server_credentials_t}  type.
 
 @var{func}: is the callback function
@@ -5061,6 +5581,61 @@ This function can be used to set a callback to retrieve the user's PSK credentia
 The callback's function form is:
 int (*callback)(gnutls_session_t, const char* username,
 gnutls_datum_t* key);
+
+ @code{username} contains the actual username.
+The  @code{key} must be filled in using the @code{gnutls_malloc()} .
+
+In case the callback returned a negative number then gnutls will
+assume that the username does not exist.
+
+The callback function will only be called once per handshake.  The
+callback function should return 0 on success, while -1 indicates
+an error.
+@end deftypefun
+
+@subheading gnutls_psk_set_server_credentials_function2
+@anchor{gnutls_psk_set_server_credentials_function2}
+@deftypefun {void} {gnutls_psk_set_server_credentials_function2} (gnutls_psk_server_credentials_t @var{cred}, gnutls_psk_server_credentials_function2 @var{func})
+@var{cred}: is a @code{gnutls_psk_server_credentials_t}  type.
+
+@var{func}: is the callback function
+
+This function can be used to set a callback to retrieve the user's PSK credentials.
+The callback's function form is:
+int (*callback)(gnutls_session_t, const gnutls_datum_t* username,
+gnutls_datum_t* key);
+
+This callback function has the same semantics as that of @code{gnutls_psk_set_server_credentials_function()} ,
+but it allows non-string usernames to be used.
+
+ @code{username} contains the actual username.
+The  @code{key} must be filled in using the @code{gnutls_malloc()} .
+
+In case the callback returned a negative number then gnutls will
+assume that the username does not exist.
+
+The callback function will only be called once per handshake.  The
+callback function should return 0 on success, while -1 indicates
+an error.
+@end deftypefun
+
+@subheading gnutls_psk_set_server_credentials_function3
+@anchor{gnutls_psk_set_server_credentials_function3}
+@deftypefun {void} {gnutls_psk_set_server_credentials_function3} (gnutls_psk_server_credentials_t @var{cred}, gnutls_psk_server_credentials_function3 @var{func})
+@var{cred}: is a @code{gnutls_psk_server_credentials_t}  type.
+
+@var{func}: is the callback function
+
+This function can be used to set a callback to retrieve the user's PSK credentials.
+The callback's function form is:
+int (*callback)(gnutls_session_t, const gnutls_datum_t* username,
+gnutls_datum_t* key, gnutls_psk_key_flags *flags);
+
+This callback function has the same semantics as that of
+@code{gnutls_psk_set_server_credentials_function2()} , but it returns flags
+associated with the key.  The callback may import external PSK
+using the method described in RFC 9258 by using
+@code{gnutls_psk_format_imported_identity()} .
 
  @code{username} contains the actual username.
 The  @code{key} must be filled in using the @code{gnutls_malloc()} .
@@ -5444,7 +6019,7 @@ The number of bytes received might be less than the requested  @code{data_size} 
 
 @var{data_size}: the number of requested bytes
 
-This function can be used by a searver to retrieve data sent early
+This function can be used by a server to retrieve data sent early
 in the handshake processes when resuming a session.  This is used
 to implement a zero-roundtrip (0-RTT) mode.  It has the same
 semantics as @code{gnutls_record_recv()} .
@@ -5607,6 +6182,32 @@ number of bytes this function can send in a single call depends
 on the negotiated maximum record size.
 
 @strong{Since:} 3.6.5
+@end deftypefun
+
+@subheading gnutls_record_send_file
+@anchor{gnutls_record_send_file}
+@deftypefun {ssize_t} {gnutls_record_send_file} (gnutls_session_t @var{session}, int @var{fd}, off_t * @var{offset}, size_t @var{count})
+@var{session}: is a @code{gnutls_session_t}  type.
+
+@var{fd}: file descriptor from which to read data.
+
+@var{offset}: Is relative to file offset, denotes the starting location for
+reading.  after function returns, it point to position following
+last read byte.
+
+@var{count}: is the length of the data in bytes to be read from file and send.
+
+This function sends data from  @code{fd} . If KTLS (kernel TLS) is enabled, it will
+use the @code{sendfile()}  system call to avoid overhead of copying data between user
+space and the kernel. Otherwise, this functionality is merely emulated by
+calling @code{read()}  and @code{gnutls_record_send()} . If this implementation is
+suboptimal, check whether KTLS is enabled using
+@code{gnutls_transport_is_ktls_enabled()} .
+
+If  @code{offset} is NULL then file offset is incremented by number of bytes send,
+otherwise file offset remains unchanged.
+
+@strong{Returns:} The number of bytes sent, or a negative error code.
 @end deftypefun
 
 @subheading gnutls_record_send_range
@@ -6085,7 +6686,7 @@ Under TLS1.3 session resumption is possible only after a session ticket
 is received by the client. To ensure that such a ticket has been received use
 @code{gnutls_session_get_flags()}  and check for flag @code{GNUTLS_SFLAGS_SESSION_TICKET} ;
 if this flag is not set, this function will wait for a new ticket within
-an estimated rountrip, and if not received will return dummy data which
+an estimated roundtrip, and if not received will return dummy data which
 cannot lead to resumption.
 
 To get notified when new tickets are received by the server
@@ -6197,6 +6798,19 @@ The session identifier value returned is always less than
 an error code is returned.
 
 @strong{Since:} 3.1.4
+@end deftypefun
+
+@subheading gnutls_session_get_keylog_function
+@anchor{gnutls_session_get_keylog_function}
+@deftypefun {gnutls_keylog_func} {gnutls_session_get_keylog_function} (const gnutls_session_t @var{session})
+@var{session}: is @code{gnutls_session_t}  type
+
+This function will return the callback function set using
+@code{gnutls_session_set_keylog_function()} .
+
+@strong{Returns:} The function set or @code{NULL}  otherwise.
+
+@strong{Since:} 3.6.13
 @end deftypefun
 
 @subheading gnutls_session_get_master_secret
@@ -6349,6 +6963,19 @@ To set session resumption parameters use @code{gnutls_session_set_data()}  inste
 an error code is returned.
 
 @strong{Since:} 3.2.1
+@end deftypefun
+
+@subheading gnutls_session_set_keylog_function
+@anchor{gnutls_session_set_keylog_function}
+@deftypefun {void} {gnutls_session_set_keylog_function} (gnutls_session_t @var{session}, gnutls_keylog_func @var{func})
+@var{session}: is @code{gnutls_session_t}  type
+
+@var{func}: is the function to be called
+
+This function will set a callback to be called when a new secret is
+derived and installed during handshake.
+
+@strong{Since:} 3.6.13
 @end deftypefun
 
 @subheading gnutls_session_set_premaster
@@ -6778,6 +7405,66 @@ This function is not thread safe.
 integers indicating the available ciphers.
 @end deftypefun
 
+@subheading gnutls_sign_set_secure
+@anchor{gnutls_sign_set_secure}
+@deftypefun {int} {gnutls_sign_set_secure} (gnutls_sign_algorithm_t @var{sign}, unsigned int @var{secure})
+@var{sign}: the sign algorithm
+
+@var{secure}: whether to mark the sign algorithm secure
+
+Modify the previous system wide setting that marked  @code{sign} as secure
+or insecure.  Calling this function is allowed
+only if allowlisting mode is set in the configuration file,
+and only if the system-wide TLS priority string
+has not been initialized yet.
+The intended usage is to provide applications with a way
+to expressly deviate from the distribution or site defaults
+inherited from the configuration file.
+The modification is composable with further modifications
+performed through the priority string mechanism.
+
+This function is not thread-safe and is intended to be called
+in the main thread at the beginning of the process execution.
+
+Even when  @code{secure} is true,  @code{sign} is not marked as secure for the
+use in certificates.  Use @code{gnutls_sign_set_secure_for_certs()}  to
+mark it secure as well for certificates.
+
+@strong{Returns:} 0 on success or negative error code otherwise.
+
+@strong{Since:} 3.7.3
+@end deftypefun
+
+@subheading gnutls_sign_set_secure_for_certs
+@anchor{gnutls_sign_set_secure_for_certs}
+@deftypefun {int} {gnutls_sign_set_secure_for_certs} (gnutls_sign_algorithm_t @var{sign}, unsigned int @var{secure})
+@var{sign}: the sign algorithm
+
+@var{secure}: whether to mark the sign algorithm secure for certificates
+
+Modify the previous system wide setting that marked  @code{sign} as secure
+or insecure for the use in certificates.  Calling this function is allowed
+only if allowlisting mode is set in the configuration file,
+and only if the system-wide TLS priority string
+has not been initialized yet.
+The intended usage is to provide applications with a way
+to expressly deviate from the distribution or site defaults
+inherited from the configuration file.
+The modification is composable with further modifications
+performed through the priority string mechanism.
+
+This function is not thread-safe and is intended to be called
+in the main thread at the beginning of the process execution.
+When  @code{secure} is true,  @code{sign} is marked as secure for any use unlike
+@code{gnutls_sign_set_secure()} .  Otherwise, it is marked as insecure only
+for the use in certificates.  Use @code{gnutls_sign_set_secure()}  to mark
+it insecure for any uses.
+
+@strong{Returns:} 0 on success or negative error code otherwise.
+
+@strong{Since:} 3.7.3
+@end deftypefun
+
 @subheading gnutls_sign_supports_pk_algorithm
 @anchor{gnutls_sign_supports_pk_algorithm}
 @deftypefun {unsigned} {gnutls_sign_supports_pk_algorithm} (gnutls_sign_algorithm_t @var{sign}, gnutls_pk_algorithm_t @var{pk})
@@ -6796,7 +7483,7 @@ from the given private key algorithm.
 
 @subheading gnutls_srp_allocate_client_credentials
 @anchor{gnutls_srp_allocate_client_credentials}
-@deftypefun {int} {gnutls_srp_allocate_client_credentials} (gnutls_srp_client_credentials_t *            @var{sc})
+@deftypefun {int} {gnutls_srp_allocate_client_credentials} (gnutls_srp_client_credentials_t * @var{sc})
 @var{sc}: is a pointer to a @code{gnutls_srp_server_credentials_t}  type.
 
 Allocate a gnutls_srp_client_credentials_t structure.
@@ -6807,7 +7494,7 @@ error code.
 
 @subheading gnutls_srp_allocate_server_credentials
 @anchor{gnutls_srp_allocate_server_credentials}
-@deftypefun {int} {gnutls_srp_allocate_server_credentials} (gnutls_srp_server_credentials_t *            @var{sc})
+@deftypefun {int} {gnutls_srp_allocate_server_credentials} (gnutls_srp_server_credentials_t * @var{sc})
 @var{sc}: is a pointer to a @code{gnutls_srp_server_credentials_t}  type.
 
 Allocate a gnutls_srp_server_credentials_t structure.
@@ -6947,7 +7634,7 @@ error code.
 
 @subheading gnutls_srp_set_client_credentials_function
 @anchor{gnutls_srp_set_client_credentials_function}
-@deftypefun {void} {gnutls_srp_set_client_credentials_function} (gnutls_srp_client_credentials_t         @var{cred}, gnutls_srp_client_credentials_function         * @var{func})
+@deftypefun {void} {gnutls_srp_set_client_credentials_function} (gnutls_srp_client_credentials_t @var{cred}, gnutls_srp_client_credentials_function * @var{func})
 @var{cred}: is a @code{gnutls_srp_server_credentials_t}  type.
 
 @var{func}: is the callback function
@@ -7016,7 +7703,7 @@ error code.
 
 @subheading gnutls_srp_set_server_credentials_function
 @anchor{gnutls_srp_set_server_credentials_function}
-@deftypefun {void} {gnutls_srp_set_server_credentials_function} (gnutls_srp_server_credentials_t         @var{cred}, gnutls_srp_server_credentials_function         * @var{func})
+@deftypefun {void} {gnutls_srp_set_server_credentials_function} (gnutls_srp_server_credentials_t @var{cred}, gnutls_srp_server_credentials_function * @var{func})
 @var{cred}: is a @code{gnutls_srp_server_credentials_t}  type.
 
 @var{func}: is the callback function
@@ -7359,7 +8046,7 @@ code.
 
 @subheading gnutls_supplemental_get_name
 @anchor{gnutls_supplemental_get_name}
-@deftypefun {const char     *} {gnutls_supplemental_get_name} (gnutls_supplemental_data_format_type_t       @var{type})
+@deftypefun {const char *} {gnutls_supplemental_get_name} (gnutls_supplemental_data_format_type_t @var{type})
 @var{type}: is a supplemental data format type
 
 Convert a @code{gnutls_supplemental_data_format_type_t}  value to a
@@ -7462,7 +8149,7 @@ negative error value.
 
 @subheading gnutls_tdb_set_store_commitment_func
 @anchor{gnutls_tdb_set_store_commitment_func}
-@deftypefun {void} {gnutls_tdb_set_store_commitment_func} (gnutls_tdb_t @var{tdb}, gnutls_tdb_store_commitment_func        @var{cstore})
+@deftypefun {void} {gnutls_tdb_set_store_commitment_func} (gnutls_tdb_t @var{tdb}, gnutls_tdb_store_commitment_func @var{cstore})
 @var{tdb}: The trust storage
 
 @var{cstore}: The commitment storage function
@@ -7567,6 +8254,18 @@ PUSH and PULL).  This must have been set using
 Used to get the arguments of the transport functions (like PUSH
 and PULL).  These should have been set using
 @code{gnutls_transport_set_ptr2()} .
+@end deftypefun
+
+@subheading gnutls_transport_is_ktls_enabled
+@anchor{gnutls_transport_is_ktls_enabled}
+@deftypefun {gnutls_transport_ktls_enable_flags_t} {gnutls_transport_is_ktls_enabled} (gnutls_session_t @var{session})
+@var{session}: is a @code{gnutls_session_t}  type.
+
+Checks if KTLS is now enabled and was properly inicialized.
+
+@strong{Returns:} @code{GNUTLS_KTLS_RECV} , @code{GNUTLS_KTLS_SEND} , @code{GNUTLS_KTLS_DUPLEX} , otherwise 0
+
+@strong{Since:} 3.7.3
 @end deftypefun
 
 @subheading gnutls_transport_set_errno

@@ -25,25 +25,25 @@
 #include <stdio.h>
 #include <string.h>
 #include "errors.h"
-#include <datum.h>
-#include <pkcs11_int.h>
-#include <gnutls/abstract.h>
-#include <pk.h>
-#include <x509_int.h>
-#include <tls-sig.h>
-#include <algorithms.h>
-#include <fips.h>
-#include <system-keys.h>
-#include "urls.h"
+#include "datum.h"
 #include "pkcs11_int.h"
-#include <abstract_int.h>
+#include <gnutls/abstract.h>
+#include "pk.h"
+#include "x509_int.h"
+#include "tls-sig.h"
+#include "algorithms.h"
+#include "fips.h"
+#include "system-keys.h"
+#include "urls.h"
+#include "tpm2.h"
+#include "pkcs11_int.h"
+#include "abstract_int.h"
 
-static int
-privkey_sign_prehashed(gnutls_privkey_t signer,
-		       const gnutls_sign_entry_st *se,
-		       const gnutls_datum_t * hash_data,
-		       gnutls_datum_t * signature,
-		       gnutls_x509_spki_st * params);
+static int privkey_sign_prehashed(gnutls_privkey_t signer,
+				  const gnutls_sign_entry_st *se,
+				  const gnutls_datum_t *hash_data,
+				  gnutls_datum_t *signature,
+				  gnutls_x509_spki_st *params);
 
 /**
  * gnutls_privkey_get_type:
@@ -78,11 +78,14 @@ gnutls_privkey_type_t gnutls_privkey_get_type(gnutls_privkey_t key)
  *
  * Since: 3.5.0
  **/
-int gnutls_privkey_get_seed(gnutls_privkey_t key, gnutls_digest_algorithm_t *digest, void *seed, size_t *seed_size)
+int gnutls_privkey_get_seed(gnutls_privkey_t key,
+			    gnutls_digest_algorithm_t *digest, void *seed,
+			    size_t *seed_size)
 {
 	if (key->type != GNUTLS_PRIVKEY_X509)
 		return gnutls_assert_val(GNUTLS_E_INVALID_REQUEST);
-	return gnutls_x509_privkey_get_seed(key->key.x509, digest, seed, seed_size);
+	return gnutls_x509_privkey_get_seed(key->key.x509, digest, seed,
+					    seed_size);
 }
 
 /**
@@ -100,11 +103,14 @@ int gnutls_privkey_get_seed(gnutls_privkey_t key, gnutls_digest_algorithm_t *dig
  *
  * Since: 3.5.0
  **/
-int gnutls_privkey_verify_seed(gnutls_privkey_t key, gnutls_digest_algorithm_t digest, const void *seed, size_t seed_size)
+int gnutls_privkey_verify_seed(gnutls_privkey_t key,
+			       gnutls_digest_algorithm_t digest,
+			       const void *seed, size_t seed_size)
 {
 	if (key->type != GNUTLS_PRIVKEY_X509)
 		return gnutls_assert_val(GNUTLS_E_INVALID_REQUEST);
-	return gnutls_x509_privkey_verify_seed(key->key.x509, digest, seed, seed_size);
+	return gnutls_x509_privkey_verify_seed(key->key.x509, digest, seed,
+					       seed_size);
 }
 
 /**
@@ -144,12 +150,11 @@ int gnutls_privkey_get_pk_algorithm(gnutls_privkey_t key, unsigned int *bits)
 		gnutls_assert();
 		return GNUTLS_E_INVALID_REQUEST;
 	}
-
 }
 
-static int
-privkey_to_pubkey(gnutls_pk_algorithm_t pk,
-		  const gnutls_pk_params_st * priv, gnutls_pk_params_st * pub)
+static int privkey_to_pubkey(gnutls_pk_algorithm_t pk,
+			     const gnutls_pk_params_st *priv,
+			     gnutls_pk_params_st *pub)
 {
 	int ret;
 
@@ -176,19 +181,44 @@ privkey_to_pubkey(gnutls_pk_algorithm_t pk,
 
 		break;
 	case GNUTLS_PK_DSA:
-		pub->params[0] = _gnutls_mpi_copy(priv->params[0]);
-		pub->params[1] = _gnutls_mpi_copy(priv->params[1]);
-		pub->params[2] = _gnutls_mpi_copy(priv->params[2]);
-		pub->params[3] = _gnutls_mpi_copy(priv->params[3]);
+		pub->params[DSA_P] = _gnutls_mpi_copy(priv->params[DSA_P]);
+		pub->params[DSA_Q] = _gnutls_mpi_copy(priv->params[DSA_Q]);
+		pub->params[DSA_G] = _gnutls_mpi_copy(priv->params[DSA_G]);
+		pub->params[DSA_Y] = _gnutls_mpi_copy(priv->params[DSA_Y]);
 
 		pub->params_nr = DSA_PUBLIC_PARAMS;
 
-		if (pub->params[0] == NULL || pub->params[1] == NULL ||
-		    pub->params[2] == NULL || pub->params[3] == NULL) {
+		if (pub->params[DSA_P] == NULL || pub->params[DSA_Q] == NULL ||
+		    pub->params[DSA_G] == NULL || pub->params[DSA_Y] == NULL) {
 			gnutls_assert();
 			ret = GNUTLS_E_MEMORY_ERROR;
 			goto cleanup;
 		}
+
+		break;
+	case GNUTLS_PK_DH:
+		pub->params[DH_P] = _gnutls_mpi_copy(priv->params[DH_P]);
+		pub->params[DH_G] = _gnutls_mpi_copy(priv->params[DH_G]);
+		pub->params[DH_Y] = _gnutls_mpi_copy(priv->params[DH_Y]);
+
+		if (pub->params[DH_P] == NULL || pub->params[DH_G] == NULL ||
+		    pub->params[DH_Y] == NULL) {
+			gnutls_assert();
+			ret = GNUTLS_E_MEMORY_ERROR;
+			goto cleanup;
+		}
+
+		if (priv->params[DH_Q]) {
+			pub->params[DH_Q] =
+				_gnutls_mpi_copy(priv->params[DH_Q]);
+			if (pub->params[DH_Q] == NULL) {
+				gnutls_assert();
+				ret = GNUTLS_E_MEMORY_ERROR;
+				goto cleanup;
+			}
+		}
+
+		pub->params_nr = DH_PUBLIC_PARAMS;
 
 		break;
 	case GNUTLS_PK_ECDSA:
@@ -206,7 +236,10 @@ privkey_to_pubkey(gnutls_pk_algorithm_t pk,
 		break;
 	case GNUTLS_PK_EDDSA_ED25519:
 	case GNUTLS_PK_EDDSA_ED448:
-		ret = _gnutls_set_datum(&pub->raw_pub, priv->raw_pub.data, priv->raw_pub.size);
+	case GNUTLS_PK_ECDH_X25519:
+	case GNUTLS_PK_ECDH_X448:
+		ret = _gnutls_set_datum(&pub->raw_pub, priv->raw_pub.data,
+					priv->raw_pub.size);
 		if (ret < 0)
 			return gnutls_assert_val(ret);
 
@@ -219,7 +252,8 @@ privkey_to_pubkey(gnutls_pk_algorithm_t pk,
 
 		pub->params_nr = GOST_PUBLIC_PARAMS;
 
-		if (pub->params[GOST_X] == NULL || pub->params[GOST_Y] == NULL) {
+		if (pub->params[GOST_X] == NULL ||
+		    pub->params[GOST_Y] == NULL) {
 			gnutls_assert();
 			ret = GNUTLS_E_MEMORY_ERROR;
 			goto cleanup;
@@ -232,15 +266,14 @@ privkey_to_pubkey(gnutls_pk_algorithm_t pk,
 	}
 
 	return 0;
- cleanup:
+cleanup:
 	gnutls_pk_params_release(pub);
 	return ret;
 }
 
 /* Returns the public key of the private key (if possible)
  */
-int
-_gnutls_privkey_get_mpis(gnutls_privkey_t key, gnutls_pk_params_st * params)
+int _gnutls_privkey_get_mpis(gnutls_privkey_t key, gnutls_pk_params_st *params)
 {
 	int ret;
 
@@ -260,9 +293,16 @@ _gnutls_privkey_get_mpis(gnutls_privkey_t key, gnutls_pk_params_st * params)
 		gnutls_pubkey_deinit(pubkey);
 
 		break;
-		}
+	}
 #endif
 	default:
+		if (key->key.ext.pk_params_func) {
+			ret = key->key.ext.pk_params_func(
+				key, key->key.ext.userdata, params);
+			if (ret < 0)
+				return gnutls_assert_val(ret);
+			return ret;
+		}
 		gnutls_assert();
 		return GNUTLS_E_INVALID_REQUEST;
 	}
@@ -270,9 +310,8 @@ _gnutls_privkey_get_mpis(gnutls_privkey_t key, gnutls_pk_params_st * params)
 	return ret;
 }
 
-int
-_gnutls_privkey_get_public_mpis(gnutls_privkey_t key,
-				gnutls_pk_params_st * params)
+int _gnutls_privkey_get_public_mpis(gnutls_privkey_t key,
+				    gnutls_pk_params_st *params)
 {
 	int ret;
 	gnutls_pk_params_st tmp1;
@@ -294,9 +333,8 @@ _gnutls_privkey_get_public_mpis(gnutls_privkey_t key,
 }
 
 /* This function retrieves default sign parameters from KEY. */
-int
-_gnutls_privkey_get_spki_params(gnutls_privkey_t key,
-				gnutls_x509_spki_st * params)
+int _gnutls_privkey_get_spki_params(gnutls_privkey_t key,
+				    gnutls_x509_spki_st *params)
 {
 	switch (key->type) {
 #ifdef ENABLE_PKCS11
@@ -325,12 +363,11 @@ _gnutls_privkey_get_spki_params(gnutls_privkey_t key,
  * After calling this function the params structure will
  * be initialized even if the original SubjectPublicKeyInfo was empty.
  */
-int
-_gnutls_privkey_update_spki_params(gnutls_privkey_t key,
-				 gnutls_pk_algorithm_t pk,
-				 gnutls_digest_algorithm_t dig,
-				 unsigned flags,
-				 gnutls_x509_spki_st *params)
+int _gnutls_privkey_update_spki_params(gnutls_privkey_t key,
+				       gnutls_pk_algorithm_t pk,
+				       gnutls_digest_algorithm_t dig,
+				       unsigned flags,
+				       gnutls_x509_spki_st *params)
 {
 	unsigned salt_size = 0;
 	unsigned bits = 0;
@@ -344,7 +381,7 @@ _gnutls_privkey_update_spki_params(gnutls_privkey_t key,
 
 	key_pk = gnutls_privkey_get_pk_algorithm(key, &bits);
 	if ((key_pk != pk) &&
-	      !(key_pk == GNUTLS_PK_RSA && pk == GNUTLS_PK_RSA_PSS)) {
+	    !(key_pk == GNUTLS_PK_RSA && pk == GNUTLS_PK_RSA_PSS)) {
 		gnutls_assert();
 		return GNUTLS_E_CONSTRAINT_ERROR;
 	}
@@ -360,8 +397,10 @@ _gnutls_privkey_update_spki_params(gnutls_privkey_t key,
 		if (params->pk == GNUTLS_PK_RSA)
 			salt_size = 0;
 		else if (params->pk == GNUTLS_PK_RSA_PSS) {
-			if (params->rsa_pss_dig != GNUTLS_DIG_UNKNOWN && dig != params->rsa_pss_dig) {
-				return gnutls_assert_val(GNUTLS_E_CONSTRAINT_ERROR);
+			if (params->rsa_pss_dig != GNUTLS_DIG_UNKNOWN &&
+			    dig != params->rsa_pss_dig) {
+				return gnutls_assert_val(
+					GNUTLS_E_CONSTRAINT_ERROR);
 			}
 
 			salt_size = params->salt_size;
@@ -370,9 +409,15 @@ _gnutls_privkey_update_spki_params(gnutls_privkey_t key,
 		if (flags & GNUTLS_PRIVKEY_FLAG_REPRODUCIBLE)
 			params->salt_size = 0;
 		else {
-			ret = _gnutls_find_rsa_pss_salt_size(bits, me, salt_size);
+			ret = _gnutls_find_rsa_pss_salt_size(bits, me,
+							     salt_size);
 			if (ret < 0)
 				return gnutls_assert_val(ret);
+			if (flags & GNUTLS_PRIVKEY_FLAG_RSA_PSS_FIXED_SALT_LENGTH &&
+			    (size_t)ret != _gnutls_hash_get_algo_len(me)) {
+				return gnutls_assert_val(
+					GNUTLS_E_CONSTRAINT_ERROR);
+			}
 			params->salt_size = ret;
 		}
 		params->rsa_pss_dig = dig;
@@ -403,8 +448,9 @@ _gnutls_privkey_update_spki_params(gnutls_privkey_t key,
  *
  * Since: 2.12.0
  **/
-int gnutls_privkey_init(gnutls_privkey_t * key)
+int gnutls_privkey_init(gnutls_privkey_t *key)
 {
+	*key = NULL;
 	FAIL_IF_LIB_ERROR;
 
 	*key = gnutls_calloc(1, sizeof(struct gnutls_privkey_st));
@@ -429,8 +475,8 @@ void gnutls_privkey_deinit(gnutls_privkey_t key)
 	if (key == NULL)
 		return;
 
-	if (key->flags & GNUTLS_PRIVKEY_IMPORT_AUTO_RELEASE
-	    || key->flags & GNUTLS_PRIVKEY_IMPORT_COPY)
+	if (key->flags & GNUTLS_PRIVKEY_IMPORT_AUTO_RELEASE ||
+	    key->flags & GNUTLS_PRIVKEY_IMPORT_COPY)
 		switch (key->type) {
 #ifdef ENABLE_PKCS11
 		case GNUTLS_PRIVKEY_PKCS11:
@@ -492,9 +538,9 @@ static int check_if_clean(gnutls_privkey_t key)
  *
  * Since: 2.12.0
  **/
-int
-gnutls_privkey_import_pkcs11(gnutls_privkey_t pkey,
-			     gnutls_pkcs11_privkey_t key, unsigned int flags)
+int gnutls_privkey_import_pkcs11(gnutls_privkey_t pkey,
+				 gnutls_pkcs11_privkey_t key,
+				 unsigned int flags)
 {
 	int ret;
 
@@ -525,7 +571,7 @@ gnutls_privkey_import_pkcs11(gnutls_privkey_t pkey,
  * @key: A key of type #gnutls_pubkey_t
  * @url: A PKCS 11 url
  *
- * This function will import a PKCS 11 private key to a #gnutls_private_key_t
+ * This function will import a PKCS 11 private key to a #gnutls_privkey_t
  * type.
  *
  * Returns: On success, %GNUTLS_E_SUCCESS (0) is returned, otherwise a
@@ -540,8 +586,8 @@ int gnutls_privkey_import_pkcs11_url(gnutls_privkey_t key, const char *url)
 }
 #endif
 
-static
-int _gnutls_privkey_import_pkcs11_url(gnutls_privkey_t key, const char *url, unsigned flags)
+static int _gnutls_privkey_import_pkcs11_url(gnutls_privkey_t key,
+					     const char *url, unsigned flags)
 {
 	gnutls_pkcs11_privkey_t pkey;
 	int ret;
@@ -562,9 +608,8 @@ int _gnutls_privkey_import_pkcs11_url(gnutls_privkey_t key, const char *url, uns
 		goto cleanup;
 	}
 
-	ret =
-	    gnutls_privkey_import_pkcs11(key, pkey,
-					 GNUTLS_PRIVKEY_IMPORT_AUTO_RELEASE);
+	ret = gnutls_privkey_import_pkcs11(key, pkey,
+					   GNUTLS_PRIVKEY_IMPORT_AUTO_RELEASE);
 	if (ret < 0) {
 		gnutls_assert();
 		goto cleanup;
@@ -572,7 +617,7 @@ int _gnutls_privkey_import_pkcs11_url(gnutls_privkey_t key, const char *url, uns
 
 	return 0;
 
- cleanup:
+cleanup:
 	gnutls_pkcs11_privkey_deinit(pkey);
 
 	return ret;
@@ -593,12 +638,12 @@ int _gnutls_privkey_import_pkcs11_url(gnutls_privkey_t key, const char *url, uns
  *
  * Since: 3.4.0
  */
-int
-gnutls_privkey_export_pkcs11(gnutls_privkey_t pkey,
-			     gnutls_pkcs11_privkey_t *key)
+int gnutls_privkey_export_pkcs11(gnutls_privkey_t pkey,
+				 gnutls_pkcs11_privkey_t *key)
 {
 	int ret;
 
+	*key = NULL;
 	if (pkey->type != GNUTLS_PRIVKEY_PKCS11) {
 		gnutls_assert();
 		return GNUTLS_E_INVALID_REQUEST;
@@ -618,7 +663,7 @@ gnutls_privkey_export_pkcs11(gnutls_privkey_t pkey,
 
 	return 0;
 }
-#endif				/* ENABLE_PKCS11 */
+#endif /* ENABLE_PKCS11 */
 
 /**
  * gnutls_privkey_import_ext:
@@ -645,20 +690,19 @@ gnutls_privkey_export_pkcs11(gnutls_privkey_t pkey,
  *
  * Since: 3.0
  **/
-int
-gnutls_privkey_import_ext(gnutls_privkey_t pkey,
-			  gnutls_pk_algorithm_t pk,
-			  void *userdata,
-			  gnutls_privkey_sign_func sign_func,
-			  gnutls_privkey_decrypt_func decrypt_func,
-			  unsigned int flags)
+int gnutls_privkey_import_ext(gnutls_privkey_t pkey, gnutls_pk_algorithm_t pk,
+			      void *userdata,
+			      gnutls_privkey_sign_func sign_func,
+			      gnutls_privkey_decrypt_func decrypt_func,
+			      unsigned int flags)
 {
 	return gnutls_privkey_import_ext2(pkey, pk, userdata, sign_func,
 					  decrypt_func, NULL, flags);
 }
 
-#define PK_IS_OK_FOR_EXT2(pk) \
-	((pk == GNUTLS_PK_RSA) || (pk == GNUTLS_PK_ECDSA) || (pk == GNUTLS_PK_DSA))
+#define PK_IS_OK_FOR_EXT2(pk)                                \
+	((pk == GNUTLS_PK_RSA) || (pk == GNUTLS_PK_ECDSA) || \
+	 (pk == GNUTLS_PK_DSA))
 
 /**
  * gnutls_privkey_import_ext2:
@@ -687,14 +731,11 @@ gnutls_privkey_import_ext(gnutls_privkey_t pkey,
  *
  * Since: 3.1
  **/
-int
-gnutls_privkey_import_ext2(gnutls_privkey_t pkey,
-			   gnutls_pk_algorithm_t pk,
-			   void *userdata,
-			   gnutls_privkey_sign_func sign_fn,
-			   gnutls_privkey_decrypt_func decrypt_fn,
-			   gnutls_privkey_deinit_func deinit_fn,
-			   unsigned int flags)
+int gnutls_privkey_import_ext2(gnutls_privkey_t pkey, gnutls_pk_algorithm_t pk,
+			       void *userdata, gnutls_privkey_sign_func sign_fn,
+			       gnutls_privkey_decrypt_func decrypt_fn,
+			       gnutls_privkey_deinit_func deinit_fn,
+			       unsigned int flags)
 {
 	int ret;
 
@@ -754,14 +795,12 @@ gnutls_privkey_import_ext2(gnutls_privkey_t pkey,
  *
  * Since: 3.4.0
  **/
-int
-gnutls_privkey_import_ext3(gnutls_privkey_t pkey,
-			   void *userdata,
-			   gnutls_privkey_sign_func sign_fn,
-			   gnutls_privkey_decrypt_func decrypt_fn,
-			   gnutls_privkey_deinit_func deinit_fn,
-			   gnutls_privkey_info_func info_fn,
-			   unsigned int flags)
+int gnutls_privkey_import_ext3(gnutls_privkey_t pkey, void *userdata,
+			       gnutls_privkey_sign_func sign_fn,
+			       gnutls_privkey_decrypt_func decrypt_fn,
+			       gnutls_privkey_deinit_func deinit_fn,
+			       gnutls_privkey_info_func info_fn,
+			       unsigned int flags)
 {
 	int ret;
 
@@ -785,7 +824,8 @@ gnutls_privkey_import_ext3(gnutls_privkey_t pkey,
 	pkey->type = GNUTLS_PRIVKEY_EXT;
 	pkey->flags = flags;
 
-	pkey->pk_algorithm = pkey->key.ext.info_func(pkey, GNUTLS_PRIVKEY_INFO_PK_ALGO, pkey->key.ext.userdata);
+	pkey->pk_algorithm = pkey->key.ext.info_func(
+		pkey, GNUTLS_PRIVKEY_INFO_PK_ALGO, pkey->key.ext.userdata);
 
 	if (!PK_IS_OK_FOR_EXT2(pkey->pk_algorithm))
 		return gnutls_assert_val(GNUTLS_E_INVALID_REQUEST);
@@ -843,15 +883,13 @@ gnutls_privkey_import_ext3(gnutls_privkey_t pkey,
  *
  * Since: 3.6.0
  **/
-int
-gnutls_privkey_import_ext4(gnutls_privkey_t pkey,
-                           void *userdata,
-                           gnutls_privkey_sign_data_func sign_data_fn,
-                           gnutls_privkey_sign_hash_func sign_hash_fn,
-                           gnutls_privkey_decrypt_func decrypt_fn,
-                           gnutls_privkey_deinit_func deinit_fn,
-                           gnutls_privkey_info_func info_fn,
-                           unsigned int flags)
+int gnutls_privkey_import_ext4(gnutls_privkey_t pkey, void *userdata,
+			       gnutls_privkey_sign_data_func sign_data_fn,
+			       gnutls_privkey_sign_hash_func sign_hash_fn,
+			       gnutls_privkey_decrypt_func decrypt_fn,
+			       gnutls_privkey_deinit_func deinit_fn,
+			       gnutls_privkey_info_func info_fn,
+			       unsigned int flags)
 {
 	int ret;
 
@@ -876,9 +914,11 @@ gnutls_privkey_import_ext4(gnutls_privkey_t pkey,
 	pkey->type = GNUTLS_PRIVKEY_EXT;
 	pkey->flags = flags;
 
-	pkey->pk_algorithm = pkey->key.ext.info_func(pkey, GNUTLS_PRIVKEY_INFO_PK_ALGO, pkey->key.ext.userdata);
+	pkey->pk_algorithm = pkey->key.ext.info_func(
+		pkey, GNUTLS_PRIVKEY_INFO_PK_ALGO, pkey->key.ext.userdata);
 
-	ret = pkey->key.ext.info_func(pkey, GNUTLS_PRIVKEY_INFO_PK_ALGO_BITS, pkey->key.ext.userdata);
+	ret = pkey->key.ext.info_func(pkey, GNUTLS_PRIVKEY_INFO_PK_ALGO_BITS,
+				      pkey->key.ext.userdata);
 	if (ret >= 0)
 		pkey->key.ext.bits = ret;
 
@@ -909,9 +949,8 @@ gnutls_privkey_import_ext4(gnutls_privkey_t pkey,
  *
  * Since: 2.12.0
  **/
-int
-gnutls_privkey_import_x509(gnutls_privkey_t pkey,
-			   gnutls_x509_privkey_t key, unsigned int flags)
+int gnutls_privkey_import_x509(gnutls_privkey_t pkey, gnutls_x509_privkey_t key,
+			       unsigned int flags)
 {
 	int ret;
 
@@ -956,12 +995,12 @@ gnutls_privkey_import_x509(gnutls_privkey_t pkey,
  *
  * Since: 3.4.0
  */
-int
-gnutls_privkey_export_x509(gnutls_privkey_t pkey,
-			   gnutls_x509_privkey_t *key)
+int gnutls_privkey_export_x509(gnutls_privkey_t pkey,
+			       gnutls_x509_privkey_t *key)
 {
 	int ret;
 
+	*key = NULL;
 	if (pkey->type != GNUTLS_PRIVKEY_X509) {
 		gnutls_assert();
 		return GNUTLS_E_INVALID_REQUEST;
@@ -1015,10 +1054,8 @@ gnutls_privkey_export_x509(gnutls_privkey_t pkey,
  *
  * Since: 3.3.0
  **/
-int
-gnutls_privkey_generate(gnutls_privkey_t pkey,
-			gnutls_pk_algorithm_t algo, unsigned int bits,
-			unsigned int flags)
+int gnutls_privkey_generate(gnutls_privkey_t pkey, gnutls_pk_algorithm_t algo,
+			    unsigned int bits, unsigned int flags)
 {
 	return gnutls_privkey_generate2(pkey, algo, bits, flags, NULL, 0);
 }
@@ -1063,10 +1100,10 @@ gnutls_privkey_generate(gnutls_privkey_t pkey,
  *
  * Since: 3.5.0
  **/
-int
-gnutls_privkey_generate2(gnutls_privkey_t pkey,
-			 gnutls_pk_algorithm_t algo, unsigned int bits,
-			 unsigned int flags, const gnutls_keygen_data_st *data, unsigned data_size)
+int gnutls_privkey_generate2(gnutls_privkey_t pkey, gnutls_pk_algorithm_t algo,
+			     unsigned int bits, unsigned int flags,
+			     const gnutls_keygen_data_st *data,
+			     unsigned data_size)
 {
 	int ret;
 
@@ -1074,7 +1111,8 @@ gnutls_privkey_generate2(gnutls_privkey_t pkey,
 	if (ret < 0)
 		return gnutls_assert_val(ret);
 
-	ret = gnutls_x509_privkey_generate2(pkey->key.x509, algo, bits, flags, data, data_size);
+	ret = gnutls_x509_privkey_generate2(pkey->key.x509, algo, bits, flags,
+					    data, data_size);
 	if (ret < 0) {
 		gnutls_x509_privkey_deinit(pkey->key.x509);
 		pkey->key.x509 = NULL;
@@ -1109,12 +1147,10 @@ gnutls_privkey_generate2(gnutls_privkey_t pkey,
  *
  * Since: 2.12.0
  **/
-int
-gnutls_privkey_sign_data(gnutls_privkey_t signer,
-			 gnutls_digest_algorithm_t hash,
-			 unsigned int flags,
-			 const gnutls_datum_t * data,
-			 gnutls_datum_t * signature)
+int gnutls_privkey_sign_data(gnutls_privkey_t signer,
+			     gnutls_digest_algorithm_t hash, unsigned int flags,
+			     const gnutls_datum_t *data,
+			     gnutls_datum_t *signature)
 {
 	int ret;
 	gnutls_x509_spki_st params;
@@ -1129,7 +1165,7 @@ gnutls_privkey_sign_data(gnutls_privkey_t signer,
 	}
 
 	ret = _gnutls_privkey_update_spki_params(signer, signer->pk_algorithm,
-					         hash, flags, &params);
+						 hash, flags, &params);
 	if (ret < 0) {
 		gnutls_assert();
 		return ret;
@@ -1137,7 +1173,9 @@ gnutls_privkey_sign_data(gnutls_privkey_t signer,
 
 	FIX_SIGN_PARAMS(params, flags, hash);
 
-	return privkey_sign_and_hash_data(signer, _gnutls_pk_to_sign_entry(params.pk, hash), data, signature, &params);
+	return privkey_sign_and_hash_data(
+		signer, _gnutls_pk_to_sign_entry(params.pk, hash), data,
+		signature, &params);
 }
 
 /**
@@ -1158,12 +1196,10 @@ gnutls_privkey_sign_data(gnutls_privkey_t signer,
  *
  * Since: 3.6.0
  **/
-int
-gnutls_privkey_sign_data2(gnutls_privkey_t signer,
-			  gnutls_sign_algorithm_t algo,
-			  unsigned int flags,
-			  const gnutls_datum_t * data,
-			  gnutls_datum_t * signature)
+int gnutls_privkey_sign_data2(gnutls_privkey_t signer,
+			      gnutls_sign_algorithm_t algo, unsigned int flags,
+			      const gnutls_datum_t *data,
+			      gnutls_datum_t *signature)
 {
 	int ret;
 	gnutls_x509_spki_st params;
@@ -1183,7 +1219,7 @@ gnutls_privkey_sign_data2(gnutls_privkey_t signer,
 	}
 
 	ret = _gnutls_privkey_update_spki_params(signer, se->pk, se->hash,
-					         flags, &params);
+						 flags, &params);
 	if (ret < 0) {
 		gnutls_assert();
 		return ret;
@@ -1219,12 +1255,10 @@ gnutls_privkey_sign_data2(gnutls_privkey_t signer,
  *
  * Since: 3.6.0
  **/
-int
-gnutls_privkey_sign_hash2(gnutls_privkey_t signer,
-			  gnutls_sign_algorithm_t algo,
-			  unsigned int flags,
-			  const gnutls_datum_t * hash_data,
-			  gnutls_datum_t * signature)
+int gnutls_privkey_sign_hash2(gnutls_privkey_t signer,
+			      gnutls_sign_algorithm_t algo, unsigned int flags,
+			      const gnutls_datum_t *hash_data,
+			      gnutls_datum_t *signature)
 {
 	int ret;
 	gnutls_x509_spki_st params;
@@ -1236,35 +1270,43 @@ gnutls_privkey_sign_hash2(gnutls_privkey_t signer,
 		se = _gnutls_sign_to_entry(GNUTLS_SIGN_RSA_RAW);
 	} else {
 		se = _gnutls_sign_to_entry(algo);
-		if (unlikely(se == NULL))
-			return gnutls_assert_val(GNUTLS_E_INVALID_REQUEST);
-
+		if (unlikely(se == NULL)) {
+			ret = gnutls_assert_val(GNUTLS_E_INVALID_REQUEST);
+			goto cleanup;
+		}
 	}
 
 	ret = _gnutls_privkey_get_spki_params(signer, &params);
 	if (ret < 0) {
 		gnutls_assert();
-		return ret;
+		goto cleanup;
 	}
 
 	ret = _gnutls_privkey_update_spki_params(signer, se->pk, se->hash,
-					         flags, &params);
+						 flags, &params);
 	if (ret < 0) {
 		gnutls_assert();
-		return ret;
+		goto cleanup;
 	}
 
 	FIX_SIGN_PARAMS(params, flags, se->hash);
 
-	return privkey_sign_prehashed(signer, se, hash_data, signature, &params);
+	ret = privkey_sign_prehashed(signer, se, hash_data, signature, &params);
+
+cleanup:
+	if (ret < 0) {
+		_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_ERROR);
+	} else {
+		_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_NOT_APPROVED);
+	}
+	return ret;
 }
 
-int
-privkey_sign_and_hash_data(gnutls_privkey_t signer,
-			   const gnutls_sign_entry_st *se,
-			   const gnutls_datum_t * data,
-			   gnutls_datum_t * signature,
-			   gnutls_x509_spki_st * params)
+int privkey_sign_and_hash_data(gnutls_privkey_t signer,
+			       const gnutls_sign_entry_st *se,
+			       const gnutls_datum_t *data,
+			       gnutls_datum_t *signature,
+			       gnutls_x509_spki_st *params)
 {
 	int ret;
 	gnutls_datum_t digest;
@@ -1274,7 +1316,8 @@ privkey_sign_and_hash_data(gnutls_privkey_t signer,
 		return gnutls_assert_val(GNUTLS_E_INVALID_REQUEST);
 
 	if (_gnutls_pk_is_not_prehashed(se->pk)) {
-		return privkey_sign_raw_data(signer, se, data, signature, params);
+		return privkey_sign_raw_data(signer, se, data, signature,
+					     params);
 	}
 
 	me = hash_to_entry(se->hash);
@@ -1303,11 +1346,10 @@ privkey_sign_and_hash_data(gnutls_privkey_t signer,
 
 	return 0;
 
- cleanup:
+cleanup:
 	_gnutls_free_datum(&digest);
 	return ret;
 }
-
 
 /**
  * gnutls_privkey_sign_hash:
@@ -1337,12 +1379,11 @@ privkey_sign_and_hash_data(gnutls_privkey_t signer,
  *
  * Since: 2.12.0
  **/
-int
-gnutls_privkey_sign_hash(gnutls_privkey_t signer,
-			 gnutls_digest_algorithm_t hash_algo,
-			 unsigned int flags,
-			 const gnutls_datum_t * hash_data,
-			 gnutls_datum_t * signature)
+int gnutls_privkey_sign_hash(gnutls_privkey_t signer,
+			     gnutls_digest_algorithm_t hash_algo,
+			     unsigned int flags,
+			     const gnutls_datum_t *hash_data,
+			     gnutls_datum_t *signature)
 {
 	int ret;
 	gnutls_x509_spki_st params;
@@ -1351,24 +1392,26 @@ gnutls_privkey_sign_hash(gnutls_privkey_t signer,
 	ret = _gnutls_privkey_get_spki_params(signer, &params);
 	if (ret < 0) {
 		gnutls_assert();
-		return ret;
+		goto cleanup;
 	}
 
 	ret = _gnutls_privkey_update_spki_params(signer, signer->pk_algorithm,
-					       hash_algo, flags, &params);
+						 hash_algo, flags, &params);
 	if (ret < 0) {
 		gnutls_assert();
-		return ret;
+		goto cleanup;
 	}
 
 	/* legacy callers of this API could use a hash algorithm of 0 (unknown)
 	 * to indicate raw hashing. As we now always want to know the signing
 	 * algorithm involved, we try discovering the hash algorithm. */
-	if (hash_algo == 0 && (params.pk == GNUTLS_PK_DSA || params.pk == GNUTLS_PK_ECDSA)) {
+	if (hash_algo == 0 &&
+	    (params.pk == GNUTLS_PK_DSA || params.pk == GNUTLS_PK_ECDSA)) {
 		hash_algo = _gnutls_hash_size_to_sha_hash(hash_data->size);
 	}
 
-	if (params.pk == GNUTLS_PK_RSA && (flags & GNUTLS_PRIVKEY_SIGN_FLAG_TLS1_RSA)) {
+	if (params.pk == GNUTLS_PK_RSA &&
+	    (flags & GNUTLS_PRIVKEY_SIGN_FLAG_TLS1_RSA)) {
 		/* the corresponding signature algorithm is SIGN_RSA_RAW,
 		 * irrespective of hash algorithm. */
 		se = _gnutls_sign_to_entry(GNUTLS_SIGN_RSA_RAW);
@@ -1376,21 +1419,28 @@ gnutls_privkey_sign_hash(gnutls_privkey_t signer,
 		se = _gnutls_pk_to_sign_entry(params.pk, hash_algo);
 	}
 
-	if (unlikely(se == NULL))
-		return gnutls_assert_val(GNUTLS_E_INVALID_REQUEST);
+	if (unlikely(se == NULL)) {
+		ret = gnutls_assert_val(GNUTLS_E_INVALID_REQUEST);
+		goto cleanup;
+	}
 
 	FIX_SIGN_PARAMS(params, flags, hash_algo);
 
-	return privkey_sign_prehashed(signer, se,
-				      hash_data, signature, &params);
+	ret = privkey_sign_prehashed(signer, se, hash_data, signature, &params);
+cleanup:
+	if (ret < 0) {
+		_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_ERROR);
+	} else {
+		_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_NOT_APPROVED);
+	}
+	return ret;
 }
 
-static int
-privkey_sign_prehashed(gnutls_privkey_t signer,
-		       const gnutls_sign_entry_st *se,
-		       const gnutls_datum_t * hash_data,
-		       gnutls_datum_t * signature,
-		       gnutls_x509_spki_st * params)
+static int privkey_sign_prehashed(gnutls_privkey_t signer,
+				  const gnutls_sign_entry_st *se,
+				  const gnutls_datum_t *hash_data,
+				  gnutls_datum_t *signature,
+				  gnutls_x509_spki_st *params)
 {
 	int ret;
 	gnutls_datum_t digest;
@@ -1399,9 +1449,7 @@ privkey_sign_prehashed(gnutls_privkey_t signer,
 		return gnutls_assert_val(GNUTLS_E_INVALID_REQUEST);
 
 	if (se->id == GNUTLS_SIGN_RSA_RAW) {
-		return privkey_sign_raw_data(signer,
-					     se,
-					     hash_data, signature,
+		return privkey_sign_raw_data(signer, se, hash_data, signature,
 					     params);
 	}
 
@@ -1423,10 +1471,7 @@ privkey_sign_prehashed(gnutls_privkey_t signer,
 		goto cleanup;
 	}
 
-	ret = privkey_sign_raw_data(signer,
-				    se,
-				    &digest, signature,
-				    params);
+	ret = privkey_sign_raw_data(signer, se, &digest, signature, params);
 	if (ret < 0) {
 		gnutls_assert();
 		goto cleanup;
@@ -1434,7 +1479,7 @@ privkey_sign_prehashed(gnutls_privkey_t signer,
 
 	ret = 0;
 
- cleanup:
+cleanup:
 	_gnutls_free_datum(&digest);
 	return ret;
 }
@@ -1461,12 +1506,9 @@ privkey_sign_prehashed(gnutls_privkey_t signer,
  *
  * Since: 3.1.10
  -*/
-int
-privkey_sign_raw_data(gnutls_privkey_t key,
-		      const gnutls_sign_entry_st *se,
-		      const gnutls_datum_t * data,
-		      gnutls_datum_t * signature,
-		      gnutls_x509_spki_st * params)
+int privkey_sign_raw_data(gnutls_privkey_t key, const gnutls_sign_entry_st *se,
+			  const gnutls_datum_t *data, gnutls_datum_t *signature,
+			  gnutls_x509_spki_st *params)
 {
 	if (unlikely(se == NULL))
 		return gnutls_assert_val(GNUTLS_E_INVALID_REQUEST);
@@ -1474,27 +1516,26 @@ privkey_sign_raw_data(gnutls_privkey_t key,
 	switch (key->type) {
 #ifdef ENABLE_PKCS11
 	case GNUTLS_PRIVKEY_PKCS11:
-		return _gnutls_pkcs11_privkey_sign(key->key.pkcs11, se,
-						   data, signature,
-						   params);
+		return _gnutls_pkcs11_privkey_sign(key->key.pkcs11, se, data,
+						   signature, params);
 #endif
 	case GNUTLS_PRIVKEY_X509:
 		return _gnutls_pk_sign(se->pk, signature, data,
 				       &key->key.x509->params, params);
 	case GNUTLS_PRIVKEY_EXT:
 		if (unlikely(key->key.ext.sign_data_func == NULL &&
-			key->key.ext.sign_hash_func == NULL &&
-			key->key.ext.sign_func == NULL))
+			     key->key.ext.sign_hash_func == NULL &&
+			     key->key.ext.sign_func == NULL))
 			return gnutls_assert_val(GNUTLS_E_INVALID_REQUEST);
 
 		if (_gnutls_pk_is_not_prehashed(se->pk)) {
 			if (!key->key.ext.sign_data_func)
-				return gnutls_assert_val(GNUTLS_E_INVALID_REQUEST);
+				return gnutls_assert_val(
+					GNUTLS_E_INVALID_REQUEST);
 
-			return key->key.ext.sign_data_func(key, se->id,
-							   key->key.ext.userdata,
-							   0,
-							   data, signature);
+			return key->key.ext.sign_data_func(
+				key, se->id, key->key.ext.userdata, 0, data,
+				signature);
 		} else if (key->key.ext.sign_hash_func) {
 			if (se->pk == GNUTLS_PK_RSA) {
 				se = _gnutls_sign_to_entry(GNUTLS_SIGN_RSA_RAW);
@@ -1502,16 +1543,16 @@ privkey_sign_raw_data(gnutls_privkey_t key,
 			}
 
 			/* se may not be set here if we are doing legacy RSA */
-			return key->key.ext.sign_hash_func(key, se->id,
-							   key->key.ext.userdata,
-							   0,
-							   data, signature);
+			return key->key.ext.sign_hash_func(
+				key, se->id, key->key.ext.userdata, 0, data,
+				signature);
 		} else {
 			if (!PK_IS_OK_FOR_EXT2(se->pk))
-				return gnutls_assert_val(GNUTLS_E_INVALID_REQUEST);
+				return gnutls_assert_val(
+					GNUTLS_E_INVALID_REQUEST);
 
-			return key->key.ext.sign_func(key, key->key.ext.userdata,
-						      data, signature);
+			return key->key.ext.sign_func(
+				key, key->key.ext.userdata, data, signature);
 		}
 	default:
 		gnutls_assert();
@@ -1534,11 +1575,9 @@ privkey_sign_raw_data(gnutls_privkey_t key,
  *
  * Since: 2.12.0
  **/
-int
-gnutls_privkey_decrypt_data(gnutls_privkey_t key,
-			    unsigned int flags,
-			    const gnutls_datum_t * ciphertext,
-			    gnutls_datum_t * plaintext)
+int gnutls_privkey_decrypt_data(gnutls_privkey_t key, unsigned int flags,
+				const gnutls_datum_t *ciphertext,
+				gnutls_datum_t *plaintext)
 {
 	switch (key->type) {
 	case GNUTLS_PRIVKEY_X509:
@@ -1546,17 +1585,14 @@ gnutls_privkey_decrypt_data(gnutls_privkey_t key,
 					  ciphertext, &key->key.x509->params);
 #ifdef ENABLE_PKCS11
 	case GNUTLS_PRIVKEY_PKCS11:
-		return _gnutls_pkcs11_privkey_decrypt_data(key->key.pkcs11,
-							   flags,
-							   ciphertext,
-							   plaintext);
+		return _gnutls_pkcs11_privkey_decrypt_data(
+			key->key.pkcs11, flags, ciphertext, plaintext);
 #endif
 	case GNUTLS_PRIVKEY_EXT:
 		if (key->key.ext.decrypt_func == NULL)
 			return gnutls_assert_val(GNUTLS_E_INVALID_REQUEST);
 
-		return key->key.ext.decrypt_func(key,
-						 key->key.ext.userdata,
+		return key->key.ext.decrypt_func(key, key->key.ext.userdata,
 						 ciphertext, plaintext);
 	default:
 		gnutls_assert();
@@ -1582,12 +1618,10 @@ gnutls_privkey_decrypt_data(gnutls_privkey_t key,
  * Since: 3.6.5
  **/
 
-int
-gnutls_privkey_decrypt_data2(gnutls_privkey_t key,
-			     unsigned int flags,
-			     const gnutls_datum_t * ciphertext,
-			     unsigned char * plaintext,
-			     size_t plaintext_size)
+int gnutls_privkey_decrypt_data2(gnutls_privkey_t key, unsigned int flags,
+				 const gnutls_datum_t *ciphertext,
+				 unsigned char *plaintext,
+				 size_t plaintext_size)
 {
 	/* Note: except for the backwards compatibility function, no
 	 * conditional code should be called after the decryption
@@ -1600,10 +1634,8 @@ gnutls_privkey_decrypt_data2(gnutls_privkey_t key,
 	    key->key.ext.decrypt_func != NULL) {
 		gnutls_datum_t plain;
 		int ret;
-		ret = key->key.ext.decrypt_func(key,
-						key->key.ext.userdata,
-						ciphertext,
-						&plain);
+		ret = key->key.ext.decrypt_func(key, key->key.ext.userdata,
+						ciphertext, &plain);
 		if (plain.size != plaintext_size) {
 			ret = gnutls_assert_val(GNUTLS_E_INVALID_REQUEST);
 		} else {
@@ -1621,8 +1653,7 @@ gnutls_privkey_decrypt_data2(gnutls_privkey_t key,
 #ifdef ENABLE_PKCS11
 	case GNUTLS_PRIVKEY_PKCS11:
 		return _gnutls_pkcs11_privkey_decrypt_data2(key->key.pkcs11,
-							    flags,
-							    ciphertext,
+							    flags, ciphertext,
 							    plaintext,
 							    plaintext_size);
 #endif
@@ -1630,8 +1661,7 @@ gnutls_privkey_decrypt_data2(gnutls_privkey_t key,
 		if (key->key.ext.decrypt_func2 == NULL)
 			return gnutls_assert_val(GNUTLS_E_INVALID_REQUEST);
 
-		return key->key.ext.decrypt_func2(key,
-						  key->key.ext.userdata,
+		return key->key.ext.decrypt_func2(key, key->key.ext.userdata,
 						  ciphertext, plaintext,
 						  plaintext_size);
 	default:
@@ -1652,7 +1682,7 @@ gnutls_privkey_decrypt_data2(gnutls_privkey_t key,
  * #gnutls_privkey_t type. 
  *
  * The supported formats are basic unencrypted key, PKCS8, PKCS12, 
- * and the openssl format.
+ * TSS2, and the openssl format.
  *
  * Returns: On success, %GNUTLS_E_SUCCESS (0) is returned, otherwise a
  *   negative error value.
@@ -1660,12 +1690,23 @@ gnutls_privkey_decrypt_data2(gnutls_privkey_t key,
  * Since: 3.1.0
  **/
 int gnutls_privkey_import_x509_raw(gnutls_privkey_t pkey,
-				   const gnutls_datum_t * data,
+				   const gnutls_datum_t *data,
 				   gnutls_x509_crt_fmt_t format,
 				   const char *password, unsigned int flags)
 {
 	gnutls_x509_privkey_t xpriv;
 	int ret;
+
+#ifdef HAVE_TSS2
+	if (format == GNUTLS_X509_FMT_PEM &&
+	    memmem(data->data, data->size, "--BEGIN TSS2", 12) != NULL) {
+		ret = _gnutls_load_tpm2_key(pkey, data);
+		if (ret < 0)
+			return gnutls_assert_val(ret);
+
+		return 0;
+	}
+#endif
 
 	ret = gnutls_x509_privkey_init(&xpriv);
 	if (ret < 0)
@@ -1682,9 +1723,8 @@ int gnutls_privkey_import_x509_raw(gnutls_privkey_t pkey,
 		goto cleanup;
 	}
 
-	ret =
-	    gnutls_privkey_import_x509(pkey, xpriv,
-				       GNUTLS_PRIVKEY_IMPORT_AUTO_RELEASE);
+	ret = gnutls_privkey_import_x509(pkey, xpriv,
+					 GNUTLS_PRIVKEY_IMPORT_AUTO_RELEASE);
 	if (ret < 0) {
 		gnutls_assert();
 		goto cleanup;
@@ -1692,7 +1732,7 @@ int gnutls_privkey_import_x509_raw(gnutls_privkey_t pkey,
 
 	return 0;
 
- cleanup:
+cleanup:
 	gnutls_x509_privkey_deinit(xpriv);
 
 	return ret;
@@ -1713,17 +1753,18 @@ int gnutls_privkey_import_x509_raw(gnutls_privkey_t pkey,
  *
  * Since: 3.1.0
  **/
-int
-gnutls_privkey_import_url(gnutls_privkey_t key, const char *url,
-			  unsigned int flags)
+int gnutls_privkey_import_url(gnutls_privkey_t key, const char *url,
+			      unsigned int flags)
 {
 	unsigned i;
 	int ret;
 
-	for (i=0;i<_gnutls_custom_urls_size;i++) {
-		if (strncmp(url, _gnutls_custom_urls[i].name, _gnutls_custom_urls[i].name_size) == 0) {
+	for (i = 0; i < _gnutls_custom_urls_size; i++) {
+		if (strncmp(url, _gnutls_custom_urls[i].name,
+			    _gnutls_custom_urls[i].name_size) == 0) {
 			if (_gnutls_custom_urls[i].import_key) {
-				ret = _gnutls_custom_urls[i].import_key(key, url, flags);
+				ret = _gnutls_custom_urls[i].import_key(
+					key, url, flags);
 				goto cleanup;
 			}
 			break;
@@ -1754,7 +1795,7 @@ gnutls_privkey_import_url(gnutls_privkey_t key, const char *url,
 	}
 
 	ret = gnutls_assert_val(GNUTLS_E_INVALID_REQUEST);
- cleanup:
+cleanup:
 	return ret;
 }
 
@@ -1793,8 +1834,7 @@ void gnutls_privkey_set_pin_function(gnutls_privkey_t key,
  * Since: 3.5.0
  *
  **/
-void gnutls_privkey_set_flags(gnutls_privkey_t key,
-			      unsigned int flags)
+void gnutls_privkey_set_flags(gnutls_privkey_t key, unsigned int flags)
 {
 	key->flags |= flags;
 	if (key->type == GNUTLS_PRIVKEY_X509)
@@ -1876,18 +1916,20 @@ int gnutls_privkey_verify_params(gnutls_privkey_t key)
  *
  * Since: 3.6.0
  **/
-int
-gnutls_privkey_get_spki(gnutls_privkey_t privkey, gnutls_x509_spki_t spki, unsigned int flags)
+int gnutls_privkey_get_spki(gnutls_privkey_t privkey, gnutls_x509_spki_t spki,
+			    unsigned int flags)
 {
+	gnutls_x509_spki_t p = &privkey->key.x509->params.spki;
+
 	if (privkey == NULL || privkey->type != GNUTLS_PRIVKEY_X509) {
 		gnutls_assert();
 		return GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE;
 	}
 
-	if (privkey->key.x509->params.spki.pk == GNUTLS_PK_UNKNOWN)
+	if (p->pk == GNUTLS_PK_UNKNOWN)
 		return gnutls_assert_val(GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE);
 
-	memcpy(spki, &privkey->key.x509->params.spki, sizeof(gnutls_x509_spki_st));
+	memcpy(spki, p, sizeof(gnutls_x509_spki_st));
 
 	return 0;
 }
@@ -1906,8 +1948,8 @@ gnutls_privkey_get_spki(gnutls_privkey_t privkey, gnutls_x509_spki_t spki, unsig
  *
  * Since: 3.6.0
  **/
-int
-gnutls_privkey_set_spki(gnutls_privkey_t privkey, const gnutls_x509_spki_t spki, unsigned int flags)
+int gnutls_privkey_set_spki(gnutls_privkey_t privkey,
+			    const gnutls_x509_spki_t spki, unsigned int flags)
 {
 	if (privkey == NULL || privkey->type != GNUTLS_PRIVKEY_X509) {
 		gnutls_assert();
@@ -1926,6 +1968,9 @@ unsigned _gnutls_privkey_compatible_with_sig(gnutls_privkey_t privkey,
 {
 	const gnutls_sign_entry_st *se;
 
+	if (unlikely(privkey == NULL))
+		return gnutls_assert_val(0);
+
 	se = _gnutls_sign_to_entry(sign);
 	if (unlikely(se == NULL))
 		return gnutls_assert_val(0);
@@ -1935,10 +1980,14 @@ unsigned _gnutls_privkey_compatible_with_sig(gnutls_privkey_t privkey,
 	 * negotiating RSA-PSS sig.
 	 */
 
-	if (se->pk != privkey->pk_algorithm) { /* if the PK algorithm of the signature differs to the one on the pubkey */
-		if (!sign_supports_priv_pk_algorithm(se, privkey->pk_algorithm)) {
-			_gnutls_handshake_log("cannot use privkey of %s with %s\n",
-					      gnutls_pk_get_name(privkey->pk_algorithm), se->name);
+	if (se->pk !=
+	    privkey->pk_algorithm) { /* if the PK algorithm of the signature differs to the one on the pubkey */
+		if (!sign_supports_priv_pk_algorithm(se,
+						     privkey->pk_algorithm)) {
+			_gnutls_handshake_log(
+				"cannot use privkey of %s with %s\n",
+				gnutls_pk_get_name(privkey->pk_algorithm),
+				se->name);
 			return 0;
 		}
 	}
@@ -1947,15 +1996,18 @@ unsigned _gnutls_privkey_compatible_with_sig(gnutls_privkey_t privkey,
 		if (privkey->key.ext.info_func) {
 			int ret;
 
-			ret = privkey->key.ext.info_func(privkey,
-						     GNUTLS_SIGN_ALGO_TO_FLAGS(sign)|GNUTLS_PRIVKEY_INFO_HAVE_SIGN_ALGO,
-						     privkey->key.ext.userdata);
+			ret = privkey->key.ext.info_func(
+				privkey,
+				GNUTLS_SIGN_ALGO_TO_FLAGS(sign) |
+					GNUTLS_PRIVKEY_INFO_HAVE_SIGN_ALGO,
+				privkey->key.ext.userdata);
 			if (ret != -1)
 				return ret;
 
 			/* use the old flag */
-			ret = privkey->key.ext.info_func(privkey, GNUTLS_PRIVKEY_INFO_SIGN_ALGO,
-						     privkey->key.ext.userdata);
+			ret = privkey->key.ext.info_func(
+				privkey, GNUTLS_PRIVKEY_INFO_SIGN_ALGO,
+				privkey->key.ext.userdata);
 			if (ret == (int)sign)
 				return 1;
 		}
@@ -1966,7 +2018,8 @@ unsigned _gnutls_privkey_compatible_with_sig(gnutls_privkey_t privkey,
 	}
 #ifdef ENABLE_PKCS11
 	else if (privkey->type == GNUTLS_PRIVKEY_PKCS11) {
-		if (privkey->pk_algorithm == GNUTLS_PK_RSA && se->pk == GNUTLS_PK_RSA_PSS) {
+		if (privkey->pk_algorithm == GNUTLS_PK_RSA &&
+		    se->pk == GNUTLS_PK_RSA_PSS) {
 			if (!privkey->key.pkcs11->rsa_pss_ok)
 				return 0;
 		}
@@ -1974,4 +2027,41 @@ unsigned _gnutls_privkey_compatible_with_sig(gnutls_privkey_t privkey,
 #endif
 
 	return 1;
+}
+
+/**
+ * gnutls_privkey_derive_secret:
+ * @privkey: a private key of type #gnutls_privkey_t
+ * @pubkey: a public key of type #gnutls_pubkey_t
+ * @nonce: an optional nonce value
+ * @secret: where shared secret will be stored
+ * @flags: must be zero
+ *
+ * This function will calculate a shared secret from our @privkey and
+ * peer's @pubkey. The result will be stored in @secret, whose data
+ * member should be freed after use using gnutls_free(). @privkey and
+ * @pubkey must be backed by the X.509 keys.
+ *
+ * Returns: On success, %GNUTLS_E_SUCCESS (0) is returned, otherwise a
+ *   negative error value.
+ *
+ * Since: 3.8.2
+ **/
+int gnutls_privkey_derive_secret(gnutls_privkey_t privkey,
+				 gnutls_pubkey_t pubkey,
+				 const gnutls_datum_t *nonce,
+				 gnutls_datum_t *secret, unsigned int flags)
+{
+	if (unlikely(privkey == NULL || privkey->type != GNUTLS_PRIVKEY_X509)) {
+		return gnutls_assert_val(GNUTLS_E_INVALID_REQUEST);
+	}
+
+	if (unlikely(pubkey == NULL ||
+		     pubkey->params.algo != privkey->pk_algorithm)) {
+		return gnutls_assert_val(GNUTLS_E_INVALID_REQUEST);
+	}
+
+	return _gnutls_pk_derive_nonce(privkey->pk_algorithm, secret,
+				       &privkey->key.x509->params,
+				       &pubkey->params, nonce);
 }

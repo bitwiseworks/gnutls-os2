@@ -23,29 +23,31 @@
 #ifndef GNUTLS_LIB_MEM_H
 #define GNUTLS_LIB_MEM_H
 
-#include <config.h>
+#include "config.h"
 
-/* this realloc function will return ptr if size==0, and
- * will free the ptr if the new allocation failed.
+#ifdef HAVE_SANITIZER_ASAN_INTERFACE_H
+#include <sanitizer/asan_interface.h>
+#endif
+
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+#include <valgrind/memcheck.h>
+#endif
+
+/* These realloc functions will return ptr if size==0, and will free
+ * the ptr if the new allocation failed.
  */
 void *gnutls_realloc_fast(void *ptr, size_t size);
+void *_gnutls_reallocarray_fast(void *ptr, size_t nmemb, size_t size);
 
-void *_gnutls_calloc(size_t nmemb, size_t size);
 char *_gnutls_strdup(const char *);
+
+void *_gnutls_reallocarray(void *, size_t, size_t);
 
 unsigned _gnutls_mem_is_zero(const uint8_t *ptr, unsigned size);
 
-/* To avoid undefined behavior when s1 or s2 are null and n = 0 */
-inline static
-int safe_memcmp(const void *s1, const void *s2, size_t n)
-{
-	if (n == 0)
-		return 0;
-	return memcmp(s1, s2, n);
-}
-
-#define zrelease_mpi_key(mpi) if (*mpi!=NULL) { \
-		_gnutls_mpi_clear(*mpi); \
+#define zrelease_mpi_key(mpi)             \
+	if (*mpi != NULL) {               \
+		_gnutls_mpi_clear(*mpi);  \
 		_gnutls_mpi_release(mpi); \
 	}
 
@@ -53,5 +55,27 @@ int safe_memcmp(const void *s1, const void *s2, size_t n)
 
 #define zeroize_temp_key zeroize_key
 #define zrelease_temp_mpi_key zrelease_mpi_key
+
+static inline void _gnutls_memory_mark_undefined(void *addr, size_t size)
+{
+#ifdef HAVE_SANITIZER_ASAN_INTERFACE_H
+	ASAN_POISON_MEMORY_REGION(addr, size);
+#endif
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+	if (RUNNING_ON_VALGRIND)
+		VALGRIND_MAKE_MEM_UNDEFINED(addr, size);
+#endif
+}
+
+static inline void _gnutls_memory_mark_defined(void *addr, size_t size)
+{
+#ifdef HAVE_SANITIZER_ASAN_INTERFACE_H
+	ASAN_UNPOISON_MEMORY_REGION(addr, size);
+#endif
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+	if (RUNNING_ON_VALGRIND)
+		VALGRIND_MAKE_MEM_DEFINED(addr, size);
+#endif
+}
 
 #endif /* GNUTLS_LIB_MEM_H */

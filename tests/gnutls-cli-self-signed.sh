@@ -19,9 +19,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>
 
-srcdir="${srcdir:-.}"
-SERV="${SERV:-../src/gnutls-serv${EXEEXT}}"
-CLI="${CLI:-../src/gnutls-cli${EXEEXT}}"
+: ${srcdir=.}
+: ${SERV=../src/gnutls-serv${EXEEXT}}
+: ${CLI=../src/gnutls-cli${EXEEXT}}
 unset RETCODE
 TMPFILE=self-signed.$$.pem.tmp
 
@@ -44,8 +44,6 @@ fi
 SERV="${SERV} -q"
 
 . "${srcdir}/scripts/common.sh"
-
-check_for_datefudge
 
 echo "Checking whether connecting to a self signed certificate returns the expected error"
 
@@ -119,12 +117,11 @@ i2yISkQxkJZp8sTwSlIGZSBpuZcDq9AdUjan1WhGgl4hpHpjr3Y=
 __EOF__
 
 eval "${GETPORT}"
-launch_server $$ --echo --x509keyfile ${TMPFILE} --x509certfile ${TMPFILE}
+launch_server --echo --x509keyfile ${TMPFILE} --x509certfile ${TMPFILE}
 PID=$!
 wait_server ${PID}
 
-datefudge "2018-1-1" \
-${VALGRIND} "${CLI}" -p "${PORT}" localhost >${TMPFILE} 2>&1 </dev/null && \
+${VALGRIND} "${CLI}" --attime "2018-1-1" -p "${PORT}" localhost >${TMPFILE} 2>&1 </dev/null && \
 	fail ${PID} "1. handshake should have failed!"
 
 

@@ -29,8 +29,6 @@ Note that the  @code{tlist} will become part of the credentials
 structure and must not be deallocated. It will be automatically deallocated
 when the  @code{res} structure is deinitialized.
 
-@strong{Returns:} @code{GNUTLS_E_SUCCESS}  (0) on success, or a negative error code.
-
 @strong{Since:} 3.2.2
 @end deftypefun
 
@@ -97,7 +95,7 @@ another negative error code in case of a failure. Zero on success.
 This function will return a human readable description of the
 PKCS12 or PBES2 schema.
 
-@strong{Returns:} a constrant string or @code{NULL}  on error.
+@strong{Returns:} a constraint string or @code{NULL}  on error.
 
 @strong{Since:} 3.4.0
 @end deftypefun
@@ -110,9 +108,38 @@ PKCS12 or PBES2 schema.
 This function will return the object identifier of the
 PKCS12 or PBES2 schema.
 
-@strong{Returns:} a constrant string or @code{NULL}  on error.
+@strong{Returns:} a constraint string or @code{NULL}  on error.
 
 @strong{Since:} 3.4.0
+@end deftypefun
+
+@subheading gnutls_session_set_verify_output_function
+@anchor{gnutls_session_set_verify_output_function}
+@deftypefun {void} {gnutls_session_set_verify_output_function} (gnutls_session_t @var{session}, gnutls_verify_output_function * @var{func})
+@var{session}: is a @code{gnutls_x509_trust_list_t}  type.
+
+@var{func}: is the callback function
+
+This function sets a callback to be called when the peer's certificate
+chain has to be verified and full path to the trusted root has to be
+printed.
+
+The callback's function prototype is defined in `x509.h':
+int (*callback)(
+gnutls_x509_crt_t cert,
+gnutls_x509_crt_t issuer,
+gnutls_x509_crl_t crl,
+unsigned int verification_output);
+
+If the callback function is provided then gnutls will call it, in the
+certificate verification procedure.
+To verify the certificate chain and print its path uptp the trusted root,
+functions such as @code{gnutls_certificate_verify_peers()} ,
+@code{gnutls_x509_trust_list_verify_crt()} , and @code{gnutls_x509_trust_list_verify_crt2()} 
+can be used. The callback is set in @code{_gnutls_verify_crt_status()}  and
+@code{_gnutls_pkcs11_verify_crt_status()} .
+
+@strong{Since:} 3.7.0
 @end deftypefun
 
 @subheading gnutls_subject_alt_names_deinit
@@ -388,9 +415,9 @@ The data in datum needs to be deallocated using @code{gnutls_free()} .
 @var{issuer}: is the certificate of a possible issuer
 
 This function will check if the given CRL was issued by the given
-issuer certificate.  
+issuer certificate.
 
-@strong{Returns:} true (1) if the given CRL was issued by the given issuer, 
+@strong{Returns:} true (1) if the given CRL was issued by the given issuer,
 and false (0) if not.
 @end deftypefun
 
@@ -754,7 +781,7 @@ with the required size, and 0 on success.
 @deftypefun {int} {gnutls_x509_crl_get_issuer_dn2} (gnutls_x509_crl_t @var{crl}, gnutls_datum_t * @var{dn})
 @var{crl}: should contain a @code{gnutls_x509_crl_t}  type
 
-@var{dn}: a pointer to a structure to hold the name
+@var{dn}: a pointer to a structure to hold the name; must be freed using @code{gnutls_free()} 
 
 This function will allocate buffer and copy the name of the CRL issuer.
 The name will be in the form "C=xxxx,O=yyyy,CN=zzzz" as
@@ -775,7 +802,7 @@ negative error value.
 @deftypefun {int} {gnutls_x509_crl_get_issuer_dn3} (gnutls_x509_crl_t @var{crl}, gnutls_datum_t * @var{dn}, unsigned @var{flags})
 @var{crl}: should contain a @code{gnutls_x509_crl_t}  type
 
-@var{dn}: a pointer to a structure to hold the name
+@var{dn}: a pointer to a structure to hold the name; must be freed using @code{gnutls_free()} 
 
 @var{flags}: zero or @code{GNUTLS_X509_DN_FLAG_COMPAT} 
 
@@ -1019,13 +1046,13 @@ This function will deinitialize an iterator type.
 
 @var{crl_max}: Initially must hold the maximum number of crls. It will be updated with the number of crls available.
 
-@var{data}: The PEM encoded CRLs
+@var{data}: The CRL data
 
 @var{format}: One of DER or PEM.
 
 @var{flags}: must be (0) or an OR'd sequence of gnutls_certificate_import_flags.
 
-This function will convert the given PEM encoded CRL list
+This function will convert the given CRL list
 to the native gnutls_x509_crl_t format. The output will be stored
 in  @code{crls} .  They will be automatically initialized.
 
@@ -1043,13 +1070,13 @@ If the Certificate is PEM encoded it should have a header of "X509 CRL".
 
 @var{size}: It will contain the size of the list.
 
-@var{data}: The PEM encoded CRL.
+@var{data}: The CRL data.
 
 @var{format}: One of DER or PEM.
 
 @var{flags}: must be (0) or an OR'd sequence of gnutls_certificate_import_flags.
 
-This function will convert the given PEM encoded CRL list
+This function will convert the given CRL list
 to the native gnutls_x509_crl_t format. The output will be stored
 in  @code{crls} .  They will be automatically initialized.
 
@@ -1485,7 +1512,7 @@ the required size.  On success 0 is returned.
 @deftypefun {int} {gnutls_x509_crq_get_dn2} (gnutls_x509_crq_t @var{crq}, gnutls_datum_t * @var{dn})
 @var{crq}: should contain a @code{gnutls_x509_crq_t}  type
 
-@var{dn}: a pointer to a structure to hold the name
+@var{dn}: a pointer to a structure to hold the name; must be freed using @code{gnutls_free()} 
 
 This function will allocate buffer and copy the name of the Certificate 
 request. The name will be in the form "C=xxxx,O=yyyy,CN=zzzz" as
@@ -1506,7 +1533,7 @@ negative error value. and a negative error code on error.
 @deftypefun {int} {gnutls_x509_crq_get_dn3} (gnutls_x509_crq_t @var{crq}, gnutls_datum_t * @var{dn}, unsigned @var{flags})
 @var{crq}: should contain a @code{gnutls_x509_crq_t}  type
 
-@var{dn}: a pointer to a structure to hold the name
+@var{dn}: a pointer to a structure to hold the name; must be freed using @code{gnutls_free()} 
 
 @var{flags}: zero or @code{GNUTLS_X509_DN_FLAG_COMPAT} 
 
@@ -2916,7 +2943,8 @@ buffer. The name will be in the form "C=xxxx,O=yyyy,CN=zzzz" as
 described in RFC4514. The output string will be ASCII or UTF-8
 encoded, depending on the certificate data.
 
-If  @code{buf} is null then only the size will be filled.
+The  @code{buf} returned will be null terminated and the  @code{buf_size} will account
+for the trailing null. If  @code{buf} is null then only the size will be filled.
 
 This function does not output a fully RFC4514 compliant string, if
 that is required see @code{gnutls_x509_crt_get_dn3()} .
@@ -2932,7 +2960,7 @@ the DN does not exist, or another error value on error. On success 0 is returned
 @deftypefun {int} {gnutls_x509_crt_get_dn2} (gnutls_x509_crt_t @var{cert}, gnutls_datum_t * @var{dn})
 @var{cert}: should contain a @code{gnutls_x509_crt_t}  type
 
-@var{dn}: a pointer to a structure to hold the name
+@var{dn}: a pointer to a structure to hold the name; must be freed using @code{gnutls_free()} 
 
 This function will allocate buffer and copy the name of the Certificate.
 The name will be in the form "C=xxxx,O=yyyy,CN=zzzz" as
@@ -2953,7 +2981,7 @@ negative error value.
 @deftypefun {int} {gnutls_x509_crt_get_dn3} (gnutls_x509_crt_t @var{cert}, gnutls_datum_t * @var{dn}, unsigned @var{flags})
 @var{cert}: should contain a @code{gnutls_x509_crt_t}  type
 
-@var{dn}: a pointer to a structure to hold the name
+@var{dn}: a pointer to a structure to hold the name; must be freed using @code{gnutls_free()} 
 
 @var{flags}: zero or @code{GNUTLS_X509_DN_FLAG_COMPAT} 
 
@@ -3392,7 +3420,7 @@ the DN does not exist, or another error value on error. On success 0 is returned
 @deftypefun {int} {gnutls_x509_crt_get_issuer_dn2} (gnutls_x509_crt_t @var{cert}, gnutls_datum_t * @var{dn})
 @var{cert}: should contain a @code{gnutls_x509_crt_t}  type
 
-@var{dn}: a pointer to a structure to hold the name
+@var{dn}: a pointer to a structure to hold the name; must be freed using @code{gnutls_free()} 
 
 This function will allocate buffer and copy the name of issuer of the Certificate.
 The name will be in the form "C=xxxx,O=yyyy,CN=zzzz" as
@@ -3413,7 +3441,7 @@ negative error value.
 @deftypefun {int} {gnutls_x509_crt_get_issuer_dn3} (gnutls_x509_crt_t @var{cert}, gnutls_datum_t * @var{dn}, unsigned @var{flags})
 @var{cert}: should contain a @code{gnutls_x509_crt_t}  type
 
-@var{dn}: a pointer to a structure to hold the name
+@var{dn}: a pointer to a structure to hold the name; must be freed using @code{gnutls_free()} 
 
 @var{flags}: zero or @code{GNUTLS_X509_DN_FLAG_COMPAT} 
 
@@ -4911,7 +4939,7 @@ While the serial number is an integer, it is often handled
 as an opaque field by several CAs. For this reason this function
 accepts any kind of data as a serial number. To be consistent
 with the X.509/PKIX specifications the provided  @code{serial} should be 
-a big-endian positive number (i.e. it's leftmost bit should be zero).
+a big-endian positive number (i.e. its leftmost bit should be zero).
 
 The size of the serial is restricted to 20 bytes maximum by RFC5280.
 This function allows writing more than 20 bytes but the generated
@@ -5000,7 +5028,7 @@ negative error value.
 
 @subheading gnutls_x509_crt_set_subject_alternative_name
 @anchor{gnutls_x509_crt_set_subject_alternative_name}
-@deftypefun {int} {gnutls_x509_crt_set_subject_alternative_name} (gnutls_x509_crt_t @var{crt}, gnutls_x509_subject_alt_name_t           @var{type}, const char * @var{data_string})
+@deftypefun {int} {gnutls_x509_crt_set_subject_alternative_name} (gnutls_x509_crt_t @var{crt}, gnutls_x509_subject_alt_name_t @var{type}, const char * @var{data_string})
 @var{crt}: a certificate of type @code{gnutls_x509_crt_t} 
 
 @var{type}: is one of the gnutls_x509_subject_alt_name_t enumerations
@@ -5186,6 +5214,52 @@ Note that since GnuTLS 3.5.6 this function introduces checks in the
 end certificate ( @code{crt} ), including time checks and key usage checks.
 
 @strong{Since:} 3.4.0
+@end deftypefun
+
+@subheading gnutls_x509_ct_sct_get
+@anchor{gnutls_x509_ct_sct_get}
+@deftypefun {int} {gnutls_x509_ct_sct_get} (const gnutls_x509_ct_scts_t @var{scts}, unsigned @var{idx}, time_t * @var{timestamp}, gnutls_datum_t * @var{logid}, gnutls_sign_algorithm_t * @var{sigalg}, gnutls_datum_t * @var{signature})
+@var{scts}: A list of SCTs
+
+@var{idx}: The index of the target SCT in the list
+
+@var{timestamp}: The timestamp of the SCT
+
+@var{logid}: The LogID field of the SCT; must be freed with @code{gnutls_free()} 
+
+@var{sigalg}: The signature algorithm
+
+@var{signature}: The signature of the SCT; must be freed with @code{gnutls_free()} 
+
+This function will return a specific SCT (Signed Certificate Timestamp)
+stored in the SCT list  @code{scts} .
+
+The datums holding the SCT's LogId and signature will be allocated
+using @code{gnutls_malloc()} .
+
+@strong{Returns:} @code{GNUTLS_E_SUCCESS}  (0) will be returned on success,
+@code{GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE}  if  @code{idx} exceeds the number of SCTs in the list
+or a negative error value.
+@end deftypefun
+
+@subheading gnutls_x509_ct_sct_get_version
+@anchor{gnutls_x509_ct_sct_get_version}
+@deftypefun {int} {gnutls_x509_ct_sct_get_version} (gnutls_x509_ct_scts_t @var{scts}, unsigned @var{idx}, unsigned int * @var{version_out})
+@var{scts}: A list of SCTs
+
+@var{idx}: The index of the target SCT in the list
+
+@var{version_out}: The version of the target SCT.
+
+This function obtains the version of the SCT at the given position
+in the SCT list.
+
+The version of that SCT will be placed on  @code{version_out} .
+
+Return : @code{GNUTLS_E_SUCCESS}  (0) is returned on success,
+@code{GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE}  if  @code{idx} exceeds the number of SCTs in the list
+and @code{GNUTLS_E_INVALID_REQUEST}  if the SCT's version is different than 1, as that's currently
+the only defined version.
 @end deftypefun
 
 @subheading gnutls_x509_dn_deinit
@@ -5405,6 +5479,57 @@ DN parsing error @code{GNUTLS_E_PARSING_ERROR}  is returned.
 negative error value.
 
 @strong{Since:} 3.5.3
+@end deftypefun
+
+@subheading gnutls_x509_ext_ct_export_scts
+@anchor{gnutls_x509_ext_ct_export_scts}
+@deftypefun {int} {gnutls_x509_ext_ct_export_scts} (const gnutls_x509_ct_scts_t @var{scts}, gnutls_datum_t * @var{ext})
+@var{scts}: An initialized SCT list
+
+@var{ext}: The DER-encoded extension data; must be freed with @code{gnutls_free()} 
+
+This function will convert the provided list of SCTs to a DER-encoded
+SignedCertificateTimestampList extension (1.3.6.1.4.1.11129.2.4.2).
+The output data in  @code{ext} will be allocated using @code{gnutls_malloc()} .
+
+@strong{Returns:} @code{GNUTLS_E_SUCCESS}  (0) on success or a negative error value.
+@end deftypefun
+
+@subheading gnutls_x509_ext_ct_import_scts
+@anchor{gnutls_x509_ext_ct_import_scts}
+@deftypefun {int} {gnutls_x509_ext_ct_import_scts} (const gnutls_datum_t * @var{ext}, gnutls_x509_ct_scts_t @var{scts}, unsigned int @var{flags})
+@var{ext}: a DER-encoded extension
+
+@var{scts}: The SCT list
+
+@var{flags}: should be zero
+
+This function will read a SignedCertificateTimestampList structure
+from the DER data of the X.509 Certificate Transparency SCT extension
+(OID 1.3.6.1.4.1.11129.2.4.2).
+
+The list of SCTs (Signed Certificate Timestamps) is placed on  @code{scts} ,
+which must be previously initialized with @code{gnutls_x509_ext_ct_scts_init()} .
+
+@strong{Returns:} @code{GNUTLS_E_SUCCESS}  (0) on success or a negative error value.
+@end deftypefun
+
+@subheading gnutls_x509_ext_ct_scts_deinit
+@anchor{gnutls_x509_ext_ct_scts_deinit}
+@deftypefun {void} {gnutls_x509_ext_ct_scts_deinit} (gnutls_x509_ct_scts_t @var{scts})
+@var{scts}: The SCT list
+
+This function will deinitialize a Certificate Transparency SCT list.
+@end deftypefun
+
+@subheading gnutls_x509_ext_ct_scts_init
+@anchor{gnutls_x509_ext_ct_scts_init}
+@deftypefun {int} {gnutls_x509_ext_ct_scts_init} (gnutls_x509_ct_scts_t * @var{scts})
+@var{scts}: The SCT list
+
+This function will initialize a Certificate Transparency SCT list.
+
+@strong{Returns:} @code{GNUTLS_E_SUCCESS}  (0) on success, otherwise a negative error value.
 @end deftypefun
 
 @subheading gnutls_x509_ext_deinit
@@ -6769,6 +6894,25 @@ function will utilize the PIN callbacks if any.
 negative error value.
 @end deftypefun
 
+@subheading gnutls_x509_privkey_import_dh_raw
+@anchor{gnutls_x509_privkey_import_dh_raw}
+@deftypefun {int} {gnutls_x509_privkey_import_dh_raw} (gnutls_x509_privkey_t @var{key}, const gnutls_dh_params_t @var{params}, const gnutls_datum_t * @var{y}, const gnutls_datum_t * @var{x})
+@var{key}: The data to store the parsed key
+
+@var{params}: holds the @code{gnutls_dh_params_t} 
+
+@var{y}: holds the y (optional)
+
+@var{x}: holds the x
+
+This function will convert the given Diffie-Hellman raw parameters
+to the native @code{gnutls_x509_privkey_t}  format.  The output will be
+stored in  @code{key} .
+
+@strong{Returns:} On success, @code{GNUTLS_E_SUCCESS}  (0) is returned, otherwise a
+negative error value.
+@end deftypefun
+
 @subheading gnutls_x509_privkey_import_dsa_raw
 @anchor{gnutls_x509_privkey_import_dsa_raw}
 @deftypefun {int} {gnutls_x509_privkey_import_dsa_raw} (gnutls_x509_privkey_t @var{key}, const gnutls_datum_t * @var{p}, const gnutls_datum_t * @var{q}, const gnutls_datum_t * @var{g}, const gnutls_datum_t * @var{y}, const gnutls_datum_t * @var{x})
@@ -6780,7 +6924,7 @@ negative error value.
 
 @var{g}: holds the g
 
-@var{y}: holds the y
+@var{y}: holds the y (optional)
 
 @var{x}: holds the x
 
@@ -7538,7 +7682,8 @@ want to prevent them from being deinitialized by this function.
 
 @var{cert}: is the certificate to find issuer for
 
-@var{issuer}: Will hold the issuer if any. Should be treated as constant.
+@var{issuer}: Will hold the issuer if any. Should be treated as constant
+unless @code{GNUTLS_TL_GET_COPY}  is set in  @code{flags} .
 
 @var{flags}: flags from @code{gnutls_trust_list_flags_t}  (@code{GNUTLS_TL_GET_COPY}  is applicable)
 
@@ -7596,6 +7741,21 @@ return a copy of the issuer, which must be freed using @code{gnutls_x509_crt_dei
 negative error value.
 
 @strong{Since:} 3.4.2
+@end deftypefun
+
+@subheading gnutls_x509_trust_list_get_ptr
+@anchor{gnutls_x509_trust_list_get_ptr}
+@deftypefun {void *} {gnutls_x509_trust_list_get_ptr} (gnutls_x509_trust_list_t @var{tlist})
+@var{tlist}: is a @code{gnutls_x509_trust_list_t}  type.
+
+Get user pointer for tlist. Useful in callback function
+gnutls_x509_trust_list_set_getissuer_function.
+This is the pointer set with @code{gnutls_x509_trust_list_set_ptr()} .
+
+@strong{Returns:} the user given pointer from the tlist structure, or
+@code{NULL}  if it was never set.
+
+@strong{Since:} 3.7.0
 @end deftypefun
 
 @subheading gnutls_x509_trust_list_init
@@ -7665,7 +7825,7 @@ from the trusted list.
 
 Note that this function can accept certificates and authorities
 not yet known. In that case they will be kept in a separate
-black list that will be used during certificate verification.
+block list that will be used during certificate verification.
 Unlike @code{gnutls_x509_trust_list_add_cas()}  there is no deinitialization
 restriction for  certificate list provided in this function.
 
@@ -7684,7 +7844,7 @@ restriction for  certificate list provided in this function.
 @var{type}: The format of the certificates
 
 This function will remove the given certificate authorities
-from the trusted list, and add them into a black list when needed. 
+from the trusted list, and add them into a block list when needed. 
 PKCS 11 URLs are also accepted, instead
 of files, by this function.
 
@@ -7705,13 +7865,63 @@ See also @code{gnutls_x509_trust_list_remove_cas()} .
 @var{type}: The format of the certificates
 
 This function will remove the provided certificate authorities
-from the trusted list, and add them into a black list when needed. 
+from the trusted list, and add them into a block list when needed. 
 
 See also @code{gnutls_x509_trust_list_remove_cas()} .
 
 @strong{Returns:} The number of removed elements is returned.
 
 @strong{Since:} 3.1.10
+@end deftypefun
+
+@subheading gnutls_x509_trust_list_set_getissuer_function
+@anchor{gnutls_x509_trust_list_set_getissuer_function}
+@deftypefun {void} {gnutls_x509_trust_list_set_getissuer_function} (gnutls_x509_trust_list_t @var{tlist}, gnutls_x509_trust_list_getissuer_function * @var{func})
+@var{tlist}: is a @code{gnutls_x509_trust_list_t}  type.
+
+@var{func}: is the callback function
+
+This function sets a callback to be called when the peer's certificate
+chain is incomplete due a missing intermediate certificate. The callback
+may provide the missing certificate for use during verification.
+
+The callback's function prototype is defined in gnutls/x509.h as:
+
+int (*callback)(gnutls_x509_trust_list_t list,
+const gnutls_x509_crt_t cert,
+gnutls_x509_crt_t **issuers,
+unsigned int *issuers_size);
+
+If the callback function is provided then gnutls will call it during the
+certificate verification procedure. The callback may wish to use
+@code{gnutls_x509_crt_get_authority_info_access()}  to get a URI from which
+to attempt to download the missing issuer certificate, if available.
+
+On a successful call, the callback shall allocate the 'issuers' array with
+@code{gnutls_x509_crt_list_import2()} . The ownership of both the array and the
+elements is transferred to the caller and thus the application does not need
+to maintain the memory after the call.
+
+The callback function should return 0 if the missing issuer certificate
+for 'crt' was properly populated and added to the 'issuers', or non-zero
+to continue the certificate list verification but with issuer as @code{NULL} .
+
+@strong{Since:} 3.7.0
+@end deftypefun
+
+@subheading gnutls_x509_trust_list_set_ptr
+@anchor{gnutls_x509_trust_list_set_ptr}
+@deftypefun {void} {gnutls_x509_trust_list_set_ptr} (gnutls_x509_trust_list_t @var{tlist}, void * @var{ptr})
+@var{tlist}: is a @code{gnutls_x509_trust_list_t}  type.
+
+@var{ptr}: is the user pointer
+
+This function will set (associate) the user given pointer  @code{ptr} to
+the tlist structure. This pointer can be accessed with
+@code{gnutls_x509_trust_list_get_ptr()} . Useful in the callback function
+gnutls_x509_trust_list_set_getissuer_function.
+
+@strong{Since:} 3.7.0
 @end deftypefun
 
 @subheading gnutls_x509_trust_list_verify_crt

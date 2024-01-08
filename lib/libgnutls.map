@@ -1309,12 +1309,138 @@ GNUTLS_3_6_12
 	gnutls_hmac_get_key_size;
 } GNUTLS_3_6_10;
 
+GNUTLS_3_6_13
+{
+ global:
+	gnutls_hkdf_extract;
+	gnutls_hkdf_expand;
+	gnutls_pbkdf2;
+	gnutls_session_get_keylog_function;
+	gnutls_session_set_keylog_function;
+	gnutls_prf_hash_get;
+	gnutls_psk_server_get_username2;
+	gnutls_psk_set_server_credentials_function2;
+	gnutls_psk_set_client_credentials2;
+	gnutls_psk_set_client_credentials_function2;
+} GNUTLS_3_6_12;
+
+GNUTLS_3_6_14
+{
+ global:
+	gnutls_ext_get_name2;
+	gnutls_pkcs7_print_signature_info;
+} GNUTLS_3_6_13;
+
+GNUTLS_3_7_0
+{
+ global:
+	gnutls_alert_set_read_function;
+	gnutls_handshake_set_read_function;
+	gnutls_handshake_set_secret_function;
+	gnutls_handshake_write;
+	gnutls_x509_trust_list_set_getissuer_function;
+	gnutls_x509_trust_list_get_ptr;
+	gnutls_x509_trust_list_set_ptr;
+	gnutls_session_set_verify_output_function;
+	gnutls_x509_ext_ct_scts_init;
+	gnutls_x509_ext_ct_scts_deinit;
+	gnutls_x509_ext_ct_import_scts;
+	gnutls_x509_ext_ct_export_scts;
+	gnutls_x509_ct_sct_get_version;
+	gnutls_x509_ct_sct_get;
+ local:
+	*;
+} GNUTLS_3_6_14;
+
+GNUTLS_3_7_2
+{
+ global:
+	gnutls_early_cipher_get;
+	gnutls_early_prf_hash_get;
+ local:
+	*;
+} GNUTLS_3_7_0;
+
+GNUTLS_3_7_3
+{
+ global:
+	gnutls_ecc_curve_set_enabled;
+	gnutls_sign_set_secure;
+	gnutls_sign_set_secure_for_certs;
+	gnutls_digest_set_secure;
+	gnutls_protocol_set_enabled;
+	gnutls_transport_is_ktls_enabled;
+	gnutls_fips140_context_init;
+	gnutls_fips140_context_deinit;
+	gnutls_fips140_get_operation_state;
+	gnutls_fips140_push_context;
+	gnutls_fips140_pop_context;
+	gnutls_get_library_config;
+ local:
+	*;
+} GNUTLS_3_7_2;
+
+GNUTLS_3_7_4
+{
+ global:
+	gnutls_ciphersuite_get;
+	gnutls_compress_certificate_get_selected_method;
+	gnutls_compress_certificate_set_methods;
+	gnutls_record_send_file;
+ local:
+	*;
+} GNUTLS_3_7_3;
+
+GNUTLS_3_7_5
+{
+ global:
+	gnutls_aead_cipher_set_key;
+ local:
+	*;
+} GNUTLS_3_7_4;
+
+GNUTLS_3_7_7
+{
+ global:
+	gnutls_fips140_run_self_tests;
+	gnutls_cipher_encrypt3;
+	gnutls_cipher_decrypt3;
+ local:
+	*;
+} GNUTLS_3_7_5;
+
+GNUTLS_3_8_1
+{
+ global:
+	gnutls_psk_set_server_credentials_function3;
+	gnutls_psk_set_client_credentials_function3;
+	gnutls_psk_format_imported_identity;
+ local:
+	*;
+} GNUTLS_3_7_7;
+
+GNUTLS_3_8_2
+{
+ global:
+	gnutls_pubkey_import_dh_raw;
+	gnutls_privkey_import_dh_raw;
+	gnutls_pubkey_export_dh_raw;
+	gnutls_privkey_export_dh_raw;
+	gnutls_x509_privkey_import_dh_raw;
+	gnutls_privkey_derive_secret;
+ local:
+	*;
+} GNUTLS_3_8_1;
+
 GNUTLS_FIPS140_3_4 {
   global:
 	gnutls_cipher_self_test;
 	gnutls_pk_self_test;
 	gnutls_mac_self_test;
 	gnutls_digest_self_test;
+	gnutls_hkdf_self_test;
+	gnutls_pbkdf2_self_test;
+	gnutls_tlsprf_self_test;
 	#for FIPS140-2 validation
 	drbg_aes_reseed;
 	drbg_aes_init;
@@ -1407,4 +1533,13 @@ GNUTLS_PRIVATE_3_4 {
 	_gnutls_buffer_unescape;
 	_gnutls_buffer_pop_datum;
 	_gnutls_buffer_clear;
+	# needed by tests/cipher-alignment
+	_gnutls_crypto_register_cipher;
+	# needed by tests/tls12-rehandshake-cert-ticket
+	_gnutls_session_ticket_disable_server;
+	# needed by tests/pathbuf
+	_gnutls_pathbuf_init;
+	_gnutls_pathbuf_append;
+	_gnutls_pathbuf_truncate;
+	_gnutls_pathbuf_deinit;
 } GNUTLS_3_4;

@@ -14,8 +14,7 @@
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this file; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+# along with this file.  If not, see <https://www.gnu.org/licenses/>.
 
 AM_CFLAGS = $(WARN_CFLAGS) $(WERROR_CFLAGS)
 AM_CPPFLAGS = -I$(top_srcdir)/lib/includes		\
@@ -35,22 +34,14 @@ LDADD = ../libutils.la \
 	$(top_builddir)/lib/libgnutls.la $(LIBSOCKET)
 
 cipher_test_CPPFLAGS = $(AM_CPPFLAGS)
-cipher_override2_CPPFLAGS = $(AM_CPPFLAGS)
 
 ctests = gendh
 
-if ENABLE_NETTLE
-cipher_override_CPPFLAGS = $(AM_CPPFLAGS) $(NETTLE_CFLAGS) $(HOGWEED_CFLAGS)
-mac_override_CPPFLAGS = $(AM_CPPFLAGS) $(NETTLE_CFLAGS) $(HOGWEED_CFLAGS)
-cipher_override_LDFLAGS = $(NETTLE_LIBS) $(HOGWEED_LIBS) $(GMP_LIBS) $(LDADD)
-mac_override_LDFLAGS = $(NETTLE_LIBS) $(HOGWEED_LIBS) $(GMP_LIBS) $(LDADD)
-endif
 
-
-dist_check_SCRIPTS = test-ciphers.sh override-ciphers test-hash-large.sh test-ciphers-common.sh \
+dist_check_SCRIPTS = test-ciphers.sh test-hash-large.sh test-ciphers-common.sh \
 	test-ciphers-api.sh
-check_PROGRAMS = $(ctests) cipher-test cipher-api-test cipher-override mac-override cipher-override2 hash-large crypto
-TESTS = $(ctests) test-ciphers.sh override-ciphers test-hash-large.sh crypto test-ciphers-api.sh
+check_PROGRAMS = $(ctests) cipher-test cipher-api-test hash-large crypto
+TESTS = $(ctests) test-ciphers.sh test-hash-large.sh crypto test-ciphers-api.sh
 
 if HAVE_LIBCRYPTO
 cipher_openssl_compat_LDADD = $(LDADD) $(LIBCRYPTO)
@@ -64,11 +55,12 @@ EXTRA_DIST = README gnutls-asan.supp
 
 TESTS_ENVIRONMENT = EXEEXT=$(EXEEXT) \
 	LC_ALL="C"						\
-	LSAN_OPTIONS=suppressions=gnutls-asan.supp		\
+	LSAN_OPTIONS=suppressions=$(srcdir)/gnutls-asan.supp	\
 	GNUTLS_TEST_SUITE_RUN=1					\
 	OPENSSL_ia32cap=0x00000000				\
 	GNUTLS_SYSTEM_PRIORITY_FILE=$(abs_top_srcdir)/tests/system.prio	\
 	top_builddir="$(top_builddir)"				\
+	abs_top_builddir="$(abs_top_builddir)"			\
 	srcdir="$(srcdir)"
 
 if WINDOWS

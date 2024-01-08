@@ -17,12 +17,11 @@
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with GnuTLS; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+# along with GnuTLS.  If not, see <https://www.gnu.org/licenses/>.
 
-srcdir="${srcdir:-.}"
-SERV="${SERV:-../src/gnutls-serv${EXEEXT}}"
-CLI="${CLI:-../src/gnutls-cli${EXEEXT}}"
+: ${srcdir=.}
+: ${SERV=../src/gnutls-serv${EXEEXT}}
+: ${CLI=../src/gnutls-cli${EXEEXT}}
 unset RETCODE
 
 if ! test -x "${SERV}"; then
@@ -46,24 +45,20 @@ SERV="${SERV} -q"
 
 . "${srcdir}/scripts/common.sh"
 
-check_for_datefudge
-
 echo "Checking whether a client will refuse weak but trusted keys"
 
 KEY1=${srcdir}/certs/rsa-512.pem
 CERT1=${srcdir}/certs/rsa-512.pem
 
 eval "${GETPORT}"
-launch_server $$ --echo --priority "NORMAL" --x509keyfile ${KEY1} --x509certfile ${CERT1}
+launch_server --echo --priority "NORMAL" --x509keyfile ${KEY1} --x509certfile ${CERT1}
 PID=$!
 wait_server ${PID}
 
-timeout 1800 datefudge "2019-12-20" \
-"${CLI}" -d 4 -p "${PORT}" localhost --x509cafile ${CERT1} --priority NORMAL:-VERS-TLS-ALL:+VERS-TLS1.2 </dev/null && \
+"${CLI}" --attime "2019-12-20" -d 4 -p "${PORT}" localhost --x509cafile ${CERT1} --priority NORMAL:-VERS-TLS-ALL:+VERS-TLS1.2 </dev/null && \
 	fail ${PID} "1. handshake with RSA should have failed!"
 
-timeout 1800 datefudge "2019-12-20" \
-"${CLI}" -d 4 -p "${PORT}" localhost --x509cafile ${CERT1} --priority NORMAL </dev/null && \
+"${CLI}" --attime "2019-12-20" -d 4 -p "${PORT}" localhost --x509cafile ${CERT1} --priority NORMAL </dev/null && \
 	fail ${PID} "2. handshake with RSA should have failed!"
 
 kill ${PID}

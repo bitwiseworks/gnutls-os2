@@ -34,25 +34,8 @@
  **/
 void gnutls_memset(void *data, int c, size_t size)
 {
-	volatile unsigned volatile_zero;
-	volatile char *vdata = (volatile char*)data;
-#ifdef HAVE_EXPLICIT_BZERO
-	if (c == 0) {
-		explicit_bzero(data, size);
-		return;
-	}
-#endif
-	volatile_zero = 0;
-
-	/* This is based on a nice trick for safe memset,
-	 * sent by David Jacobson in the openssl-dev mailing list.
-	 */
-
-	if (size > 0) {
-		do {
-			memset(data, c, size);
-		} while(vdata[volatile_zero] != c);
-	}
+	explicit_bzero(data, size);
+	memset(data, c, size);
 }
 
 /**
@@ -76,7 +59,7 @@ int gnutls_memcmp(const void *s1, const void *s2, size_t n)
 	const uint8_t *_s1 = s1;
 	const uint8_t *_s2 = s2;
 
-	for (i=0;i<n;i++) {
+	for (i = 0; i < n; i++) {
 		status |= (_s1[i] ^ _s2[i]);
 	}
 
@@ -84,14 +67,13 @@ int gnutls_memcmp(const void *s1, const void *s2, size_t n)
 }
 
 #ifdef TEST_SAFE_MEMSET
-int main()
+int main(void)
 {
 	char x[64];
 
 	gnutls_memset(x, 0, sizeof(x));
 
 	return 0;
-
 }
 
 #endif

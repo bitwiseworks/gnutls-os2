@@ -24,19 +24,20 @@
 #include "gnutls_int.h"
 #include "errors.h"
 #include <libtasn1.h>
-#include <dh.h>
-#include <random.h>
+#include "dh.h"
+#include "random.h"
 #include <gnutls/pkcs11.h>
 
-#include <hello_ext.h>	/* for _gnutls_hello_ext_init */
-#include <supplemental.h> /* for _gnutls_supplemental_deinit */
-#include <locks.h>
-#include <system.h>
-#include <accelerated/cryptodev.h>
-#include <accelerated/accelerated.h>
-#include <fips.h>
-#include <atfork.h>
-#include <system-keys.h>
+#include "hello_ext.h" /* for _gnutls_hello_ext_init */
+#include "supplemental.h" /* for _gnutls_supplemental_deinit */
+#include "locks.h"
+#include "system.h"
+#include "accelerated/cryptodev.h"
+#include "accelerated/afalg.h"
+#include "accelerated/accelerated.h"
+#include "fips.h"
+#include "atfork.h"
+#include "system-keys.h"
 #include "str.h"
 #include "global.h"
 
@@ -44,13 +45,13 @@
 #define GNUTLS_MIN_LIBTASN1_VERSION "0.3.4"
 
 #ifdef __sun
-# pragma fini(lib_deinit)
-# pragma init(lib_init)
-# define _CONSTRUCTOR
-# define _DESTRUCTOR
+#pragma fini(lib_deinit)
+#pragma init(lib_init)
+#define _CONSTRUCTOR
+#define _DESTRUCTOR
 #else
-# define _CONSTRUCTOR __attribute__((constructor))
-# define _DESTRUCTOR __attribute__((destructor))
+#define _CONSTRUCTOR __attribute__((constructor))
+#define _DESTRUCTOR __attribute__((destructor))
 #endif
 
 #ifndef _WIN32
@@ -67,24 +68,22 @@ inline static int _gnutls_global_init_skip(void)
 #endif
 
 /* created by asn1c */
-extern const ASN1_ARRAY_TYPE gnutls_asn1_tab[];
-extern const ASN1_ARRAY_TYPE pkix_asn1_tab[];
-void *_gnutls_file_mutex;
-void *_gnutls_pkcs11_mutex;
+extern const asn1_static_node gnutls_asn1_tab[];
+extern const asn1_static_node pkix_asn1_tab[];
 
-ASN1_TYPE _gnutls_pkix1_asn = ASN1_TYPE_EMPTY;
-ASN1_TYPE _gnutls_gnutls_asn = ASN1_TYPE_EMPTY;
+asn1_node _gnutls_pkix1_asn = NULL;
+asn1_node _gnutls_gnutls_asn = NULL;
 
 gnutls_log_func _gnutls_log_func = NULL;
 gnutls_audit_log_func _gnutls_audit_log_func = NULL;
-int _gnutls_log_level = 0;	/* default log level */
+int _gnutls_log_level = 0; /* default log level */
 
 unsigned int _gnutls_global_version = GNUTLS_VERSION_NUMBER;
 
 static int _gnutls_global_init(unsigned constructor);
 static void _gnutls_global_deinit(unsigned destructor);
 
-static void default_log_func(int level, const char* str)
+static void default_log_func(int level, const char *str)
 {
 	fprintf(stderr, "gnutls[%d]: %s", level, str);
 }
@@ -126,6 +125,12 @@ void gnutls_global_set_audit_log_function(gnutls_audit_log_func log_func)
 	_gnutls_audit_log_func = log_func;
 }
 
+static void gettime_from_time(struct timespec *t)
+{
+	t->tv_sec = gnutls_time(NULL);
+	t->tv_nsec = 0;
+}
+
 /**
  * gnutls_global_set_time_function:
  * @time_func: it's the system time function, a gnutls_time_func() callback.
@@ -139,6 +144,12 @@ void gnutls_global_set_audit_log_function(gnutls_audit_log_func log_func)
 void gnutls_global_set_time_function(gnutls_time_func time_func)
 {
 	gnutls_time = time_func;
+
+	/* When the time function is overridden, also override the
+	 * gettime function to use the derived value, even if its
+	 * resolution is lower.
+	 */
+	_gnutls_global_set_gettime_function(gettime_from_time);
 }
 
 /**
@@ -177,14 +188,14 @@ void gnutls_global_set_log_level(int level)
  * This function must be called before gnutls_global_init() is called.
  * This function is not thread safe.
  **/
-void
-gnutls_global_set_mem_functions(gnutls_alloc_function alloc_func,
-				gnutls_alloc_function secure_alloc_func,
-				gnutls_is_secure_function is_secure_func,
-				gnutls_realloc_function realloc_func,
-				gnutls_free_function free_func)
+void gnutls_global_set_mem_functions(gnutls_alloc_function alloc_func,
+				     gnutls_alloc_function secure_alloc_func,
+				     gnutls_is_secure_function is_secure_func,
+				     gnutls_realloc_function realloc_func,
+				     gnutls_free_function free_func)
 {
-	_gnutls_debug_log("called the deprecated gnutls_global_set_mem_functions()\n");
+	_gnutls_debug_log(
+		"called the deprecated gnutls_global_set_mem_functions()\n");
 }
 
 GNUTLS_STATIC_MUTEX(global_init_mutex);
@@ -198,7 +209,7 @@ static int _gnutls_init_ret = 0;
  *
  * Since GnuTLS 3.3.0 this function is no longer necessary to be explicitly
  * called. To disable the implicit call (in a library constructor) of this
- * function set the environment variable %GNUTLS_NO_EXPLICIT_INIT to 1.
+ * function set the environment variable %GNUTLS_NO_IMPLICIT_INIT to 1.
  *
  * This function performs any required precalculations, detects
  * the supported CPU capabilities and initializes the underlying
@@ -228,24 +239,17 @@ static int _gnutls_global_init(unsigned constructor)
 {
 	int ret = 0, res;
 	int level;
-	const char* e;
+	const char *e;
 
 	if (!constructor) {
-		GNUTLS_STATIC_MUTEX_LOCK(global_init_mutex);
+		ret = gnutls_static_mutex_lock(&global_init_mutex);
+		if (ret < 0) {
+			return gnutls_assert_val(ret);
+		}
 	}
 
 	_gnutls_init++;
 	if (_gnutls_init > 1) {
-		if (_gnutls_init == 2 && _gnutls_init_ret == 0) {
-			/* some applications may close the urandom fd 
-			 * before calling gnutls_global_init(). in that
-			 * case reopen it */
-			ret = _gnutls_rnd_check();
-			if (ret < 0) {
-				gnutls_assert();
-				goto out;
-			}
-		}
 		ret = _gnutls_init_ret;
 		goto out;
 	}
@@ -258,7 +262,7 @@ static int _gnutls_global_init(unsigned constructor)
 		gnutls_global_set_log_level(level);
 		if (_gnutls_log_func == NULL)
 			gnutls_global_set_log_function(default_log_func);
-		_gnutls_debug_log("Enabled GnuTLS "VERSION" logging...\n");
+		_gnutls_debug_log("Enabled GnuTLS " VERSION " logging...\n");
 	}
 
 #ifdef HAVE_DCGETTEXT
@@ -281,15 +285,14 @@ static int _gnutls_global_init(unsigned constructor)
 	 */
 	if (asn1_check_version(GNUTLS_MIN_LIBTASN1_VERSION) == NULL) {
 		gnutls_assert();
-		_gnutls_debug_log
-		    ("Checking for libtasn1 failed: %s < %s\n",
-		     asn1_check_version(NULL),
-		     GNUTLS_MIN_LIBTASN1_VERSION);
+		_gnutls_debug_log("Checking for libtasn1 failed: %s < %s\n",
+				  asn1_check_version(NULL),
+				  GNUTLS_MIN_LIBTASN1_VERSION);
 		ret = GNUTLS_E_INCOMPATIBLE_LIBTASN1_LIBRARY;
 		goto out;
 	}
 
-	_gnutls_pkix1_asn = ASN1_TYPE_EMPTY;
+	_gnutls_pkix1_asn = NULL;
 	res = asn1_array2tree(pkix_asn1_tab, &_gnutls_pkix1_asn, NULL);
 	if (res != ASN1_SUCCESS) {
 		gnutls_assert();
@@ -313,18 +316,6 @@ static int _gnutls_global_init(unsigned constructor)
 
 	/* Initialize the default TLS extensions */
 	ret = _gnutls_hello_ext_init();
-	if (ret < 0) {
-		gnutls_assert();
-		goto out;
-	}
-
-	ret = gnutls_mutex_init(&_gnutls_file_mutex);
-	if (ret < 0) {
-		gnutls_assert();
-		goto out;
-	}
-
-	ret = gnutls_mutex_init(&_gnutls_pkcs11_mutex);
 	if (ret < 0) {
 		gnutls_assert();
 		goto out;
@@ -356,9 +347,13 @@ static int _gnutls_global_init(unsigned constructor)
 
 		/* first round of self checks, these are done on the
 		 * nettle algorithms which are used internally */
+		_gnutls_switch_lib_state(LIB_STATE_SELFTEST);
 		ret = _gnutls_fips_perform_self_checks1();
-		if (res != 2) {
-			if (ret < 0) {
+		if (ret < 0) {
+			_gnutls_switch_lib_state(LIB_STATE_ERROR);
+			_gnutls_audit_log(
+				NULL, "FIPS140-2 self testing part1 failed\n");
+			if (res != 2) {
 				gnutls_assert();
 				goto out;
 			}
@@ -368,16 +363,20 @@ static int _gnutls_global_init(unsigned constructor)
 
 	_gnutls_register_accel_crypto();
 	_gnutls_cryptodev_init();
-	_gnutls_load_system_priorities();
+	_gnutls_afalg_init();
 
 #ifdef ENABLE_FIPS140
 	/* These self tests are performed on the overridden algorithms
 	 * (e.g., AESNI overridden AES). They are after _gnutls_register_accel_crypto()
 	 * intentionally */
 	if (res != 0) {
+		_gnutls_switch_lib_state(LIB_STATE_SELFTEST);
 		ret = _gnutls_fips_perform_self_checks2();
-		if (res != 2) {
-			if (ret < 0) {
+		if (ret < 0) {
+			_gnutls_switch_lib_state(LIB_STATE_ERROR);
+			_gnutls_audit_log(
+				NULL, "FIPS140-2 self testing part 2 failed\n");
+			if (res != 2) {
 				gnutls_assert();
 				goto out;
 			}
@@ -385,13 +384,14 @@ static int _gnutls_global_init(unsigned constructor)
 		_gnutls_fips_mode_reset_zombie();
 	}
 #endif
+	_gnutls_prepare_to_load_system_priorities();
 	_gnutls_switch_lib_state(LIB_STATE_OPERATIONAL);
 	ret = 0;
 
-      out:
+out:
 	_gnutls_init_ret = ret;
 	if (!constructor) {
-		GNUTLS_STATIC_MUTEX_UNLOCK(global_init_mutex);
+		(void)gnutls_static_mutex_unlock(&global_init_mutex);
 	}
 	return ret;
 }
@@ -399,7 +399,9 @@ static int _gnutls_global_init(unsigned constructor)
 static void _gnutls_global_deinit(unsigned destructor)
 {
 	if (!destructor) {
-		GNUTLS_STATIC_MUTEX_LOCK(global_init_mutex);
+		if (gnutls_static_mutex_lock(&global_init_mutex) < 0) {
+			return;
+		}
 	}
 
 	if (_gnutls_init == 1) {
@@ -437,19 +439,19 @@ static void _gnutls_global_deinit(unsigned destructor)
 #ifdef HAVE_TROUSERS
 		_gnutls_tpm_global_deinit();
 #endif
+#ifdef HAVE_TPM2
+		_gnutls_tpm2_deinit();
+#endif
 
 		_gnutls_nss_keylog_deinit();
-
-		gnutls_mutex_deinit(&_gnutls_file_mutex);
-		gnutls_mutex_deinit(&_gnutls_pkcs11_mutex);
 	} else {
 		if (_gnutls_init > 0)
 			_gnutls_init--;
 	}
 
- fail:
+fail:
 	if (!destructor) {
-		GNUTLS_STATIC_MUTEX_UNLOCK(global_init_mutex);
+		(void)gnutls_static_mutex_unlock(&global_init_mutex);
 	}
 }
 
@@ -495,14 +497,23 @@ const char *gnutls_check_version(const char *req_version)
 
 static void _CONSTRUCTOR lib_init(void)
 {
-int ret;
-const char *e;
+	int ret;
+	const char *e;
 
 	if (_gnutls_global_init_skip() != 0)
 		return;
 
+	e = secure_getenv("GNUTLS_NO_IMPLICIT_INIT");
+	if (e != NULL) {
+		ret = atoi(e);
+		if (ret == 1)
+			return;
+	}
+
 	e = secure_getenv("GNUTLS_NO_EXPLICIT_INIT");
 	if (e != NULL) {
+		_gnutls_debug_log(
+			"GNUTLS_NO_EXPLICIT_INIT is deprecated; use GNUTLS_NO_IMPLICIT_INIT\n");
 		ret = atoi(e);
 		if (ret == 1)
 			return;
@@ -510,24 +521,83 @@ const char *e;
 
 	ret = _gnutls_global_init(1);
 	if (ret < 0) {
-		fprintf(stderr, "Error in GnuTLS initialization: %s\n", gnutls_strerror(ret));
+		fprintf(stderr, "Error in GnuTLS initialization: %s\n",
+			gnutls_strerror(ret));
 		_gnutls_switch_lib_state(LIB_STATE_ERROR);
 	}
 }
 
 static void _DESTRUCTOR lib_deinit(void)
 {
+	int ret;
 	const char *e;
 
 	if (_gnutls_global_init_skip() != 0)
 		return;
 
+	e = secure_getenv("GNUTLS_NO_IMPLICIT_INIT");
+	if (e != NULL) {
+		ret = atoi(e);
+		if (ret == 1)
+			return;
+	}
+
 	e = secure_getenv("GNUTLS_NO_EXPLICIT_INIT");
 	if (e != NULL) {
-		int ret = atoi(e);
+		_gnutls_debug_log(
+			"GNUTLS_NO_EXPLICIT_INIT is deprecated; use GNUTLS_NO_IMPLICIT_INIT\n");
+		ret = atoi(e);
 		if (ret == 1)
 			return;
 	}
 
 	_gnutls_global_deinit(1);
+}
+
+static const struct gnutls_library_config_st _gnutls_library_config[] = {
+#ifdef FIPS_MODULE_NAME
+	{ "fips-module-name", FIPS_MODULE_NAME },
+#endif
+#ifdef FIPS_MODULE_VERSION
+	{ "fips-module-version", FIPS_MODULE_VERSION },
+#endif
+	{ "libgnutls-soname", GNUTLS_LIBRARY_SONAME },
+	{ "libnettle-soname", NETTLE_LIBRARY_SONAME },
+	{ "libhogweed-soname", HOGWEED_LIBRARY_SONAME },
+	{ "libgmp-soname", GMP_LIBRARY_SONAME },
+	{ "hardware-features", HW_FEATURES },
+	{ "tls-features", TLS_FEATURES },
+	{ "default-system-config", SYSTEM_PRIORITY_FILE },
+	{ NULL, NULL }
+};
+
+/**
+ * gnutls_get_library_config:
+ *
+ * Returns the library configuration as key value pairs.
+ * Currently defined keys are:
+ *
+ *  - fips-module-name: the name of the FIPS140 module
+ *
+ *  - fips-module-version: the version of the FIPS140 module
+ *
+ *  - libgnutls-soname: the SONAME of the library itself
+ *
+ *  - libnettle-soname: the library SONAME of linked libnettle
+ *
+ *  - libhogweed-soname: the library SONAME of linked libhogweed
+ *
+ *  - libgmp-soname: the library SONAME of linked libgmp
+ *
+ *  - hardware-features: enabled hardware support features
+ *
+ *  - tls-features: enabled TLS protocol features
+ *
+ * Returns: a NUL-terminated %gnutls_library_config_st array
+ *
+ * Since: 3.7.3
+ */
+const gnutls_library_config_st *gnutls_get_library_config(void)
+{
+	return _gnutls_library_config;
 }

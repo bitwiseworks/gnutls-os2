@@ -8,8 +8,8 @@
 @var{issuer}: is the certificate of a possible issuer
 
 This function will check if the given CRL was issued by the given
-issuer certificate.  
+issuer certificate.
 
-@strong{Returns:} true (1) if the given CRL was issued by the given issuer, 
+@strong{Returns:} true (1) if the given CRL was issued by the given issuer,
 and false (0) if not.
 @end deftypefun

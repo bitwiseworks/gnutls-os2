@@ -3,7 +3,7 @@
 
 
 @deftypefun {int} {gnutls_priority_init} (gnutls_priority_t * @var{priority_cache}, const char * @var{priorities}, const char ** @var{err_pos})
-@var{priority_cache}: is a @code{gnutls_prioritity_t}  type.
+@var{priority_cache}: is a @code{gnutls_priority_t}  type.
 
 @var{priorities}: is a string describing priorities (may be @code{NULL} )
 

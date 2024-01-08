@@ -17,22 +17,21 @@
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with GnuTLS; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+# along with GnuTLS.  If not, see <https://www.gnu.org/licenses/>.
 
-srcdir="${srcdir:-.}"
-top_builddir="${top_builddir:-..}"
-PKGCONFIG="${PKG_CONFIG:-$(which pkg-config)}"
-CC=${CC:-cc}
+: ${srcdir=.}
+: ${top_builddir=..}
+: ${PKG_CONFIG=pkg-config}
+: ${CC=cc}
 unset RETCODE
 TMPFILE=c.$$.tmp.c
 TMPFILE_O=c.$$.tmp.o
 
 echo "$CFLAGS"|grep sanitize && exit 77
 
-${PKGCONFIG} --version >/dev/null || exit 77
+${PKG_CONFIG} --version >/dev/null || exit 77
 
-${PKGCONFIG} --libs nettle
+${PKG_CONFIG} --libs nettle
 if test $? != 0;then
 	echo "Nettle was not found in pkg-config"
 	exit 77
@@ -40,7 +39,7 @@ fi
 
 for lib in libidn2 p11-kit-1
 do
-	OTHER=$(${PKGCONFIG} --libs --static $lib)
+	OTHER=$(${PKG_CONFIG} --libs --static $lib)
 	if test -n "${OTHER}" && test "${OTHER#*-R}" != "$OTHER";then
 		echo "Found invalid string in $lib flags: ${OTHER}"
 		exit 77
@@ -60,7 +59,7 @@ set -e
 cat >$TMPFILE <<__EOF__
 #include <gnutls/gnutls.h>
 
-int main()
+int main(void)
 {
 gnutls_global_init();
 }
@@ -68,16 +67,16 @@ __EOF__
 
 COMMON="-I${top_builddir}/lib/includes -L${top_builddir}/lib/.libs -I${srcdir}/../lib/includes"
 echo "Trying dynamic linking with:"
-echo "  * flags: $(${PKGCONFIG} --libs gnutls)"
+echo "  * flags: $(${PKG_CONFIG} --libs gnutls)"
 echo "  * common: ${COMMON}"
 echo "  * lib: ${CFLAGS}"
-echo cc ${TMPFILE} -o ${TMPFILE_O} $(${PKGCONFIG} --libs gnutls) $(${PKGCONFIG} --cflags gnutls) ${COMMON}
-${CC} ${TMPFILE} -o ${TMPFILE_O} $(${PKGCONFIG} --libs gnutls) $(${PKGCONFIG} --cflags gnutls) ${COMMON}
+echo cc ${TMPFILE} -o ${TMPFILE_O} $(${PKG_CONFIG} --libs gnutls) $(${PKG_CONFIG} --cflags gnutls) ${COMMON} ${CFLAGS}
+${CC} ${TMPFILE} -o ${TMPFILE_O} $(${PKG_CONFIG} --libs gnutls) $(${PKG_CONFIG} --cflags gnutls) ${COMMON} ${CFLAGS}
 
 echo ""
-echo "Trying static linking with $(${PKGCONFIG} --libs --static gnutls)"
-echo cc ${TMPFILE} -o ${TMPFILE_O} $(${PKGCONFIG} --static --libs gnutls) $(${PKGCONFIG} --cflags gnutls) ${COMMON}
-${CC} ${TMPFILE} -o ${TMPFILE_O} $(${PKGCONFIG} --static --libs gnutls) $(${PKGCONFIG} --cflags gnutls) ${COMMON}
+echo "Trying static linking with $(${PKG_CONFIG} --libs --static gnutls)"
+echo cc ${TMPFILE} -o ${TMPFILE_O} $(${PKG_CONFIG} --static --libs gnutls) $(${PKG_CONFIG} --cflags gnutls) ${COMMON} ${CFLAGS}
+${CC} ${TMPFILE} -o ${TMPFILE_O} $(${PKG_CONFIG} --static --libs gnutls) $(${PKG_CONFIG} --cflags gnutls) ${COMMON} ${CFLAGS}
 
 rm -f ${TMPFILE} ${TMPFILE_O}
 

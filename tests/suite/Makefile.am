@@ -14,8 +14,7 @@
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this file; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+# along with this file.  If not, see <https://www.gnu.org/licenses/>.
 
 AM_CFLAGS = $(WARN_CFLAGS)
 AM_CPPFLAGS = \
@@ -39,20 +38,36 @@ LDADD = ../../lib/libgnutls.la \
 prime_check_LDADD = $(LDADD) -lhogweed -lgmp
 
 scripts_to_test = chain.sh \
-	testrng.sh testcompat-polarssl.sh testcompat-openssl.sh \
-	testrandom.sh tls-fuzzer/tls-fuzzer-nocert.sh \
+	testrng.sh \
+	testcompat-polarssl-serv.sh \
+	testcompat-polarssl-serv-compat.sh \
+	testcompat-polarssl-serv-no-etm.sh \
+	testcompat-openssl-cli.sh \
+	testcompat-openssl-cli-compat.sh \
+	testcompat-openssl-cli-no-etm.sh \
+	testcompat-openssl-serv.sh \
+	testcompat-openssl-serv-compat.sh \
+	testcompat-openssl-serv-no-etm.sh \
+	testcompat-openssl-serv-no-tickets.sh \
+	testcompat-openssl-serv-no-safe-renegotiation.sh \
+	testcompat-openssl-serv-safe-renegotiation.sh \
+	testrandom.sh \
+	test-ciphersuite-names.sh \
+	tls-fuzzer/tls-fuzzer-nocert.sh \
 	tls-fuzzer/tls-fuzzer-cert.sh tls-fuzzer/tls-fuzzer-alpn.sh \
 	tls-fuzzer/tls-fuzzer-nocert-tls13.sh tls-fuzzer/tls-fuzzer-psk.sh \
 	tls-fuzzer/tls-fuzzer-nolimit.sh tls-fuzzer/tls-fuzzer-nolimit-tls13.sh \
 	multi-ticket-reception.sh
 
-TESTS_ENVIRONMENT = EXEEXT=$(EXEEXT) \
-	LC_ALL="C"			\
-	VALGRIND="$(VALGRIND)"		\
-	top_builddir="$(top_builddir)"	\
-	srcdir="$(srcdir)"		\
-	ASAN_OPTIONS="detect_leaks=0"	\
-	GNUTLS_TEST_SUITE_RUN=1		\
+TESTS_ENVIRONMENT = EXEEXT=$(EXEEXT)					\
+	LC_ALL="C"							\
+	PYTHON="$(PYTHON)"						\
+	VALGRIND='$(LOG_VALGRIND)'					\
+	top_builddir="$(top_builddir)"					\
+	abs_top_builddir="$(abs_top_builddir)"				\
+	srcdir="$(srcdir)"						\
+	ASAN_OPTIONS="detect_leaks=0"					\
+	GNUTLS_TEST_SUITE_RUN=1						\
 	GNUTLS_SYSTEM_PRIORITY_FILE=$(abs_top_srcdir)/tests/system.prio \
 	OPENSSL_ia32cap=0x00000000
 
@@ -65,8 +80,15 @@ scripts_to_test += tls-fuzzer/tls-fuzzer-nocert-ssl3.sh
 TESTS_ENVIRONMENT += ENABLE_SSL3=1
 endif
 
+TESTS_ENVIRONMENT +=					\
+	FAKETIME="$(FAKETIME)"				\
+	FAKETIME_F_OPT="$(FAKETIME_F_OPT)"		\
+	ac_cv_faketime_works="$(ac_cv_faketime_works)"
+
 if ENABLE_TLS13_INTEROP
-scripts_to_test += testcompat-tls13-openssl.sh
+scripts_to_test += \
+	testcompat-openssl-tls13-cli.sh \
+	testcompat-openssl-tls13-serv.sh
 endif
 
 if ENABLE_OLDGNUTLS_INTEROP
@@ -100,8 +122,7 @@ TESTS = $(scripts_to_test) prime-check
 prime_check_CPPFLAGS = $(AM_CPPFLAGS) $(NETTLE_CFLAGS)
 
 TEST_EXTENSIONS = .sh
+SH_LOG_COMPILER = $(SHELL)
 
-if WANT_TEST_SUITE
-LOG_COMPILER = $(VALGRIND)
-SH_LOG_COMPILER =
-endif
+AM_VALGRINDFLAGS = --suppressions=$(srcdir)/suppressions.valgrind
+LOG_COMPILER = $(LOG_VALGRIND)

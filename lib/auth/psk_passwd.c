@@ -26,21 +26,20 @@
 
 #include "x509_b64.h"
 #include "errors.h"
-#include <auth/psk_passwd.h>
-#include <auth/psk.h>
+#include "auth/psk_passwd.h"
+#include "auth/psk.h"
 #include "auth.h"
 #include "dh.h"
 #include "debug.h"
-#include <str.h>
-#include <datum.h>
-#include <num.h>
-#include <random.h>
-
+#include "str.h"
+#include "datum.h"
+#include "num.h"
+#include "random.h"
 
 /* this function parses passwd.psk file. Format is:
  * string(username):hex(passwd)
  */
-static int pwd_put_values(gnutls_datum_t * psk, char *str)
+static int pwd_put_values(gnutls_datum_t *psk, char *str)
 {
 	char *p;
 	int len, ret;
@@ -64,7 +63,7 @@ static int pwd_put_values(gnutls_datum_t * psk, char *str)
 	if (p[len - 1] == '\n' || p[len - 1] == ' ')
 		len--;
 
-	tmp.data = (void*)p;
+	tmp.data = (void *)p;
 	tmp.size = len;
 	ret = gnutls_hex_decode2(&tmp, psk);
 	if (ret < 0) {
@@ -73,14 +72,60 @@ static int pwd_put_values(gnutls_datum_t * psk, char *str)
 	}
 
 	return 0;
-
 }
 
+ATTRIBUTE_NONNULL((1, 2))
+static bool username_matches(const gnutls_datum_t *username, const char *line,
+			     size_t line_size)
+{
+	int retval;
+	unsigned i;
+	gnutls_datum_t hexline, hex_username = { NULL, 0 };
+
+	/*
+	 * Guard against weird behavior - we don't check 'line',
+	 * as it's returned by getline(), which will never return NULL
+	 * if successful.
+	 */
+	if (username->data == NULL)
+		return false;
+
+	if (line_size == 0)
+		return (username->size == 0);
+
+	/* move to first ':' */
+	i = 0;
+	while ((i < line_size) && (line[i] != '\0') && (line[i] != ':')) {
+		i++;
+	}
+
+	/* if format is in hex, e.g. #FAFAFA */
+	if (line[0] == '#' && line_size > 1) {
+		hexline.data = (void *)&line[1];
+		hexline.size = i - 1;
+
+		if (gnutls_hex_decode2(&hexline, &hex_username) < 0)
+			return gnutls_assert_val(0);
+
+		if (hex_username.size == username->size)
+			retval = memcmp(username->data, hex_username.data,
+					username->size);
+		else
+			retval = -1;
+
+		_gnutls_free_datum(&hex_username);
+	} else {
+		retval = strncmp((const char *)username->data, line,
+				 MAX(i, username->size));
+	}
+
+	return (retval == 0);
+}
 
 /* Randomizes the given password entry. It actually sets a random password. 
  * Returns 0 on success.
  */
-static int _randomize_psk(gnutls_datum_t * psk)
+static int _randomize_psk(gnutls_datum_t *psk)
 {
 	int ret;
 
@@ -92,7 +137,7 @@ static int _randomize_psk(gnutls_datum_t * psk)
 
 	psk->size = 16;
 
-	ret = gnutls_rnd(GNUTLS_RND_NONCE, (char *) psk->data, 16);
+	ret = gnutls_rnd(GNUTLS_RND_NONCE, (char *)psk->data, 16);
 	if (ret < 0) {
 		gnutls_assert();
 		return ret;
@@ -104,19 +149,20 @@ static int _randomize_psk(gnutls_datum_t * psk)
 /* Returns the PSK key of the given user. 
  * If the user doesn't exist a random password is returned instead.
  */
-int
-_gnutls_psk_pwd_find_entry(gnutls_session_t session, char *username,
-			   gnutls_datum_t * psk)
+int _gnutls_psk_pwd_find_entry(gnutls_session_t session, const char *username,
+			       uint16_t username_len, gnutls_datum_t *psk,
+			       gnutls_psk_key_flags *flags)
 {
 	gnutls_psk_server_credentials_t cred;
-	FILE *fd;
+	FILE *fp;
 	char *line = NULL;
 	size_t line_size = 0;
-	unsigned i, len;
 	int ret;
+	gnutls_datum_t username_datum = { .data = (unsigned char *)username,
+					  .size = username_len };
 
-	cred = (gnutls_psk_server_credentials_t)
-	    _gnutls_get_cred(session, GNUTLS_CRD_PSK);
+	cred = (gnutls_psk_server_credentials_t)_gnutls_get_cred(
+		session, GNUTLS_CRD_PSK);
 	if (cred == NULL) {
 		gnutls_assert();
 		return GNUTLS_E_INSUFFICIENT_CREDENTIALS;
@@ -126,9 +172,8 @@ _gnutls_psk_pwd_find_entry(gnutls_session_t session, char *username,
 	 * set, use it.
 	 */
 	if (cred->pwd_callback != NULL) {
-		ret = cred->pwd_callback(session, username, psk);
-
-		if (ret == 1) {	/* the user does not exist */
+		ret = cred->pwd_callback(session, &username_datum, psk, flags);
+		if (ret == 1) { /* the user does not exist */
 			ret = _randomize_psk(psk);
 			if (ret < 0) {
 				gnutls_assert();
@@ -154,27 +199,22 @@ _gnutls_psk_pwd_find_entry(gnutls_session_t session, char *username,
 
 	/* Open the selected password file.
 	 */
-	fd = fopen(cred->password_file, "r");
-	if (fd == NULL) {
+	fp = fopen(cred->password_file, "re");
+	if (fp == NULL) {
 		gnutls_assert();
 		return GNUTLS_E_SRP_PWD_ERROR;
 	}
 
-	len = strlen(username);
-	while (getline(&line, &line_size, fd) > 0) {
-		/* move to first ':' */
-		i = 0;
-		while ((i < line_size) && (line[i] != '\0')
-		       && (line[i] != ':')) {
-			i++;
-		}
-
-		if (strncmp(username, line, MAX(i, len)) == 0) {
+	while (getline(&line, &line_size, fp) > 0) {
+		if (username_matches(&username_datum, line, line_size)) {
 			ret = pwd_put_values(psk, line);
 			if (ret < 0) {
 				gnutls_assert();
 				ret = GNUTLS_E_SRP_PWD_ERROR;
 				goto cleanup;
+			}
+			if (flags) {
+				*flags = 0;
 			}
 			ret = 0;
 			goto cleanup;
@@ -188,16 +228,18 @@ _gnutls_psk_pwd_find_entry(gnutls_session_t session, char *username,
 		goto cleanup;
 	}
 
+	if (flags) {
+		*flags = 0;
+	}
 	ret = 0;
 cleanup:
-	if (fd != NULL)
-		fclose(fd);
+	if (fp != NULL)
+		fclose(fp);
 
 	zeroize_key(line, line_size);
 	free(line);
 
 	return ret;
-
 }
 
 /* returns the username and they key for the PSK session.
@@ -205,10 +247,9 @@ cleanup:
  */
 int _gnutls_find_psk_key(gnutls_session_t session,
 			 gnutls_psk_client_credentials_t cred,
-			 gnutls_datum_t * username, gnutls_datum_t * key,
-			 int *free)
+			 gnutls_datum_t *username, gnutls_datum_t *key,
+			 gnutls_psk_key_flags *flags, int *free)
 {
-	char *user_p;
 	int ret;
 
 	*free = 0;
@@ -218,18 +259,18 @@ int _gnutls_find_psk_key(gnutls_session_t session,
 		username->size = cred->username.size;
 		key->data = cred->key.data;
 		key->size = cred->key.size;
+		if (flags) {
+			*flags = 0;
+		}
 	} else if (cred->get_function != NULL) {
-		ret = cred->get_function(session, &user_p, key);
-		if (ret)
+		ret = cred->get_function(session, username, key, flags);
+		if (ret) {
 			return gnutls_assert_val(ret);
-
-		username->data = (uint8_t *) user_p;
-		username->size = strlen(user_p);
+		}
 
 		*free = 1;
 	} else
-		return
-		    gnutls_assert_val(GNUTLS_E_INSUFFICIENT_CREDENTIALS);
+		return gnutls_assert_val(GNUTLS_E_INSUFFICIENT_CREDENTIALS);
 
 	return 0;
 }

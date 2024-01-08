@@ -14,22 +14,22 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this program; if not, see <https://www.gnu.org/licenses/>.
+ * License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <config.h>
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
-#include <drbg-aes.h>
-#include <fips.h>
+#include "drbg-aes.h"
+#include "fips.h"
 
 #include "gnutls_int.h"
 #include "errors.h"
 #include <nettle/sha2.h>
-#include <atfork.h>
-#include <rnd-common.h>
+#include "atfork.h"
+#include "rnd-common.h"
 
 /* The block size is chosen arbitrarily */
 #define ENTROPY_BLOCK_SIZE SHA256_DIGEST_SIZE
@@ -55,22 +55,29 @@ static int get_random(struct drbg_aes_ctx *ctx, struct fips_ctx *fctx,
 {
 	int ret;
 
-	if ( _gnutls_detect_fork(fctx->forkid) != 0) {
+	if (_gnutls_detect_fork(fctx->forkid) != 0) {
 		ret = _rngfips_ctx_reinit(fctx);
-		if (ret < 0)
+		if (ret < 0) {
+			_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_ERROR);
 			return gnutls_assert_val(ret);
+		}
 	}
 
 	if (ctx->reseed_counter > DRBG_AES_RESEED_TIME) {
 		ret = drbg_reseed(fctx, ctx);
-		if (ret < 0)
+		if (ret < 0) {
+			_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_ERROR);
 			return gnutls_assert_val(ret);
+		}
 	}
 
 	ret = drbg_aes_random(ctx, length, buffer);
-	if (ret == 0)
+	if (ret == 0) {
+		_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_ERROR);
 		return gnutls_assert_val(GNUTLS_E_RANDOM_FAILED);
+	}
 
+	_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_APPROVED);
 	return 0;
 }
 
@@ -99,6 +106,7 @@ static int get_entropy(struct fips_ctx *fctx, uint8_t *buffer, size_t length)
 		sha256_digest(&ctx, sizeof(hash), hash);
 
 		if (memcmp(hash, fctx->entropy_hash, sizeof(hash)) == 0) {
+			_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_ERROR);
 			_gnutls_switch_lib_state(LIB_STATE_ERROR);
 			return gnutls_assert_val(GNUTLS_E_RANDOM_FAILED);
 		}
@@ -110,26 +118,32 @@ static int get_entropy(struct fips_ctx *fctx, uint8_t *buffer, size_t length)
 	}
 	zeroize_key(block, sizeof(block));
 
+	_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_APPROVED);
 	return 0;
 }
 
 #define PSTRING "gnutls-rng"
-#define PSTRING_SIZE (sizeof(PSTRING)-1)
+#define PSTRING_SIZE (sizeof(PSTRING) - 1)
 static int drbg_init(struct fips_ctx *fctx, struct drbg_aes_ctx *ctx)
 {
 	uint8_t buffer[DRBG_AES_SEED_SIZE];
 	int ret;
 
 	ret = get_entropy(fctx, buffer, sizeof(buffer));
-	if (ret < 0)
+	if (ret < 0) {
+		_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_ERROR);
 		return gnutls_assert_val(ret);
+	}
 
-	ret = drbg_aes_init(ctx, sizeof(buffer), buffer,
-			    PSTRING_SIZE, (void*)PSTRING);
+	ret = drbg_aes_init(ctx, sizeof(buffer), buffer, PSTRING_SIZE,
+			    (void *)PSTRING);
 	zeroize_key(buffer, sizeof(buffer));
-	if (ret == 0)
+	if (ret == 0) {
+		_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_ERROR);
 		return gnutls_assert_val(GNUTLS_E_RANDOM_FAILED);
+	}
 
+	_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_APPROVED);
 	return GNUTLS_E_SUCCESS;
 }
 
@@ -140,14 +154,19 @@ static int drbg_reseed(struct fips_ctx *fctx, struct drbg_aes_ctx *ctx)
 	int ret;
 
 	ret = get_entropy(fctx, buffer, sizeof(buffer));
-	if (ret < 0)
+	if (ret < 0) {
+		_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_ERROR);
 		return gnutls_assert_val(ret);
+	}
 
 	ret = drbg_aes_reseed(ctx, sizeof(buffer), buffer, 0, NULL);
 	zeroize_key(buffer, sizeof(buffer));
-	if (ret == 0)
+	if (ret == 0) {
+		_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_ERROR);
 		return gnutls_assert_val(GNUTLS_E_RANDOM_FAILED);
+	}
 
+	_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_APPROVED);
 	return GNUTLS_E_SUCCESS;
 }
 
@@ -209,7 +228,7 @@ static int _rngfips_ctx_reinit(struct fips_ctx *fctx)
 /* Initialize this random subsystem. */
 static int _rngfips_init(void **_ctx)
 {
-/* Basic initialization is required to
+	/* Basic initialization is required to
    do a few checks on the implementation.  */
 	struct fips_ctx *ctx;
 	int ret;
@@ -286,4 +305,3 @@ gnutls_crypto_rnd_st _gnutls_fips_rnd_ops = {
 	.rnd_refresh = _rngfips_refresh,
 	.self_test = selftest_kat,
 };
-

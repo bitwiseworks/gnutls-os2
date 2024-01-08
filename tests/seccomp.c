@@ -17,7 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <config.h>
+#include "config.h"
 #include <stdio.h>
 #include "utils.h"
 
@@ -27,7 +27,7 @@
 #include <errno.h>
 #include <string.h>
 #if defined(__linux__)
-#  include <sys/syscall.h>
+#include <sys/syscall.h>
 #endif
 
 int disable_system_calls(void)
@@ -35,23 +35,26 @@ int disable_system_calls(void)
 	int ret;
 	scmp_filter_ctx ctx;
 
-	/*ctx = seccomp_init(SCMP_ACT_ERRNO(EPERM));*/
+	/*ctx = seccomp_init(SCMP_ACT_ERRNO(EPERM)); */
 	ctx = seccomp_init(SCMP_ACT_TRAP);
 	if (ctx == NULL) {
 		fprintf(stderr, "could not initialize seccomp");
 		return -1;
 	}
-
-#define ADD_SYSCALL(name, ...) \
-	ret = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(name), __VA_ARGS__); \
-	/* libseccomp returns EDOM for pseudo-syscalls due to a bug */ \
-	if (ret < 0 && ret != -EDOM) { \
-		fprintf(stderr, "could not add " #name " to seccomp filter: %s", strerror(-ret)); \
-		ret = -1; \
-		goto fail; \
+#define ADD_SYSCALL(name, ...)                                           \
+	ret = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(name),      \
+			       __VA_ARGS__);                             \
+	/* libseccomp returns EDOM for pseudo-syscalls due to a bug */   \
+	if (ret < 0 && ret != -EDOM) {                                   \
+		fprintf(stderr,                                          \
+			"could not add " #name " to seccomp filter: %s", \
+			strerror(-ret));                                 \
+		ret = -1;                                                \
+		goto fail;                                               \
 	}
 
 	ADD_SYSCALL(nanosleep, 0);
+	ADD_SYSCALL(clock_nanosleep, 0);
 	ADD_SYSCALL(time, 0);
 	ADD_SYSCALL(getpid, 0);
 	ADD_SYSCALL(gettimeofday, 0);
@@ -97,13 +100,16 @@ int disable_system_calls(void)
 	ADD_SYSCALL(sigreturn, 0);
 	ADD_SYSCALL(rt_sigreturn, 0);
 
+	/* used by gl_once_t implementation with pthread */
+	ADD_SYSCALL(futex, 0);
+
 	ret = seccomp_load(ctx);
 	if (ret < 0) {
 		fprintf(stderr, "could not load seccomp filter");
 		ret = -1;
 		goto fail;
 	}
-	
+
 	ret = 0;
 
 fail:

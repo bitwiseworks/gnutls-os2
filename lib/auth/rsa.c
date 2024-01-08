@@ -30,17 +30,17 @@
 #include "dh.h"
 #include "num.h"
 #include "datum.h"
-#include <auth/cert.h>
-#include <pk.h>
-#include <algorithms.h>
-#include <global.h>
+#include "auth/cert.h"
+#include "pk.h"
+#include "algorithms.h"
+#include "global.h"
 #include "debug.h"
-#include <tls-sig.h>
-#include <x509.h>
-#include <random.h>
-#include <mpi.h>
-#include <abstract_int.h>
-#include <auth/rsa_common.h>
+#include "tls-sig.h"
+#include "x509.h"
+#include "random.h"
+#include "mpi.h"
+#include "abstract_int.h"
+#include "auth/rsa_common.h"
 
 int _gnutls_gen_rsa_client_kx(gnutls_session_t, gnutls_buffer_st *);
 static int proc_rsa_client_kx(gnutls_session_t, uint8_t *, size_t);
@@ -49,32 +49,34 @@ const mod_auth_st rsa_auth_struct = {
 	"RSA",
 	_gnutls_gen_cert_server_crt,
 	_gnutls_gen_cert_client_crt,
-	NULL,			/* gen server kx */
+	NULL, /* gen server kx */
 	_gnutls_gen_rsa_client_kx,
-	_gnutls_gen_cert_client_crt_vrfy,	/* gen client cert vrfy */
-	_gnutls_gen_cert_server_cert_req,	/* server cert request */
+	_gnutls_gen_cert_client_crt_vrfy, /* gen client cert vrfy */
+	_gnutls_gen_cert_server_cert_req, /* server cert request */
 
 	_gnutls_proc_crt,
 	_gnutls_proc_crt,
-	NULL,			/* proc server kx */
-	proc_rsa_client_kx,	/* proc client kx */
-	_gnutls_proc_cert_client_crt_vrfy,	/* proc client cert vrfy */
-	_gnutls_proc_cert_cert_req	/* proc server cert request */
+	NULL, /* proc server kx */
+	proc_rsa_client_kx, /* proc client kx */
+	_gnutls_proc_cert_client_crt_vrfy, /* proc client cert vrfy */
+	_gnutls_proc_cert_cert_req /* proc server cert request */
 };
 
-static
-int check_key_usage_for_enc(gnutls_session_t session, unsigned key_usage)
+static int check_key_usage_for_enc(gnutls_session_t session, unsigned key_usage)
 {
 	if (key_usage != 0) {
-		if (!(key_usage & GNUTLS_KEY_KEY_ENCIPHERMENT) && !(key_usage & GNUTLS_KEY_KEY_AGREEMENT)) {
+		if (!(key_usage & GNUTLS_KEY_KEY_ENCIPHERMENT) &&
+		    !(key_usage & GNUTLS_KEY_KEY_AGREEMENT)) {
 			gnutls_assert();
 			if (session->internals.allow_key_usage_violation == 0) {
-				_gnutls_audit_log(session,
-					  "Peer's certificate does not allow encryption. Key usage violation detected.\n");
+				_gnutls_audit_log(
+					session,
+					"Peer's certificate does not allow encryption. Key usage violation detected.\n");
 				return GNUTLS_E_KEY_USAGE_VIOLATION;
 			} else {
-				_gnutls_audit_log(session,
-					  "Peer's certificate does not allow encryption. Key usage violation detected (ignored).\n");
+				_gnutls_audit_log(
+					session,
+					"Peer's certificate does not allow encryption. Key usage violation detected (ignored).\n");
 			}
 		}
 	}
@@ -95,9 +97,8 @@ int check_key_usage_for_enc(gnutls_session_t session, unsigned key_usage)
  * checks need to be build in order to retrieve the correct
  * certificate type.
  */
-int
-_gnutls_get_public_rsa_params(gnutls_session_t session,
-			      gnutls_pk_params_st * params)
+int _gnutls_get_public_rsa_params(gnutls_session_t session,
+				  gnutls_pk_params_st *params)
 {
 	int ret;
 	cert_auth_info_t info;
@@ -115,7 +116,6 @@ _gnutls_get_public_rsa_params(gnutls_session_t session,
 		gnutls_assert();
 		return GNUTLS_E_INTERNAL_ERROR;
 	}
-
 	// Get the negotiated server certificate type
 	cert_type = get_certificate_type(session, GNUTLS_CTYPE_SERVER);
 
@@ -145,23 +145,19 @@ _gnutls_get_public_rsa_params(gnutls_session_t session,
 	gnutls_pcert_deinit(&peer_cert);
 	return 0;
 
-      cleanup2:
+cleanup2:
 	gnutls_pcert_deinit(&peer_cert);
 
 	return ret;
 }
 
-static int
-proc_rsa_client_kx(gnutls_session_t session, uint8_t * data,
-		   size_t _data_size)
+static int proc_rsa_client_kx(gnutls_session_t session, uint8_t *data,
+			      size_t _data_size)
 {
-	const char attack_error[] = "auth_rsa: Possible PKCS #1 attack\n";
 	gnutls_datum_t ciphertext;
 	int ret, dsize;
 	ssize_t data_size = _data_size;
 	volatile uint8_t ver_maj, ver_min;
-	volatile uint8_t check_ver_min;
-	volatile uint32_t ok;
 
 #ifdef ENABLE_SSL3
 	if (get_num_version(session) == GNUTLS_SSL3) {
@@ -187,7 +183,6 @@ proc_rsa_client_kx(gnutls_session_t session, uint8_t * data,
 
 	ver_maj = _gnutls_get_adv_version_major(session);
 	ver_min = _gnutls_get_adv_version_minor(session);
-	check_ver_min = (session->internals.allow_wrong_pms == 0);
 
 	session->key.key.data = gnutls_malloc(GNUTLS_MASTER_SIZE);
 	if (session->key.key.data == NULL) {
@@ -206,13 +201,12 @@ proc_rsa_client_kx(gnutls_session_t session, uint8_t * data,
 		return ret;
 	}
 
-	ret =
-	    gnutls_privkey_decrypt_data2(session->internals.selected_key,
-					 0, &ciphertext, session->key.key.data,
-					 session->key.key.size);
+	gnutls_privkey_decrypt_data2(session->internals.selected_key, 0,
+				     &ciphertext, session->key.key.data,
+				     session->key.key.size);
 	/* After this point, any conditional on failure that cause differences
 	 * in execution may create a timing or cache access pattern side
-	 * channel that can be used as an oracle, so treat very carefully */
+	 * channel that can be used as an oracle, so tread carefully */
 
 	/* Error handling logic:
 	 * In case decryption fails then don't inform the peer. Just use the
@@ -225,25 +219,6 @@ proc_rsa_client_kx(gnutls_session_t session, uint8_t * data,
 	 * Vlastimil Klima, Ondej Pokorny and Tomas Rosa.
 	 */
 
-	/* ok is 0 in case of error and 1 in case of success. */
-
-	/* if ret < 0 */
-	ok = CONSTCHECK_EQUAL(ret, 0);
-	/* session->key.key.data[0] must equal ver_maj */
-	ok &= CONSTCHECK_EQUAL(session->key.key.data[0], ver_maj);
-	/* if check_ver_min then session->key.key.data[1] must equal ver_min */
-	ok &= CONSTCHECK_NOT_EQUAL(check_ver_min, 0) &
-	        CONSTCHECK_EQUAL(session->key.key.data[1], ver_min);
-
-	if (ok) {
-		/* call logging function unconditionally so all branches are
-		 * indistinguishable for timing and cache access when debug
-		 * logging is disabled */
-		_gnutls_no_log("%s", attack_error);
-	} else {
-		_gnutls_debug_log("%s", attack_error);
-	}
-
 	/* This is here to avoid the version check attack
 	 * discussed above.
 	 */
@@ -253,16 +228,12 @@ proc_rsa_client_kx(gnutls_session_t session, uint8_t * data,
 	return 0;
 }
 
-
-
 /* return RSA(random) using the peers public key 
  */
-int
-_gnutls_gen_rsa_client_kx(gnutls_session_t session,
-			  gnutls_buffer_st * data)
+int _gnutls_gen_rsa_client_kx(gnutls_session_t session, gnutls_buffer_st *data)
 {
 	cert_auth_info_t auth = session->key.auth_info;
-	gnutls_datum_t sdata;	/* data to send */
+	gnutls_datum_t sdata; /* data to send */
 	gnutls_pk_params_st params;
 	int ret;
 
@@ -283,7 +254,7 @@ _gnutls_gen_rsa_client_kx(gnutls_session_t session,
 	}
 
 	ret = gnutls_rnd(GNUTLS_RND_RANDOM, session->key.key.data,
-			  session->key.key.size);
+			 session->key.key.size);
 	if (ret < 0) {
 		gnutls_assert();
 		return ret;
@@ -291,14 +262,14 @@ _gnutls_gen_rsa_client_kx(gnutls_session_t session,
 
 	if (session->internals.rsa_pms_version[0] == 0) {
 		session->key.key.data[0] =
-		    _gnutls_get_adv_version_major(session);
+			_gnutls_get_adv_version_major(session);
 		session->key.key.data[1] =
-		    _gnutls_get_adv_version_minor(session);
-	} else {		/* use the version provided */
+			_gnutls_get_adv_version_minor(session);
+	} else { /* use the version provided */
 		session->key.key.data[0] =
-		    session->internals.rsa_pms_version[0];
+			session->internals.rsa_pms_version[0];
 		session->key.key.data[1] =
-		    session->internals.rsa_pms_version[1];
+			session->internals.rsa_pms_version[1];
 	}
 
 	/* move RSA parameters to key (session).
@@ -308,31 +279,26 @@ _gnutls_gen_rsa_client_kx(gnutls_session_t session,
 		return ret;
 	}
 
-	ret =
-	    _gnutls_pk_encrypt(GNUTLS_PK_RSA, &sdata, &session->key.key,
-			       &params);
+	ret = _gnutls_pk_encrypt(GNUTLS_PK_RSA, &sdata, &session->key.key,
+				 &params);
 
 	gnutls_pk_params_release(&params);
 
 	if (ret < 0)
 		return gnutls_assert_val(ret);
 
-
 #ifdef ENABLE_SSL3
 	if (get_num_version(session) == GNUTLS_SSL3) {
 		/* SSL 3.0 */
-		ret =
-		    _gnutls_buffer_append_data(data, sdata.data,
-					       sdata.size);
+		ret = _gnutls_buffer_append_data(data, sdata.data, sdata.size);
 
 		_gnutls_free_datum(&sdata);
 		return ret;
 	} else
 #endif
-	{		/* TLS 1.x */
-		ret =
-		    _gnutls_buffer_append_data_prefix(data, 16, sdata.data,
-						      sdata.size);
+	{ /* TLS 1.x */
+		ret = _gnutls_buffer_append_data_prefix(data, 16, sdata.data,
+							sdata.size);
 
 		_gnutls_free_datum(&sdata);
 		return ret;

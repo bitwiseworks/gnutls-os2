@@ -27,21 +27,23 @@
 #include "errors.h"
 #include "num.h"
 #include "hello_ext_lib.h"
-#include <ext/early_data.h>
+#include "ext/early_data.h"
 
-static int early_data_recv_params(gnutls_session_t session,
-				  const uint8_t * data,
+static int early_data_recv_params(gnutls_session_t session, const uint8_t *data,
 				  size_t data_size);
 static int early_data_send_params(gnutls_session_t session,
-				  gnutls_buffer_st * extdata);
+				  gnutls_buffer_st *extdata);
 
 const hello_ext_entry_st ext_mod_early_data = {
 	.name = "Early Data",
 	.tls_id = 42,
 	.gid = GNUTLS_EXTENSION_EARLY_DATA,
-	.validity = GNUTLS_EXT_FLAG_TLS | GNUTLS_EXT_FLAG_CLIENT_HELLO | GNUTLS_EXT_FLAG_EE,
-	.client_parse_point = GNUTLS_EXT_MANDATORY, /* force parsing prior to EXT_TLS extensions */
-	.server_parse_point = GNUTLS_EXT_MANDATORY, /* force parsing prior to EXT_TLS extensions */
+	.validity = GNUTLS_EXT_FLAG_TLS | GNUTLS_EXT_FLAG_CLIENT_HELLO |
+		    GNUTLS_EXT_FLAG_EE,
+	.client_parse_point =
+		GNUTLS_EXT_MANDATORY, /* force parsing prior to EXT_TLS extensions */
+	.server_parse_point =
+		GNUTLS_EXT_MANDATORY, /* force parsing prior to EXT_TLS extensions */
 	.recv_func = early_data_recv_params,
 	.send_func = early_data_send_params,
 	.pack_func = NULL,
@@ -50,9 +52,8 @@ const hello_ext_entry_st ext_mod_early_data = {
 	.cannot_be_overriden = 0
 };
 
-static int
-early_data_recv_params(gnutls_session_t session,
-		       const uint8_t * data, size_t _data_size)
+static int early_data_recv_params(gnutls_session_t session, const uint8_t *data,
+				  size_t _data_size)
 {
 	const version_entry_st *vers = get_version(session);
 
@@ -60,13 +61,9 @@ early_data_recv_params(gnutls_session_t session,
 		return gnutls_assert_val(0);
 
 	if (session->security_parameters.entity == GNUTLS_SERVER) {
-		/* The flag may be cleared by pre_shared_key
-		 * extension, when replay is detected. */
-		if ((session->internals.flags & GNUTLS_ENABLE_EARLY_DATA) &&
-		    /* Refuse early data when this is a second CH after HRR */
-		    !(session->internals.hsk_flags & HSK_HRR_SENT))
-			session->internals.hsk_flags |= HSK_EARLY_DATA_ACCEPTED;
-
+		/* Whether to accept early data is decided during processing the
+		 * pre_shared_key extension in the later phase.
+		 */
 		session->internals.hsk_flags |= HSK_EARLY_DATA_IN_FLIGHT;
 	} else {
 		if (_gnutls_ext_get_msg(session) == GNUTLS_EXT_FLAG_EE)
@@ -78,16 +75,22 @@ early_data_recv_params(gnutls_session_t session,
 
 /* returns data_size or a negative number on failure
  */
-static int
-early_data_send_params(gnutls_session_t session,
-		       gnutls_buffer_st * extdata)
+static int early_data_send_params(gnutls_session_t session,
+				  gnutls_buffer_st *extdata)
 {
 	if (session->security_parameters.entity == GNUTLS_SERVER) {
 		if (session->internals.hsk_flags & HSK_EARLY_DATA_ACCEPTED)
 			return GNUTLS_E_INT_RET_0;
 	} else {
-		if (session->internals.early_data_presend_buffer.length > 0) {
-			session->internals.hsk_flags |= HSK_EARLY_DATA_IN_FLIGHT;
+		/* early data is enabled and resuming a TLS 1.3 session */
+		if (session->internals.flags & GNUTLS_ENABLE_EARLY_DATA &&
+		    !(session->internals.resumption_requested == 0 &&
+		      session->internals.premaster_set == 0) &&
+		    session->internals.resumed_security_parameters.pversion &&
+		    session->internals.resumed_security_parameters.pversion
+			    ->tls13_sem) {
+			session->internals.hsk_flags |=
+				HSK_EARLY_DATA_IN_FLIGHT;
 			return GNUTLS_E_INT_RET_0;
 		}
 	}
@@ -108,8 +111,7 @@ early_data_send_params(gnutls_session_t session,
  *
  * Since: 3.6.5
  **/
-size_t
-gnutls_record_get_max_early_data_size(gnutls_session_t session)
+size_t gnutls_record_get_max_early_data_size(gnutls_session_t session)
 {
 	return session->security_parameters.max_early_data_size;
 }
@@ -129,9 +131,7 @@ gnutls_record_get_max_early_data_size(gnutls_session_t session)
  *
  * Since: 3.6.4
  **/
-int
-gnutls_record_set_max_early_data_size(gnutls_session_t session,
-				      size_t size)
+int gnutls_record_set_max_early_data_size(gnutls_session_t session, size_t size)
 {
 	if (session->security_parameters.entity == GNUTLS_CLIENT)
 		return GNUTLS_E_INVALID_REQUEST;
@@ -140,7 +140,7 @@ gnutls_record_set_max_early_data_size(gnutls_session_t session,
 	if (size == 0 || size > UINT32_MAX)
 		return GNUTLS_E_INVALID_REQUEST;
 
-	session->security_parameters.max_early_data_size = (uint32_t) size;
+	session->security_parameters.max_early_data_size = (uint32_t)size;
 
 	return 0;
 }

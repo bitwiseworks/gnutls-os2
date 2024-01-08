@@ -40,18 +40,21 @@ noinst_LTLIBRARIES = libcrypto.la
 
 libcrypto_la_SOURCES = pk.c mpi.c mac.c cipher.c init.c \
 	gnettle.h rnd-common.h prf.c \
-	backport/cfb8.c backport/cfb8.h \
-	backport/cmac.c backport/cmac.h \
-	backport/xts.c backport/xts.h \
 	rnd.c int/rsa-fips.h int/rsa-keygen-fips186.c int/provable-prime.c \
 	int/dsa-fips.h int/dsa-keygen-fips186.c int/dsa-validate.c \
 	int/tls1-prf.c int/tls1-prf.h \
 	int/dsa-compute-k.c int/dsa-compute-k.h \
 	int/ecdsa-compute-k.c int/ecdsa-compute-k.h \
-	int/mpn-base256.c int/mpn-base256.h
+	int/mpn-base256.c int/mpn-base256.h \
+	int/block8.h backport/block-internal.h \
+	int/rsa-pad.c int/nettle-internal.h
 
 if WINDOWS
+if HAVE_BCRYPT
+libcrypto_la_SOURCES += sysrng-bcrypt.c
+else
 libcrypto_la_SOURCES += sysrng-windows.c
+endif
 else
 if HAVE_GETENTROPY
 libcrypto_la_SOURCES += sysrng-getentropy.c
@@ -77,82 +80,40 @@ endif
 
 if ENABLE_GOST
 libcrypto_la_SOURCES += \
-	gost/nettle-write.h \
+	gost/nettle-write.h gost/write-le32.c \
 	gost/gost28147.c gost/gost28147.h gost/gost-wrap.c \
-	gost/gosthash94.c gost/gosthash94.h gost/gosthash94-meta.c \
 	gost/streebog.c gost/streebog.h gost/streebog-meta.c \
-	gost/hmac-gosthash94.c gost/hmac-streebog.c gost/hmac-gost.h
+	gost/hmac-streebog.c gost/hmac-gost.h
 
 libcrypto_la_SOURCES += \
 	gost/bignum-le.c gost/bignum-le.h
 
 libcrypto_la_SOURCES += \
-	gost/pbkdf2-hmac-gosthash94.c gost/pbkdf2-hmac-streebog.c \
-	gost/pbkdf2-gost.h
-
-if NEED_GOSTDSA
-libcrypto_la_SOURCES += \
-	gost/nettle-internal.h \
-	gost/ecc-gost256cpa.c gost/ecc-gost256cpa-32.h  gost/ecc-gost256cpa-64.h\
-	gost/ecc-gost512a.c gost/ecc-gost512a-32.h gost/ecc-gost512a-64.h \
-	gost/ecc-internal.h gost/gmp-glue.h \
-	gost/ecc-gostdsa-sign.c gost/ecc-gostdsa-verify.c \
-	gost/gostdsa-sign.c gost/gostdsa-verify.c \
-	gost/gostdsa.h gost/ecc-gost-curve.h gost/ecc-gost-hash.c
-endif
-
-libcrypto_la_SOURCES += \
-	gost/gostdsa-mask.c gost/gostdsa-vko.c gost/gostdsa2.h
+	gost/gostdsa-mask.c gost/gostdsa2.h
 
 libcrypto_la_SOURCES += gost_keywrap.c
+
+libcrypto_la_SOURCES += \
+	gost/magma.c gost/magma.h \
+	gost/kuznyechik.c gost/kuznyechik.h gost/kuztable.h \
+	gost/acpkm.c gost/acpkm.h \
+	gost/cmac.h gost/cmac-magma.c gost/cmac-kuznyechik.c
 endif
 
-if NEED_CURVE448
-curve448_generated_headers = \
-	curve448/ecc-curve448-32.h curve448/ecc-curve448-64.h
-
-BUILT_SOURCES = $(curve448_generated_headers)
-EXTRA_DIST = $(curve448_generated_headers) curve448/eccdata.stamp
-
-noinst_PROGRAMS = curve448/eccdata$(EXEEXT)
-
-curve448_eccdata_SOURCES = curve448/eccdata.c
-curve448_eccdata_CFLAGS = $(GMP_CFLAGS)
-curve448_eccdata_LDADD = $(GMP_LIBS) ../../gl/libgnu.la
-
-curve448/eccdata.stamp: $(curve448_eccdata_SOURCES)
-	$(AM_V_GEN)$(MAKE) $(AM_MAKEFLAGS) curve448/eccdata$(EXEEXT) && touch $@
-
-curve448/ecc-curve448-32.h: curve448/eccdata.stamp
-	$(AM_V_GEN)curve448/eccdata$(EXEEXT) curve448 38 6 32 > $@T && mv $@T $@
-
-curve448/ecc-curve448-64.h: curve448/eccdata.stamp
-	$(AM_V_GEN)curve448/eccdata$(EXEEXT) curve448 38 6 64 > $@T && mv $@T $@
-
+if NEED_SIV_GCM
 libcrypto_la_SOURCES += \
-	curve448/nettle-write.h curve448/gmp-glue.h curve448/gmp-glue.c
-
-libcrypto_la_SOURCES += \
-	curve448/sha3.c curve448/sha3.h curve448/sha3-256.c \
-	curve448/sha3-permute.c curve448/sha3-internal.h \
-	curve448/shake256.c
-
-libcrypto_la_SOURCES += \
-	curve448/ecc-internal.h \
-	curve448/ecc-add-eh.c curve448/ecc-add-ehh.c curve448/ecc-dup-eh.c \
-	curve448/ecc-eh-to-a.c curve448/ecc-mul-a-eh.c curve448/ecc-mul-g-eh.c \
-	curve448/ecc-mul-m.c curve448/ecc-mod.c curve448/ecc-mod-arith.c \
-	curve448/ecc-mod-inv.c \
-	curve448/ecc-a-to-j.c \
-	curve448/sec-tabselect.c curve448/cnd-copy.c curve448/sec-add-1.c \
-	curve448/ecc-curve448.c $(curve448_genereated_headers) \
-	curve448/curve448-eh-to-x.c curve448/curve448.h curve448/curve448-mul.c \
-	curve448/curve448-mul-g.c
-
-libcrypto_la_SOURCES += \
-	curve448/eddsa.h curve448/eddsa-compress.c curve448/eddsa-decompress.c \
-	curve448/eddsa-expand.c curve448/eddsa-hash.c curve448/eddsa-internal.h \
-	curve448/eddsa-pubkey.c curve448/eddsa-sign.c curve448/eddsa-verify.c \
-	curve448/ed448-shake256.c curve448/ed448-shake256-pubkey.c \
-	curve448/ed448-shake256-sign.c curve448/ed448-shake256-verify.c
+	backport/bswap-internal.h \
+	backport/ctr-internal.h \
+	backport/ctr.h \
+	backport/ctr16.c \
+	backport/ghash-internal.h \
+	backport/ghash-set-key.c \
+	backport/ghash-update.c \
+	backport/siv-gcm-aes128.c \
+	backport/siv-gcm-aes256.c \
+	backport/siv-gcm.c \
+	backport/siv-gcm.h \
+	backport/siv-ghash-set-key.c \
+	backport/siv-ghash-update.c \
+	$(NULL)
 endif

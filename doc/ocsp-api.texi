@@ -132,6 +132,8 @@ that information back.
 The caller needs to deallocate memory by calling @code{gnutls_free()}  on
  @code{oid} ->data and  @code{data} ->data.
 
+Since 3.7.0  @code{oid} ->size does not account for the terminating null byte.
+
 @strong{Returns:} On success, @code{GNUTLS_E_SUCCESS}  (0) is returned, otherwise a
 negative error code is returned.  If you have reached the last
 extension available @code{GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE}  will
@@ -367,6 +369,8 @@ that information back.
 The caller needs to deallocate memory by calling @code{gnutls_free()}  on
  @code{oid} ->data and  @code{data} ->data.
 
+Since 3.7.0  @code{oid} ->size does not account for the terminating null byte.
+
 @strong{Returns:} On success, @code{GNUTLS_E_SUCCESS}  (0) is returned, otherwise a
 negative error code is returned.  If you have reached the last
 extension available @code{GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE}  will
@@ -497,6 +501,9 @@ This function is typically only useful when you want to extract the
 response type OID of an response for diagnostic purposes.
 Otherwise @code{gnutls_ocsp_resp_import()}  will decode the basic OCSP
 response part and the caller need not worry about that aspect.
+
+Since 3.7.0  @code{response_type_oid} ->size does not account for the terminating
+null byte.
 
 @strong{Returns:} On success, @code{GNUTLS_E_SUCCESS}  (0) is returned, otherwise a
 negative error value.

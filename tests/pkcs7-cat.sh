@@ -15,14 +15,13 @@
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with GnuTLS; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+# along with GnuTLS.  If not, see <https://www.gnu.org/licenses/>.
 
 #set -e
 
-srcdir="${srcdir:-.}"
-CERTTOOL="${CERTTOOL:-../src/certtool${EXEEXT}}"
-DIFF="${DIFF:-diff -b -B}"
+: ${srcdir=.}
+: ${CERTTOOL=../src/certtool${EXEEXT}}
+: ${DIFF=diff -b -B}
 if ! test -z "${VALGRIND}"; then
 	VALGRIND="${LIBTOOL:-libtool} --mode=execute ${VALGRIND} --error-exitcode=15"
 fi
@@ -34,11 +33,8 @@ fi
 
 . ${srcdir}/scripts/common.sh
 
-check_for_datefudge
-
 #try verification
-datefudge -s "2010-10-10" \
-${VALGRIND} "${CERTTOOL}" --verify-allow-broken --inder --p7-verify --infile "${srcdir}/data/test1.cat" --load-certificate "${srcdir}/data/pkcs7-cat-ca.pem"
+${VALGRIND} "${CERTTOOL}" --attime "2010-10-10" --verify-allow-broken --inder --p7-verify --infile "${srcdir}/data/test1.cat" --load-certificate "${srcdir}/data/pkcs7-cat-ca.pem"
 rc=$?
 
 if test "${rc}" = "0"; then
@@ -46,8 +42,7 @@ if test "${rc}" = "0"; then
 	exit 1
 fi
 
-datefudge -s "2016-10-10" \
-${VALGRIND} "${CERTTOOL}" --verify-allow-broken --inder --p7-verify --infile "${srcdir}/data/test1.cat" --load-certificate "${srcdir}/data/pkcs7-cat-ca.pem"
+${VALGRIND} "${CERTTOOL}" --attime "2016-10-10" --verify-allow-broken --inder --p7-verify --infile "${srcdir}/data/test1.cat" --load-certificate "${srcdir}/data/pkcs7-cat-ca.pem"
 rc=$?
 
 if test "${rc}" != "0"; then

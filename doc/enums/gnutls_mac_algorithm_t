@@ -60,4 +60,8 @@ The GOST 28147-89 working in IMIT mode with TC26 Z S-box.
 Reserved; unimplemented.
 @item GNUTLS_@-MAC_@-SHAKE_@-256
 Reserved; unimplemented.
+@item GNUTLS_@-MAC_@-MAGMA_@-OMAC
+GOST R 34.12-2015 (Magma) in OMAC (CMAC) mode.
+@item GNUTLS_@-MAC_@-KUZNYECHIK_@-OMAC
+GOST R 34.12-2015 (Kuznyechik) in OMAC (CMAC) mode.
 @end table
