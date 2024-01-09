@@ -934,7 +934,7 @@ _GL_CXXALIASWARN (putenv);
    'const char *string' or 'char *string'.  */
 _GL_CXXALIAS_MDA_CAST (putenv, int, (char *string));
 # else
-_GL_CXXALIAS_SYS (putenv, int, (char *string));
+_GL_CXXALIAS_SYS (putenv, int, (const char *string));
 # endif
 _GL_CXXALIASWARN (putenv);
 #endif

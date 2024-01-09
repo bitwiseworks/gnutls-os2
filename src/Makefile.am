@@ -161,7 +161,11 @@ certtool_LDADD += libcmd-certtool.la ../gl/libgnu.la gl/libgnu_gpl.la
 
 noinst_LTLIBRARIES += libcmd-certtool.la
 libcmd_certtool_la_SOURCES = certtool-options.c certtool-options.h
+if !OS2
 libcmd_certtool_la_LIBADD = libcerttool-cfg.la ../lib/libgnutls.la gl/libgnu_gpl.la ../gl/libgnu.la 
+else
+libcmd_certtool_la_LIBADD = libcerttool-cfg.la ../lib/libgnutls.la
+endif
 libcmd_certtool_la_LIBADD += $(COMMON_LIBS)
 libcmd_certtool_la_LIBADD += $(LTLIBREADLINE) 
 libcmd_certtool_la_LIBADD += $(INET_PTON_LIB) $(LIB_CLOCK_GETTIME)
@@ -194,7 +198,11 @@ p11tool_LDADD += $(COMMON_LIBS)
 
 noinst_LTLIBRARIES += libcmd-p11tool.la
 libcmd_p11tool_la_SOURCES = p11tool-options.c p11tool-options.h
+if !OS2
 libcmd_p11tool_la_LIBADD = libcerttool-cfg.la ../lib/libgnutls.la gl/libgnu_gpl.la ../gl/libgnu.la 
+else
+libcmd_p11tool_la_LIBADD = libcerttool-cfg.la ../lib/libgnutls.la
+endif
 libcmd_p11tool_la_LIBADD += $(LTLIBREADLINE) $(INET_PTON_LIB) $(LIB_CLOCK_GETTIME)
 
 endif # ENABLE_PKCS11
@@ -221,12 +229,20 @@ systemkey_LDADD += $(COMMON_LIBS)
 
 noinst_LTLIBRARIES += libcmd-systemkey.la
 libcmd_systemkey_la_SOURCES = systemkey-tool-options.c systemkey-tool-options.h
+if !OS2
 libcmd_systemkey_la_LIBADD = libcerttool-cfg.la ../lib/libgnutls.la gl/libgnu_gpl.la ../gl/libgnu.la 
+else
+libcmd_systemkey_la_LIBADD = libcerttool-cfg.la ../lib/libgnutls.la
+endif
 libcmd_systemkey_la_LIBADD += $(LTLIBREADLINE) $(INET_PTON_LIB) $(LIB_CLOCK_GETTIME)
 
 noinst_LTLIBRARIES += libcerttool-cfg.la
 libcerttool_cfg_la_SOURCES = certtool-cfg.h certtool-cfg.c cfg.c cfg.h
+if !OS2
 libcerttool_cfg_la_LIBADD = ../gl/libgnu.la gl/libgnu_gpl.la
+else
+libcerttool_cfg_la_LIBADD =
+endif
 
 noinst_PROGRAMS += dumpcfg
 dumpcfg_SOURCES = cfg.c cfg.h

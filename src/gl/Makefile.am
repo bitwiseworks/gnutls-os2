@@ -134,13 +134,8 @@ noinst_LTLIBRARIES += libgnu_gpl.la
 
 libgnu_gpl_la_SOURCES =
 libgnu_gpl_la_CFLAGS = $(AM_CFLAGS) $(GL_CFLAG_GNULIB_WARNINGS)
-if !OS2
 libgnu_gpl_la_LIBADD = $(ggl_LTLIBOBJS)
 libgnu_gpl_la_DEPENDENCIES = $(ggl_LTLIBOBJS)
-else
-libgnu_gpl_la_LIBADD = time_rz.lo timegm.lo mktime.lo setenv.lo
-libgnu_gpl_la_DEPENDENCIES = time_rz.lo timegm.lo mktime.lo setenv.lo
-endif
 EXTRA_libgnu_gpl_la_SOURCES =
 libgnu_gpl_la_LDFLAGS = $(AM_LDFLAGS)
 libgnu_gpl_la_LDFLAGS += -no-undefined
@@ -332,9 +327,7 @@ EXTRA_DIST += byteswap.in.h
 
 ## begin gnulib module c-ctype
 
-if !OS2
 libgnu_gpl_la_SOURCES += c-ctype.h c-ctype.c
-endif
 
 ## end   gnulib module c-ctype
 
@@ -1240,11 +1233,9 @@ EXTRA_DIST += rawmemchr.valgrind
 
 ## begin gnulib module read-file
 
-if !OS2
 libgnu_gpl_la_SOURCES += read-file.c
 
 EXTRA_DIST += read-file.h
-endif
 
 ## end   gnulib module read-file
 
@@ -2947,9 +2938,7 @@ libgnu_gpl_la_SOURCES += gl_xlist.h gl_xlist.c
 
 ## begin gnulib module xsize
 
-if !OS2
 libgnu_gpl_la_SOURCES += xsize.h xsize.c
-endif
 
 ## end   gnulib module xsize
 
