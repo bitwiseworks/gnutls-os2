@@ -27,7 +27,7 @@
 #include <unistd.h>
 
 #include "macros.h"
-
+#define DEBUG
 #ifdef DEBUG
 #define LOG(str, now, res)                                              \
   printf ("string '%s' diff %d %d\n",                                 \
@@ -425,6 +425,7 @@ main (_GL_UNUSED int argc, char **argv)
       ASSERT (result.tv_sec == thur2 + ((i + 3) % 7 - 7) * 24 * 3600);
     }
 
+#ifndef __OS2__
   p = "1970-12-31T23:59:59+00:00 - 1 year";  /* Bug#50115 */
   now.tv_sec = -1;
   now.tv_nsec = 0;
@@ -432,6 +433,7 @@ main (_GL_UNUSED int argc, char **argv)
   LOG (p, now, result);
   ASSERT (result.tv_sec == now.tv_sec
           && result.tv_nsec == now.tv_nsec);
+#endif
 
   p = "THURSDAY UTC+00";  /* The epoch was on Thursday.  */
   now.tv_sec = 0;

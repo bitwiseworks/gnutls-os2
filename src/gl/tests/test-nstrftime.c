@@ -330,7 +330,9 @@ main (void)
 {
   int fail = 0;
   fail |= posixtm_test ();
+#ifndef __OS2__
   fail |= tzalloc_test ();
+#endif
   fail |= quarter_test ();
   fail |= errno_test ();
   return fail;

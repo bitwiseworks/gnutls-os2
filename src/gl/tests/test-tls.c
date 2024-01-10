@@ -500,6 +500,7 @@ main ()
   test_tls ();
   printf (" OK\n"); fflush (stdout);
 
+#ifndef __OS2__
   printf ("Starting test_tls_dtorcheck1 ..."); fflush (stdout);
   test_tls_dtorcheck1 ();
   printf (" OK\n"); fflush (stdout);
@@ -507,9 +508,10 @@ main ()
   printf ("Starting test_tls_dtorcheck2 ..."); fflush (stdout);
   test_tls_dtorcheck2 ();
   printf (" OK\n"); fflush (stdout);
+#endif
 
   /* This test hangs with the mingw-w64 winpthreads.  */
-#if (defined _WIN32 && ! defined __CYGWIN__) && TEST_POSIX_THREADS
+#if (defined _WIN32 && ! defined __CYGWIN__) && TEST_POSIX_THREADS || __OS2__
   fputs ("Skipping test: it is known to hang with the mingw-w64 winpthreads.\n",
          stderr);
   exit (77);

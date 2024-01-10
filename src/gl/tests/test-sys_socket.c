@@ -55,7 +55,9 @@ main (void)
     case ECONNABORTED:
     case ECONNRESET:
     case ENOTCONN:
+#ifndef __OS2__
     case ESHUTDOWN:
+#endif
       break;
     }
 

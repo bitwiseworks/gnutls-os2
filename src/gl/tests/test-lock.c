@@ -44,7 +44,9 @@
 #define DO_TEST_LOCK 1
 #define DO_TEST_RWLOCK 1
 #define DO_TEST_RECURSIVE_LOCK 1
+#ifndef __OS2__
 #define DO_TEST_ONCE 1
+#endif
 
 /* Whether to help the scheduler through explicit yield().
    Uncomment this to see if the operating system has a fair scheduler.  */

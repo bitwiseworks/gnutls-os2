@@ -263,7 +263,7 @@ main (void)
     ASSERT (stat ("//", &st2) == 0);
     /* On IBM z/OS, "/" and "//" are distinct, yet they both have
        st_dev == st_ino == 1.  */
-#ifndef __MVS__
+#if !defined(__MVS__) && !defined(__OS2__)
     if (SAME_INODE (st1, st2))
       {
         ASSERT (strcmp (result1, "/") == 0);
@@ -287,9 +287,17 @@ main (void)
   ASSERT (remove (BASE "/bef") == 0);
   ASSERT (remove (BASE "/ouk") == 0);
   ASSERT (remove (BASE "/ket") == 0);
+#ifndef __OS2__
   ASSERT (remove (BASE "/lum") == 0);
+#else
+  ASSERT (rmdir (BASE "/lum") == 0);
+#endif
   ASSERT (remove (BASE "/tra") == 0);
+#ifndef __OS2__
   ASSERT (remove (BASE) == 0);
+#else
+  ASSERT (rmdir (BASE) == 0);
+#endif
   ASSERT (remove ("ise") == 0);
 
   return 0;

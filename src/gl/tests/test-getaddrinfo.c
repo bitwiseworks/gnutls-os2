@@ -20,6 +20,9 @@
 #include <config.h>
 
 #include <netdb.h>
+#ifdef __OS2__
+#include <libcx/net.h>
+#endif
 
 #include "signature.h"
 SIGNATURE_CHECK (gai_strerror, char const *, (int));
