@@ -287,17 +287,9 @@ main (void)
   ASSERT (remove (BASE "/bef") == 0);
   ASSERT (remove (BASE "/ouk") == 0);
   ASSERT (remove (BASE "/ket") == 0);
-#ifndef __OS2__
   ASSERT (remove (BASE "/lum") == 0);
-#else
-  ASSERT (rmdir (BASE "/lum") == 0);
-#endif
   ASSERT (remove (BASE "/tra") == 0);
-#ifndef __OS2__
   ASSERT (remove (BASE) == 0);
-#else
-  ASSERT (rmdir (BASE) == 0);
-#endif
   ASSERT (remove ("ise") == 0);
 
   return 0;
